@@ -5,6 +5,7 @@ from algosdk.future import transaction
 from algosdk import account, mnemonic
 from algosdk.v2client import algod
 import utilities.CommonFunctions as com_func
+import API.connection
 
 # user declared account mnemonics
 creator_mnemonic = "recipe insane demand stem tube pulp discover auction amateur dove curtain club negative boil provide help economy name congress pave nothing color feel abandon lumber"
@@ -17,6 +18,8 @@ global_ints = 1
 global_bytes = 0
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
+
+algorand_client = API.connection.algo_conn()
 
 approval_program_source_initial = b"""#pragma version 2
 int 1
