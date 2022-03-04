@@ -19,7 +19,6 @@ global_bytes = 0
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
-algorand_client = API.connection.algo_conn()
 
 approval_program_source_initial = b"""#pragma version 2
 int 1
