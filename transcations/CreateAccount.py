@@ -60,6 +60,7 @@ def create_app(client, name, usertype, email, password):
 
     account_info = client.account_info(address)
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
+    input("Press ENTER to continue...")
 
     sender = address
     on_complete = transaction.OnComplete.NoOpOC.real
