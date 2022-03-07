@@ -25,7 +25,7 @@ bnz main_l2
 err
 main_l2:
 txn NumAppArgs
-int 2
+int 4
 ==
 bnz main_l4
 err
@@ -35,6 +35,12 @@ txna ApplicationArgs 0
 app_global_put
 byte "usertype"
 txna ApplicationArgs 1
+app_global_put
+byte "email"
+txna ApplicationArgs 2
+app_global_put
+byte "password"
+txna ApplicationArgs 3
 app_global_put
 int 1
 return
@@ -47,7 +53,7 @@ int 1
 
 
 # create new application
-def create_app(client, private_key, name, usertype):
+def create_app(client, private_key, name, usertype, email, password):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -61,7 +67,7 @@ def create_app(client, private_key, name, usertype):
     params.flat_fee = True
     params.fee = 1000
 
-    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8')]
+    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'),bytes(email, 'utf8'), bytes(password, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,

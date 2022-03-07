@@ -8,9 +8,9 @@ app = Flask(__name__)
 algod_client = connection.algo_conn()
 
 
-@app.route('/createAccount/<string:name>/<string:usertype>', methods=["POST"])
-def create_account(name, usertype):
-    appId = trans.create_app(algod_client, account(), name, usertype)
+@app.route('/createAccount/<string:name>/<string:usertype>/<string:email>/<string:password>', methods=["POST"])
+def create_account(name, usertype, email, password):
+    appId = trans.create_app(algod_client, account(), name, usertype, email, password)
     return appId
 
 
