@@ -1,16 +1,15 @@
 from flask import Flask
+import API.connection
 import transcations.CreateAccount as trans
-from API import connection
-from utilities.accounts import account
 
 app = Flask(__name__)
 
-algod_client = connection.algo_conn()
+algod_client = API.connection.algo_conn()
 
 
 @app.route('/createAccount/<string:name>/<string:usertype>/<string:email>/<string:password>', methods=["POST"])
 def create_account(name, usertype, email, password):
-    appId = trans.create_app(algod_client, account(), name, usertype, email, password)
+    appId = trans.create_app(algod_client, name, usertype, email, password)
     return appId
 
 

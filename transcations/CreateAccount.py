@@ -1,12 +1,14 @@
 from billiard.five import string
 from pyteal import *
 import base64
-
 from algosdk.future import transaction
-from algosdk import account, mnemonic
 from algosdk.v2client import algod
 import utilities.CommonFunctions as com_func
-import API.connection
+import utilities.accounts
+from algosdk import account, mnemonic
+from API.connection import algo_conn
+from algosdk.v2client import algod
+
 
 # declare application state storage (immutable)
 local_ints = 5
@@ -53,13 +55,19 @@ int 1
 
 
 # create new application
-def create_app(client, private_key, name, usertype, email, password):
+def create_app(client, name, usertype, email, password):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
 
-    sender = account.address_from_private_key(private_key)
+    private_key, address = account.generate_account()
+    print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))
+
+    account_info = client.account_info(address)
+    print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
+
+    sender = private_key
     on_complete = transaction.OnComplete.NoOpOC.real
 
     params = client.suggested_params()
