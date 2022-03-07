@@ -1,6 +1,7 @@
 from flask import Flask
 import API.connection
-import transcations.CreateAccount as trans
+import transcations.CreateAccount as account
+import transcations.createCampaign as campaign
 
 app = Flask(__name__)
 
@@ -14,7 +15,7 @@ algod_client = API.connection.algo_conn()
            '/<string:password>',
            methods=["POST"])
 def create_account(name, usertype, email, password):
-    userID = trans.create_app(algod_client, name, usertype, email, password)
+    userID = account.create_app(algod_client, name, usertype, email, password)
     return userID
 
 
@@ -25,7 +26,7 @@ def create_account(name, usertype, email, password):
            '/<string:duration>',
            methods=["POST"])
 def create_campaign(title, description, fund_limit, duration):
-    campaignID = trans.create_app(algod_client, title, description, fund_limit, duration)
+    campaignID = campaign.create_app(algod_client, title, description, fund_limit, duration)
     return campaignID
 
 
