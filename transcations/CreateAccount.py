@@ -1,3 +1,4 @@
+from billiard.five import string
 from pyteal import *
 import base64
 
@@ -11,6 +12,7 @@ import API.connection
 creator_mnemonic = "recipe insane demand stem tube pulp discover auction amateur dove curtain club negative boil provide help economy name congress pave nothing color feel abandon lumber"
 user_mnemonic = "brass unaware company mirror rail oil step journey cargo denial inflict code ozone route recall animal ribbon comfort expect fun liquid woman stone able arrest"
 
+
 # declare application state storage (immutable)
 local_ints = 1
 local_bytes = 1
@@ -21,17 +23,36 @@ local_schema = transaction.StateSchema(local_ints, local_bytes)
 
 
 approval_program_source_initial = b"""#pragma version 2
+txn ApplicationID
+int 0
+==
+bnz main_l2
+err
+main_l2:
+txn NumAppArgs
+int 2
+==
+bnz main_l4
+err
+main_l4:
+byte "name"
+txna ApplicationArgs 0
+app_global_put
+byte "usertype"
+txna ApplicationArgs 1
+app_global_put
 int 1
+return
 """
 
 # declare clear state program source
-clear_program_source = b"""#pragma version 2
+clear_program_source = b"""#pragma version 5
 int 1
 """
 
 
 # create new application
-def create_app(client, private_key):
+def create_app(client, private_key, name, usertype):
     print("Creating application...")
 
     creator_private_key = com_func.get_private_key_from_mnemonic(creator_mnemonic)
@@ -48,9 +69,11 @@ def create_app(client, private_key):
     params.flat_fee = True
     params.fee = 1000
 
+    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8')]
+
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
-                                           global_schema, local_schema)
+                                           global_schema, local_schema, args_list)
     signed_txn = txn.sign(private_key)
     tx_id = signed_txn.transaction.get_txid()
     client.send_transactions([signed_txn])
@@ -59,4 +82,4 @@ def create_app(client, private_key):
     app_id = transaction_response['application-index']
     print("Created new app-id: ", app_id)
 
-    return app_id
+    return string(app_id)
