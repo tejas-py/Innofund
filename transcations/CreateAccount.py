@@ -13,7 +13,7 @@ global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
 
-approval_program_source_initial = b"""#pragma version 2
+approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
