@@ -70,7 +70,7 @@ def create_app(client, name, usertype, email, password):
     params.flat_fee = True
     params.fee = 1000
 
-    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'),bytes(email, 'utf8'), bytes(password, 'utf8')]
+    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8'), bytes(password, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,

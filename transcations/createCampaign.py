@@ -69,7 +69,7 @@ def create_app(client, title, description, fund_limit, duration):
     params.flat_fee = True
     params.fee = 1000
 
-    args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'),bytes(fund_limit, 'utf8'), bytes(duration, 'utf8')]
+    args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(fund_limit, 'utf8'), bytes(duration, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
