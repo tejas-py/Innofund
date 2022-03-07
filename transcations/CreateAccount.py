@@ -1,13 +1,7 @@
 from billiard.five import string
-from pyteal import *
-import base64
 from algosdk.future import transaction
-from algosdk.v2client import algod
 import utilities.CommonFunctions as com_func
-import utilities.accounts
-from algosdk import account, mnemonic
-from API.connection import algo_conn
-from algosdk.v2client import algod
+from algosdk import account
 
 
 # declare application state storage (immutable)
