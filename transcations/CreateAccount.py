@@ -8,16 +8,11 @@ from algosdk.v2client import algod
 import utilities.CommonFunctions as com_func
 import API.connection
 
-# user declared account mnemonics
-creator_mnemonic = "recipe insane demand stem tube pulp discover auction amateur dove curtain club negative boil provide help economy name congress pave nothing color feel abandon lumber"
-user_mnemonic = "brass unaware company mirror rail oil step journey cargo denial inflict code ozone route recall animal ribbon comfort expect fun liquid woman stone able arrest"
-
-
 # declare application state storage (immutable)
-local_ints = 1
-local_bytes = 1
-global_ints = 1
-global_bytes = 0
+local_ints = 5
+local_bytes = 5
+global_ints = 5
+global_bytes = 5
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
@@ -54,9 +49,6 @@ int 1
 # create new application
 def create_app(client, private_key, name, usertype):
     print("Creating application...")
-
-    creator_private_key = com_func.get_private_key_from_mnemonic(creator_mnemonic)
-    user_private_key = com_func.get_private_key_from_mnemonic(user_mnemonic)
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
