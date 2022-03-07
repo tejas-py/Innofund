@@ -13,6 +13,12 @@ def create_account(name, usertype, email, password):
     return appId
 
 
+@app.route('/createAccount/<string:title>/<string:description>/<string:fund_limit>/<string:duration>', methods=["POST"])
+def create_account(title, description, fund_limit, duration):
+    appId = trans.create_app(algod_client, title, description, fund_limit, duration)
+    return appId
+
+
 if __name__ == "__main__":
     # table_creation()
     app.run(debug=True)

@@ -1,5 +1,4 @@
 from algosdk import mnemonic
-from pyteal import *
 import base64
 
 
