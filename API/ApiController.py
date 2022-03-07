@@ -14,8 +14,8 @@ algod_client = API.connection.algo_conn()
            '/<string:password>',
            methods=["POST"])
 def create_account(name, usertype, email, password):
-    appId = trans.create_app(algod_client, name, usertype, email, password)
-    return appId
+    userID = trans.create_app(algod_client, name, usertype, email, password)
+    return userID
 
 
 @app.route('/createCampaign/'
@@ -24,9 +24,9 @@ def create_account(name, usertype, email, password):
            '/<string:fund_limit>'
            '/<string:duration>',
            methods=["POST"])
-def create_account(title, description, fund_limit, duration):
-    appId = trans.create_app(algod_client, title, description, fund_limit, duration)
-    return appId
+def create_campaign(title, description, fund_limit, duration):
+    campaignID = trans.create_app(algod_client, title, description, fund_limit, duration)
+    return campaignID
 
 
 if __name__ == "__main__":
