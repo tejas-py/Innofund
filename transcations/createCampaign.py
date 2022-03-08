@@ -88,7 +88,7 @@ def create_app(client, your_passphrase, creator, title, campaign_type, descripti
     client.send_transactions([signed_txn])
     com_func.wait_for_confirmation(client, tx_id)
     transaction_response = client.pending_transaction_info(tx_id)
-    app_id = transaction_response['application-index']
-    print("Created new app-id: ", app_id)
+    campaign_id= transaction_response['application-index']
+    print("Created new Campaign ID: ", campaign_id)
 
-    return string(app_id)
+    return string(campaign_id)
