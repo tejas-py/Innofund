@@ -15,11 +15,10 @@ algod_client = API.connection.algo_conn()
 @app.route('/createAccount/'
            '<string:name>'
            '/<string:usertype>'
-           '/<string:email>'
-           '/<string:password>',
+           '/<string:email>',
            methods=["POST"])
-def create_account(name, usertype, email, password):
-    userID = account.create_app(algod_client, name, usertype, email, password)
+def create_account(name, usertype, email):
+    userID = account.create_app(algod_client, name, usertype, email)
     return userID
 
 
@@ -38,12 +37,12 @@ def create_campaign(your_passphrase, creator, title, campaign_type,
 
 
 # Transaction of algos, Investor to escrow.
-@app.route('/escrow_trasaction_details/<string:passphrase>')
-def escrow_transaction(passphrase):
+@app.route('/escrow_trasaction_details/<string:passphrase>/<int:amount>')
+def escrow_transaction(passphrase, amount):
     try:
-        txnID = transcations.txn_escrow.transfer(passphrase)
+        txnID = transcations.txn_escrow.transfer(passphrase, amount)
         if re.search("[0-9]+[A-Z]", txnID):
-            return "Transaction was successful. Transaction ID: {}".format(txnID)
+            return "Transaction of {} was successful. Transaction ID: {}".format(amount, txnID)
         else:
             return "Transaction was not successful."
     except Exception:
@@ -51,11 +50,11 @@ def escrow_transaction(passphrase):
 
 
 # Transaction of algos, Escrow to Creator.
-@app.route('/creator_escrow_tnx/<string:your_address>')
-def creator_escrow(your_address):
-    txnID = transcations.escrow_creator.transfer(your_address)
+@app.route('/creator_escrow_tnx/<string:your_address>/<int:amount>')
+def creator_escrow(your_address, amount):
+    txnID = transcations.escrow_creator.transfer(your_address, amount)
     if re.search("[0-9]+[A-Z]", txnID):
-        return "Transaction was successful. Transaction ID: {}".format(txnID)
+        return "Transaction of {} was successful. Transaction ID: {}".format(amount, txnID)
     else:
         return "Transaction was not successful."
 

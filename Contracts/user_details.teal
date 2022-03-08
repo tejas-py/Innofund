@@ -6,11 +6,9 @@ bnz main_l2
 err
 main_l2:
 txn NumAppArgs
-int 4
+int 3
 ==
-bnz main_l4
-err
-main_l4:
+assert
 byte "name"
 txna ApplicationArgs 0
 app_global_put
@@ -19,9 +17,6 @@ txna ApplicationArgs 1
 app_global_put
 byte "email"
 txna ApplicationArgs 2
-app_global_put
-byte "password"
-txna ApplicationArgs 3
 app_global_put
 int 1
 return

@@ -15,7 +15,7 @@ def load_resource(res):
     return data
 
 
-def transfer(creator_address):
+def transfer(creator_address, amount):
 
     algod_client = algo_conn()
 
@@ -37,7 +37,7 @@ def transfer(creator_address):
 
     receiver = creator
 
-    txn = transaction.PaymentTxn(sender, params, receiver, 14444)
+    txn = transaction.PaymentTxn(sender, params, receiver, amount)
 
     #sign by logic sign
     lstx = transaction.LogicSigTransaction(txn, lsig)

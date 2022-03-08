@@ -7,7 +7,7 @@ from API.connection import algo_conn
 import utilities.CommonFunctions
 
 
-def transfer(passphrase):
+def transfer(passphrase, amount):
 
     algod_client = algo_conn()
 
@@ -24,7 +24,7 @@ def transfer(passphrase):
     note = "Account to Escrow Account".encode()
     receiver = "BJATCHES5YJZJ7JITYMVLSSIQAVAWBQRVGPQUDT5AZ2QSLDSXWWM46THOY"
 
-    txn = transaction.PaymentTxn(your_address, params.fee, params.first, params.last, params.gh, receiver, 1000000)
+    txn = transaction.PaymentTxn(your_address, params.fee, params.first, params.last, params.gh, receiver, amount)
     signed_txn = txn.sign(private_key)
     txid = signed_txn.transaction.get_txid()
     print("Signed transaction with txID: {}".format(txid))
