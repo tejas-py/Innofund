@@ -1,11 +1,12 @@
-from billiard.five import string
-from algosdk.future import transaction
-import utilities.CommonFunctions as com_func
-from algosdk import account
-from API.connection import algo_conn
+myprogram = "escrow_account/sample.teal"
 
-client = algo_conn()
+data = load_resource(myprogram)
+source = data.decode('utf-8')
 
-account_info = client.application_info(76552592)
-params_info = account_info['params']
-print(params_info['creator'])
+response = algod_client.compile(source)
+# Print(response)
+print("Response Result = ", response['result'])
+print("Response Hash = ", response['hash'])
+# Create logic sig
+programstr = response['result']
+t = programstr.encode("ascii")

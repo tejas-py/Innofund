@@ -2,6 +2,7 @@ from flask import Flask
 import API.connection
 import transcations.CreateAccount as account
 import transcations.createCampaign as campaign
+import transcations.escrow_creator
 import transcations.txn_escrow
 import re
 
@@ -47,6 +48,16 @@ def escrow_transaction(passphrase):
             return "Transaction was not successful."
     except Exception:
         return "Transaction was not successful, please check your passphrase."
+
+
+# Transaction of algos, Escrow to Creator.
+@app.route('/creator_escrow_tnx/<string:your_address>')
+def creator_escrow(your_address):
+    txnID = transcations.escrow_creator.transfer(your_address)
+    if re.search("[0-9]+[A-Z]", txnID):
+        return "Transaction was successful. Transaction ID: {}".format(txnID)
+    else:
+        return "Transaction was not successful."
 
 
 if __name__ == "__main__":
