@@ -6,7 +6,7 @@ bnz main_l2
 err
 main_l2:
 txn NumAppArgs
-int 6
+int 7
 ==
 assert
 byte "creator"

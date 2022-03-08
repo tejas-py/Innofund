@@ -5,10 +5,10 @@ from algosdk import mnemonic
 
 
 # declare application state storage (immutable)
-local_ints = 5
-local_bytes = 5
-global_ints = 5
-global_bytes = 5
+local_ints = 1
+local_bytes = 1
+global_ints = 10
+global_bytes = 10
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
@@ -21,7 +21,7 @@ bnz main_l2
 err
 main_l2:
 txn NumAppArgs
-int 6
+int 7
 ==
 assert
 byte "creator"
@@ -30,7 +30,7 @@ app_global_put
 byte "title"
 txna ApplicationArgs 1
 app_global_put
-byte "Campaign_type"
+byte "campaign_type"
 txna ApplicationArgs 2
 app_global_put
 byte "description"
@@ -56,7 +56,7 @@ int 1
 
 
 # create new application
-def create_app(your_passphrase, client, creator, title, campaign_type, description,start_time, end_time, fund_limit):
+def create_app(client, your_passphrase, creator, title, campaign_type, description, start_time, end_time, fund_limit):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
