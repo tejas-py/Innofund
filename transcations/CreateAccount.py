@@ -24,7 +24,7 @@ txn NumAppArgs
 int 3
 ==
 assert
-byte "name"
+byte "username"
 txna ApplicationArgs 0
 app_global_put
 byte "usertype"
@@ -44,7 +44,7 @@ int 1
 
 
 # create new application
-def create_app(client, name, usertype, email):
+def create_app(client, username, usertype, email):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -67,7 +67,7 @@ def create_app(client, name, usertype, email):
     params.flat_fee = True
     params.fee = 1000
 
-    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
+    args_list = [bytes(username, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,

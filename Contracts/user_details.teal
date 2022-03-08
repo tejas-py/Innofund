@@ -9,7 +9,7 @@ txn NumAppArgs
 int 3
 ==
 assert
-byte "name"
+byte "username"
 txna ApplicationArgs 0
 app_global_put
 byte "usertype"

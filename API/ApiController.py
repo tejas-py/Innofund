@@ -5,6 +5,7 @@ import transcations.createCampaign as campaign
 import transcations.escrow_creator
 import transcations.txn_escrow
 import re
+import utilities.check
 
 app = Flask(__name__)
 
@@ -13,27 +14,20 @@ algod_client = API.connection.algo_conn()
 
 # Create unique id for respective accounts created.
 @app.route('/createAccount/'
-           '<string:name>'
+           '<string:username>'
            '/<string:usertype>'
            '/<string:email>',
            methods=["POST"])
-def create_account(name, usertype, email):
-    userID = account.create_app(algod_client, name, usertype, email)
-    return userID
-
-
-# Creating a Campaign id for each campaign created by accounts.
-@app.route('/createCampaign/<string:your_passphrase>/<string:creator>/<string:title>'
-           '/<string:campaign_type>/<string:description>'
-           '/<string:start_time>/<string:end_time>/<string:fund_limit>',
-           methods=["POST"])
-def create_campaign(your_passphrase, creator, title, campaign_type,
-                    description, start_time, end_time,
-                    fund_limit):
-    campaignID = campaign.create_app(algod_client, your_passphrase, creator, title,
-                                     campaign_type, description, start_time,
-                                     end_time, fund_limit)
-    return campaignID
+def create_account(username, usertype, email):
+    name = utilities.check.check_username(username)
+    user_type = utilities.check.check_user(usertype)
+    email_id = utilities.check.check_email(email)
+    if name and usertype and email_id == "Approved":
+        userID = account.create_app(algod_client, username, usertype, email)
+        return "Username registration successful with user id: {}".format(userID)
+    else:
+        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
+        return lst_error
 
 
 # Transaction of algos, Investor to escrow.

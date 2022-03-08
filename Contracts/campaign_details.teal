@@ -6,29 +6,32 @@ bnz main_l2
 err
 main_l2:
 txn NumAppArgs
-int 7
+int 8
 ==
 assert
-byte "creator"
+byte "title"
 txna ApplicationArgs 0
 app_global_put
-byte "title"
+byte "description"
 txna ApplicationArgs 1
 app_global_put
-byte "campaign_type"
+byte "category"
 txna ApplicationArgs 2
 app_global_put
-byte "description"
+byte "start_time"
 txna ApplicationArgs 3
 app_global_put
-byte "start_time"
+byte "end_time"
 txna ApplicationArgs 4
 app_global_put
-byte "end_time"
+byte "funding_category"
 txna ApplicationArgs 5
 app_global_put
 byte "fund_limit"
 txna ApplicationArgs 6
+app_global_put
+byte "country"
+txna ApplicationArgs 7
 app_global_put
 int 1
 return
