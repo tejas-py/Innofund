@@ -32,6 +32,7 @@ def create_campaign(title, description, fund_limit, duration):
     return campaignID
 
 
+#Invester to escrow.
 @app.route('/escrow_trasaction_details/<string:passphrase>')
 def escrow_transaction(passphrase):
     try:
