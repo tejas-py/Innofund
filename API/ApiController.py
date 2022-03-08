@@ -44,7 +44,6 @@ def create_campaign(your_passphrase,  title, description,
     return campaignID
 
 
-
 # Transaction of algos, Investor to escrow.
 @app.route('/escrow_trasaction_details/<string:passphrase>/<int:amount>')
 def escrow_transaction(passphrase, amount):
