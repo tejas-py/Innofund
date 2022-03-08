@@ -1,38 +1,51 @@
 import json
-import base64
-from algosdk import mnemonic
-from algosdk import transaction
 from API.connection import algo_conn
 import utilities.CommonFunctions
+from billiard.five import string
+from algosdk.future import transaction
+import os
+import base64
 
 
-def transfer():
+def load_resource(res):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(dir_path, res)
+    with open(path, "rb") as fin:
+        data = fin.read()
+    return data
+
+
+def transfer(creator_address):
 
     algod_client = algo_conn()
 
-    passphrase = "broken fossil rate oblige true always cost goddess hole rare novel autumn forest good corn price wolf together today advice abstract pulse live able always"
-
-    private_key = mnemonic.to_private_key(passphrase)
-    creator = mnemonic.to_public_key(passphrase)
-    print("My address: {}".format(creator))
-
-    account_info = algod_client.account_info(creator)
-    print("Account balance: {} microAlgos".format(account_info.get('amount')))
+    creator = creator_address
 
     params = algod_client.suggested_params()
-    note = "Account to Escrow Account".encode()
-    sender = "BJATCHES5YJZJ7JITYMVLSSIQAVAWBQRVGPQUDT5AZ2QSLDSXWWM46THOY"
 
-    escrow_private =
+    myprogram = "D:\webmob\Innofund_new\escrow_account\sample.teal"
+
+    data = load_resource(myprogram)
+    source = data.decode('utf-8')
+    response = algod_client.compile(source)
+    programstr = response['result']
+    t = programstr.encode("ascii")
+    program = base64.decodebytes(t)
+    lsig = transaction.LogicSigAccount(program)
+
+    sender = lsig.address()
 
     receiver = creator
 
-    txn = transaction.PaymentTxn(sender, params.fee, params.first, params.last, params.gh, receiver, 14444)
-    signed_txn = txn.sign(private_key)
-    txid = signed_txn.transaction.get_txid()
+    txn = transaction.PaymentTxn(sender, params, receiver, 14444)
+
+    #sign by logic sign
+    lstx = transaction.LogicSigTransaction(txn, lsig)
+    assert lstx.verify()
+    txid = lstx.transaction.get_txid()
     print("Signed transaction with txID: {}".format(txid))
 
-    algod_client.send_transaction(signed_txn)
+    algod_client.send_transaction(lstx)
 
     utilities.CommonFunctions.wait_for_confirmation(algod_client, txid)
 
@@ -40,5 +53,6 @@ def transfer():
     confirmed_txn = algod_client.pending_transaction_info(txid)
     print("Transaction information: {}".format(json.dumps(confirmed_txn, indent=4)))
 
+    return string(txid)
 
-transfer()
+
