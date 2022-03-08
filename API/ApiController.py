@@ -10,6 +10,7 @@ app = Flask(__name__)
 algod_client = API.connection.algo_conn()
 
 
+# Create unique id for respective accounts created.
 @app.route('/createAccount/'
            '<string:name>'
            '/<string:usertype>'
@@ -21,18 +22,21 @@ def create_account(name, usertype, email, password):
     return userID
 
 
-@app.route('/createCampaign/'
-           '<string:title>'
-           '/<string:description>'
-           '/<string:fund_limit>'
-           '/<string:duration>',
+# Creating a Campaign id for each campaign created by accounts.
+@app.route('/createCampaign/<string:your_passphrase>/<string:creator>/<string:title>'
+           '/<string:campaign_type>/<string:description>'
+           '/<string:start_time>/<string:end_time>/<string:fund_limit>',
            methods=["POST"])
-def create_campaign(title, description, fund_limit, duration):
-    campaignID = campaign.create_app(algod_client, title, description, fund_limit, duration)
+def create_campaign(your_passphrase, creator, title, campaign_type,
+                    description, start_time, end_time,
+                    fund_limit):
+    campaignID = campaign.create_app(algod_client, your_passphrase, creator, title,
+                                     campaign_type, description, start_time,
+                                     end_time, fund_limit)
     return campaignID
 
 
-#Invester to escrow.
+# Transaction of algos, Investor to escrow.
 @app.route('/escrow_trasaction_details/<string:passphrase>')
 def escrow_transaction(passphrase):
     try:

@@ -1,7 +1,7 @@
 from billiard.five import string
 from algosdk.future import transaction
 import utilities.CommonFunctions as com_func
-from algosdk import account
+from algosdk import mnemonic
 
 
 # declare application state storage (immutable)
@@ -21,23 +21,31 @@ bnz main_l2
 err
 main_l2:
 txn NumAppArgs
-int 4
+int 6
 ==
 assert
-byte "title"
+byte "creator"
 txna ApplicationArgs 0
 app_global_put
-byte "description"
+byte "title"
 txna ApplicationArgs 1
 app_global_put
-byte "fund_limit"
+byte "Campaign_type"
 txna ApplicationArgs 2
 app_global_put
-byte "duration"
+byte "description"
 txna ApplicationArgs 3
 app_global_put
+byte "start_time"
+txna ApplicationArgs 4
+app_global_put
+byte "end_time"
+txna ApplicationArgs 5
+app_global_put
+byte "fund_limit"
+txna ApplicationArgs 6
+app_global_put
 int 1
-return
 return
 """
 
@@ -48,18 +56,18 @@ int 1
 
 
 # create new application
-def create_app(client, title, description, fund_limit, duration):
+def create_app(your_passphrase, client, creator, title, campaign_type, description,start_time, end_time, fund_limit):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
 
-    private_key, address = account.generate_account()
-    print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))
+    # Fetching public and private address from the passphrase, passed as argument.
+    private_key = mnemonic.to_private_key(your_passphrase)
+    address = mnemonic.to_public_key(your_passphrase)
 
     account_info = client.account_info(address)
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
-    input("Press ENTER to continue...")
 
     sender = address
     on_complete = transaction.OnComplete.NoOpOC.real
@@ -69,7 +77,8 @@ def create_app(client, title, description, fund_limit, duration):
     params.flat_fee = True
     params.fee = 1000
 
-    args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(fund_limit, 'utf8'), bytes(duration, 'utf8')]
+    args_list = [bytes(creator, 'utf8'), bytes(title, 'utf8'), bytes(campaign_type, 'utf8'), bytes(description, 'utf8'),
+                 bytes(start_time, 'utf8'), bytes(end_time, 'utf8'), bytes(fund_limit, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,

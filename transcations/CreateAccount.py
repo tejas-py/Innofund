@@ -57,6 +57,7 @@ def create_app(client, name, usertype, email, password):
 
     private_key, address = account.generate_account()
     print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))
+    print("here is your private key:{}".format(private_key))
 
     account_info = client.account_info(address)
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
