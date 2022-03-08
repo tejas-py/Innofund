@@ -30,6 +30,21 @@ def create_account(username, usertype, email):
         return lst_error
 
 
+# Creating a Campaign id for each campaign created by accounts.
+@app.route('/createCampaign/<string:your_passphrase>/<string:title>/<string:description>'
+           '/<string:category>/<string:start_time>/<string:end_time>/<string:fund_category>'
+           '/<string:fund_limit>/<string:county>',
+           methods=["POST"])
+def create_campaign(your_passphrase,  title, description,
+                    category, start_time, end_time, fund_category,
+                    fund_limit, country):
+    campaignID = campaign.create_app(algod_client, your_passphrase,  title, description,
+                                     category, start_time, end_time, fund_category,
+                                     fund_limit, country)
+    return campaignID
+
+
+
 # Transaction of algos, Investor to escrow.
 @app.route('/escrow_trasaction_details/<string:passphrase>/<int:amount>')
 def escrow_transaction(passphrase, amount):
