@@ -16,8 +16,12 @@ def approval_program():
             Return(Int(1))
         ]
     )
+
+    check_duration = If(App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")), Approve(), Reject())
+
     program = Cond(
-        [Txn.application_id() == Int(0), on_creation]
+        [Txn.application_id() == Int(0), on_creation],
+        [Txn.on_completion() == OnComplete.NoOp, check_duration]
     )
 
     return program

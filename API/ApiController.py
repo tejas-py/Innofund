@@ -33,7 +33,7 @@ def create_account(username, usertype, email):
 # Creating a Campaign id for each campaign created by accounts.
 @app.route('/createCampaign/<string:your_passphrase>/<string:title>/<string:description>'
            '/<string:category>/<string:start_time>/<string:end_time>/<string:fund_category>'
-           '/<string:fund_limit>/<string:county>',
+           '/<string:fund_limit>/<string:country>',
            methods=["POST"])
 def create_campaign(your_passphrase,  title, description,
                     category, start_time, end_time, fund_category,
