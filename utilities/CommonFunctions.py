@@ -1,6 +1,7 @@
 from algosdk import mnemonic
 import base64
 import os
+import time
 
 
 # compile program used to compile the source code, used when new application is created
@@ -35,3 +36,10 @@ def load_resource(res):
     with open(path, "rb") as fin:
         data = fin.read()
     return data
+
+
+def Today_seconds():
+    today_time = time.localtime()
+    seconds_today_time = time.mktime(today_time)
+    today_seconds = int(seconds_today_time)
+    return today_seconds

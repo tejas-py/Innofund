@@ -27,7 +27,8 @@ byte "Check_again"
 bnz main_l6
 err
 main_l6:
-int 200
+byte "today_time"
+app_global_get
 byte "end_time"
 app_global_get
 >
@@ -51,7 +52,7 @@ int 1
 return
 main_l12:
 txn NumAppArgs
-int 8
+int 9
 ==
 assert
 byte "title"
@@ -79,6 +80,10 @@ txna ApplicationArgs 6
 app_global_put
 byte "country"
 txna ApplicationArgs 7
+app_global_put
+byte "today_time"
+txna ApplicationArgs 8
+btoi
 app_global_put
 int 1
 return

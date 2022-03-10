@@ -2,7 +2,7 @@ from algosdk import mnemonic
 from algosdk.future.transaction import *
 from billiard.five import string
 import utilities.CommonFunctions as com_func
-
+from utilities.CommonFunctions import Today_seconds
 
 # Declare application state storage (immutable)
 local_ints = 1
@@ -43,7 +43,8 @@ byte "Check_again"
 bnz main_l6
 err
 main_l6:
-int 200
+byte "today_time"
+app_global_get
 byte "end_time"
 app_global_get
 >
@@ -67,7 +68,7 @@ int 1
 return
 main_l12:
 txn NumAppArgs
-int 8
+int 9
 ==
 assert
 byte "title"
@@ -96,8 +97,11 @@ app_global_put
 byte "country"
 txna ApplicationArgs 7
 app_global_put
+byte "today_time"
+txna ApplicationArgs 8
+btoi
+app_global_put
 int 1
-return
 """
 
 # Declare clear state program source
@@ -132,7 +136,7 @@ def create_app(client, your_passphrase,  title, description,
 
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
-                 bytes(fund_limit, 'utf8'), bytes(country, 'utf8')]
+                 bytes(fund_limit, 'utf8'), bytes(country, 'utf8'), int(Today_seconds())]
 
     txn = ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
@@ -283,4 +287,4 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
     # wait for confirmation
     com_func.wait_for_confirmation(client, tx_id)
 
-    return string(group_id)
+    return string(tx_id)
