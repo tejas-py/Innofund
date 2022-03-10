@@ -1,7 +1,7 @@
-from billiard.five import string
-from algosdk.future import transaction
-import utilities.CommonFunctions as com_func
 from algosdk import mnemonic
+from algosdk.future.transaction import *
+from billiard.five import string
+import utilities.CommonFunctions as com_func
 
 
 # declare application state storage (immutable)
@@ -9,24 +9,62 @@ local_ints = 1
 local_bytes = 1
 global_ints = 20
 global_bytes = 20
-global_schema = transaction.StateSchema(global_ints, global_bytes)
-local_schema = transaction.StateSchema(local_ints, local_bytes)
+global_schema = StateSchema(global_ints, global_bytes)
+local_schema = StateSchema(local_ints, local_bytes)
 
 
 approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l4
+bnz main_l12
 txn OnCompletion
 int NoOp
 ==
 bnz main_l3
 err
 main_l3:
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "Check"
+==
+&&
+bnz main_l9
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "Check_again"
+==
+&&
+bnz main_l6
+err
+main_l6:
+int 200
+byte "end_time"
+app_global_get
+>
+bnz main_l8
 int 0
 return
-main_l4:
+main_l8:
+int 1
+return
+main_l9:
+byte "end_time"
+app_global_get
+byte "start_time"
+app_global_get
+>
+bnz main_l11
+int 0
+return
+main_l11:
+int 1
+return
+main_l12:
 txn NumAppArgs
 int 8
 ==
@@ -42,9 +80,11 @@ txna ApplicationArgs 2
 app_global_put
 byte "start_time"
 txna ApplicationArgs 3
+btoi
 app_global_put
 byte "end_time"
 txna ApplicationArgs 4
+btoi
 app_global_put
 byte "funding_category"
 txna ApplicationArgs 5
@@ -82,7 +122,7 @@ def create_app(client, your_passphrase,  title, description,
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
 
     sender = address
-    on_complete = transaction.OnComplete.NoOpOC.real
+    on_complete = OnComplete.NoOpOC.real
 
     params = client.suggested_params()
 
@@ -90,10 +130,10 @@ def create_app(client, your_passphrase,  title, description,
     params.fee = 1000
 
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
-                 bytes(start_time, 'utf8'), bytes(end_time, 'utf8'), bytes(fund_category, 'utf8'),
+                 int(start_time), int(end_time), bytes(fund_category, 'utf8'),
                  bytes(fund_limit, 'utf8'), bytes(country, 'utf8')]
 
-    txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
+    txn = ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
                                            global_schema, local_schema, args_list)
 
@@ -106,3 +146,138 @@ def create_app(client, your_passphrase,  title, description,
     print("Created new Campaign ID: ", campaign_id)
 
     return string(campaign_id)
+
+
+def call_app(client, your_passphrase, campaignID, investment):
+
+    # Converting Passphrase to public and private key.
+    investor_account = mnemonic.to_public_key(your_passphrase)
+    investor_private_key = mnemonic.to_private_key(your_passphrase)
+
+    escrow_account = "BJATCHES5YJZJ7JITYMVLSSIQAVAWBQRVGPQUDT5AZ2QSLDSXWWM46THOY"
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    # create transactions
+    print("Creating transactions...")
+
+    # Investor Account to call app.
+    sender = investor_account
+    args_list = ["Check"]
+    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
+    print("Created Transaction: ", txn_1.get_txid())
+
+    # Transaction from Investor Account to Escrow Account
+    sender = investor_account
+    receiver = escrow_account
+    amount = investment
+    txn_2 = PaymentTxn(sender, params, receiver, amount)
+    print("Transaction 2 : from {} to {} for {} microAlgos".format(
+        sender, receiver, amount))
+    print("Created Transaction 2: ", txn_2.get_txid())
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    # split transaction group
+    print("Splitting unsigned transaction group...")
+    # this example does not use files on disk, so splitting is implicit above
+
+    # sign transactions
+    print("Signing transactions...")
+
+    stxn_1 = txn_1.sign(investor_private_key)
+    print("Investor signed txn_1: ", stxn_1.get_txid())
+
+    stxn_2 = txn_2.sign(investor_private_key)
+    print("Investor signed txn_2: ", stxn_2.get_txid())
+
+    # assemble transaction group
+    print("Assembling transaction group...")
+    signedGroup = [stxn_1, stxn_2]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
+    com_func.wait_for_confirmation(client, tx_id)
+
+    return string(tx_id)
+
+
+def pull_investment(client, creator_passphrase, campaignID, pull):
+
+    # Converting Passphrase to public and private key.
+    creator_account = mnemonic.to_public_key(creator_passphrase)
+    creator_private_key = mnemonic.to_private_key(creator_passphrase)
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    # create transactions
+    print("Creating transactions...")
+
+    # Creator Account to call app.
+    sender = creator_account
+    args_list = ["Check_again"]
+    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
+    print("Created Transaction: ", txn_1.get_txid())
+
+    # Transaction from Escrow account to Creator Account
+    # Logic Sign
+    myprogram = "D:\webmob\Innofund_new\escrow_account\sample.teal"
+
+    data = com_func.load_resource(myprogram)
+    source = data.decode('utf-8')
+    response = client.compile(source)
+    programstr = response['result']
+    t = programstr.encode("ascii")
+    program = base64.decodebytes(t)
+    lsig = LogicSigAccount(program)
+
+    sender = lsig.address()
+    receiver = creator_account
+    amount = pull
+    txn_2 = PaymentTxn(sender, params, receiver, amount)
+    print("Transaction 2 : from {} to {} for {} microAlgos".format(
+        sender, receiver, amount))
+    print("Created Transaction 2: ", txn_2.get_txid())
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    # split transaction group
+    print("Splitting unsigned transaction group...")
+    # this example does not use files on disk, so splitting is implicit above
+
+    # sign transactions
+    print("Signing transactions...")
+
+    stxn_1 = txn_1.sign(creator_private_key)
+    print("Investor signed txn_1: ", stxn_1.get_txid())
+
+    stxn_2 = LogicSigTransaction(txn_2, lsig)
+    print("Investor signed txn_2: ", stxn_2.get_txid())
+
+    # assemble transaction group
+    print("Assembling transaction group...")
+    signedGroup = [stxn_1, stxn_2]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
+    com_func.wait_for_confirmation(client, tx_id)
+
+    return string(group_id)

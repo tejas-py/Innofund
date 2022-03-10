@@ -1,5 +1,6 @@
 from algosdk import mnemonic
 import base64
+import os
 
 
 def compile_program(client, source_code):
@@ -24,3 +25,11 @@ def wait_for_confirmation(client, txid):
         txinfo = client.pending_transaction_info(txid)
         print("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')))
         return txinfo
+
+
+def load_resource(res):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(dir_path, res)
+    with open(path, "rb") as fin:
+        data = fin.read()
+    return data

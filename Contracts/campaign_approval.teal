@@ -2,16 +2,54 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l4
+bnz main_l12
 txn OnCompletion
 int NoOp
 ==
 bnz main_l3
 err
 main_l3:
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "Check"
+==
+&&
+bnz main_l9
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "Check_again"
+==
+&&
+bnz main_l6
+err
+main_l6:
+int 200
+byte "end_time"
+app_global_get
+>
+bnz main_l8
 int 0
 return
-main_l4:
+main_l8:
+int 1
+return
+main_l9:
+byte "end_time"
+app_global_get
+byte "start_time"
+app_global_get
+>
+bnz main_l11
+int 0
+return
+main_l11:
+int 1
+return
+main_l12:
 txn NumAppArgs
 int 8
 ==
@@ -27,9 +65,11 @@ txna ApplicationArgs 2
 app_global_put
 byte "start_time"
 txna ApplicationArgs 3
+btoi
 app_global_put
 byte "end_time"
 txna ApplicationArgs 4
+btoi
 app_global_put
 byte "funding_category"
 txna ApplicationArgs 5
