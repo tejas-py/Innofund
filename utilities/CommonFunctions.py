@@ -3,6 +3,7 @@ import base64
 import os
 
 
+# compile program used to compile the source code, used when new application is created
 def compile_program(client, source_code):
     compile_response = client.compile(source_code.decode('utf-8'))
     return base64.b64decode(compile_response['result'])
@@ -27,6 +28,7 @@ def wait_for_confirmation(client, txid):
         return txinfo
 
 
+# load resource used for logic signature
 def load_resource(res):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(dir_path, res)

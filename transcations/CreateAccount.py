@@ -4,7 +4,7 @@ import utilities.CommonFunctions as com_func
 from algosdk import account, mnemonic
 
 
-# declare application state storage (immutable)
+# Declare application state storage (immutable)
 local_ints = 5
 local_bytes = 5
 global_ints = 5
@@ -12,7 +12,7 @@ global_bytes = 5
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
-
+# Declare approval program source
 approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
@@ -37,13 +37,13 @@ int 1
 return
 """
 
-# declare clear state program source
+# Declare clear state program source
 clear_program_source = b"""#pragma version 5
 int 1
 """
 
 
-# create new application
+# Generate a new account as well as new user id for each user that registers
 def create_app(client, username, usertype, email):
     print("Creating application...")
 

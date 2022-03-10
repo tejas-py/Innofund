@@ -4,7 +4,7 @@ from billiard.five import string
 import utilities.CommonFunctions as com_func
 
 
-# declare application state storage (immutable)
+# Declare application state storage (immutable)
 local_ints = 1
 local_bytes = 1
 global_ints = 20
@@ -13,6 +13,7 @@ global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
 
+# Declare the approval program source
 approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
@@ -99,13 +100,13 @@ int 1
 return
 """
 
-# declare clear state program source
+# Declare clear state program source
 clear_program_source = b"""#pragma version 5
 int 1
 """
 
 
-# create new application
+# Create new campaign
 def create_app(client, your_passphrase,  title, description,
                category, start_time, end_time, fund_category,
                fund_limit, country):
@@ -148,6 +149,7 @@ def create_app(client, your_passphrase,  title, description,
     return string(campaign_id)
 
 
+# Investors participate in the campaigns and invest
 def call_app(client, your_passphrase, campaignID, investment):
 
     # Converting Passphrase to public and private key.
@@ -211,6 +213,7 @@ def call_app(client, your_passphrase, campaignID, investment):
     return string(tx_id)
 
 
+# Creator pulls out the investment done in that campaign whenever the campaign is over
 def pull_investment(client, creator_passphrase, campaignID, pull):
 
     # Converting Passphrase to public and private key.
