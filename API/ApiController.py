@@ -2,7 +2,7 @@ from flask import Flask
 import API.connection
 import transcations.CreateAccount as account
 import transcations.createCampaign
-import re
+import transcations.UpdateAccount
 import utilities.check
 
 app = Flask(__name__)
@@ -26,6 +26,15 @@ def create_account(username, usertype, email):
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
         return lst_error
+
+
+# Updating user details
+@app.route('/updateAccount/<string:user_passphrase>/<string:user_id>/'
+           '<string:username>/<string:usertype>/<string:email>')
+def update_user(user_passphrase, user_id, username, usertype, email):
+    update_user_id = transcations.UpdateAccount.update_user(algod_client, user_passphrase,
+                                                            user_id, username, usertype, email)
+    return update_user_id
 
 
 # Creating a Campaign id for each campaign created by accounts.

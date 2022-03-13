@@ -1,7 +1,6 @@
 from pyteal import *
 
 
-
 def approval_program():
     on_creation = Seq(
         [
