@@ -4,7 +4,6 @@ from pyteal import *
 def approval_program():
     on_creation = Seq(
         [
-            App.globalPut(Bytes("Creator"), Txn.sender()),
             Assert(Txn.application_args.length() == Int(3)),
             App.globalPut(Bytes("username"), Txn.application_args[0]),
             App.globalPut(Bytes("usertype"), Txn.application_args[1]),
@@ -13,11 +12,9 @@ def approval_program():
         ]
     )
 
-    is_creator = Txn.sender() == App.globalGet(Bytes("Creator"))
-
     program = Cond(
         [Txn.application_id() == Int(0), on_creation],
-        [Txn.on_completion() == OnComplete.UpdateApplication, Return(is_creator)]
+        [Txn.on_completion() == OnComplete.UpdateApplication, Approve()]
     )
 
     return program

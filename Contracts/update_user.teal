@@ -9,15 +9,9 @@ int UpdateApplication
 bnz main_l3
 err
 main_l3:
-txn Sender
-byte "Creator"
-app_global_get
-==
+int 1
 return
 main_l4:
-byte "Creator"
-txn Sender
-app_global_put
 txn NumAppArgs
 int 3
 ==

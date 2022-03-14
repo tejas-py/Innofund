@@ -17,9 +17,16 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l2
+bnz main_l4
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l3
 err
-main_l2:
+main_l3:
+int 1
+return
+main_l4:
 txn NumAppArgs
 int 3
 ==

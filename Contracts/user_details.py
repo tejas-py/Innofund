@@ -12,7 +12,8 @@ def approval_program():
         ]
     )
     program = Cond(
-        [Txn.application_id() == Int(0), on_creation]
+        [Txn.application_id() == Int(0), on_creation],
+        [Txn.on_completion() == OnComplete.UpdateApplication, Approve()]
     )
 
     return program

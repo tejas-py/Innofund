@@ -29,11 +29,10 @@ def create_account(username, usertype, email):
 
 
 # Updating user details
-@app.route('/updateAccount/<string:user_passphrase>/<string:user_id>/'
-           '<string:username>/<string:usertype>/<string:email>')
-def update_user(user_passphrase, user_id, username, usertype, email):
+@app.route('/updateAccount/<string:user_passphrase>/<int:user_id>')
+def update_user(user_passphrase, user_id):
     update_user_id = transcations.UpdateAccount.update_user(algod_client, user_passphrase,
-                                                            user_id, username, usertype, email)
+                                                            user_id)
     return update_user_id
 
 
