@@ -4,7 +4,7 @@ from pyteal import *
 def approval_program():
     on_creation = Seq(
         [
-            Assert(Txn.application_args.length() == Int(9)),
+            Assert(Txn.application_args.length() == Int(10)),
             App.globalPut(Bytes("title"), Txn.application_args[0]),
             App.globalPut(Bytes("description"), Txn.application_args[1]),
             App.globalPut(Bytes("category"), Txn.application_args[2]),
@@ -12,8 +12,9 @@ def approval_program():
             App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[4])),
             App.globalPut(Bytes("funding_category"), Txn.application_args[5]),
             App.globalPut(Bytes("fund_limit"), Txn.application_args[6]),
-            App.globalPut(Bytes("country"), Txn.application_args[7]),
-            App.globalPut(Bytes("today_time"), Btoi(Txn.application_args[8])),
+            App.globalPut(Bytes("reward_type"), Txn.application_args[7]),
+            App.globalPut(Bytes("country"), Txn.application_args[8]),
+            App.globalPut(Bytes("today_time"), Btoi(Txn.application_args[9])),
             Return(Int(1))
         ]
     )

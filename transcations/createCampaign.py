@@ -12,7 +12,6 @@ global_bytes = 20
 global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
-
 # Declare the approval program source
 approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
@@ -68,7 +67,7 @@ int 1
 return
 main_l12:
 txn NumAppArgs
-int 9
+int 10
 ==
 assert
 byte "title"
@@ -94,14 +93,18 @@ app_global_put
 byte "fund_limit"
 txna ApplicationArgs 6
 app_global_put
-byte "country"
+byte "reward_type"
 txna ApplicationArgs 7
 app_global_put
-byte "today_time"
+byte "country"
 txna ApplicationArgs 8
+app_global_put
+byte "today_time"
+txna ApplicationArgs 9
 btoi
 app_global_put
 int 1
+return
 """
 
 # Declare clear state program source
@@ -111,9 +114,9 @@ int 1
 
 
 # Create new campaign
-def create_app(client, your_passphrase,  title, description,
+def create_app(client, your_passphrase, title, description,
                category, start_time, end_time, fund_category,
-               fund_limit, country):
+               fund_limit, reward_type, country):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -136,11 +139,11 @@ def create_app(client, your_passphrase,  title, description,
 
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
-                 bytes(fund_limit, 'utf8'), bytes(country, 'utf8'), int(Today_seconds())]
+                 bytes(fund_limit, 'utf8'), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(Today_seconds())]
 
     txn = ApplicationCreateTxn(sender, params, on_complete,
-                                           approval_program, clear_program,
-                                           global_schema, local_schema, args_list)
+                               approval_program, clear_program,
+                               global_schema, local_schema, args_list)
 
     signed_txn = txn.sign(private_key)
     tx_id = signed_txn.transaction.get_txid()
@@ -155,7 +158,6 @@ def create_app(client, your_passphrase,  title, description,
 
 # Investors participate in the campaigns and invest
 def call_app(client, your_passphrase, campaignID, investment):
-
     # Converting Passphrase to public and private key.
     investor_account = mnemonic.to_public_key(your_passphrase)
     investor_private_key = mnemonic.to_private_key(your_passphrase)
@@ -219,7 +221,6 @@ def call_app(client, your_passphrase, campaignID, investment):
 
 # Creator pulls out the investment done in that campaign whenever the campaign is over
 def pull_investment(client, creator_passphrase, campaignID, pull):
-
     # Converting Passphrase to public and private key.
     creator_account = mnemonic.to_public_key(creator_passphrase)
     creator_private_key = mnemonic.to_private_key(creator_passphrase)

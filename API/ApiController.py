@@ -1,9 +1,12 @@
-from flask import Flask
+import requests
+from flask import Flask, jsonify, request
 import API.connection
 import transcations.CreateAccount as account
 import transcations.createCampaign
 import transcations.UpdateAccount
+import transcations.createAsset
 import utilities.check
+import utilities.CommonFunctions as comFunc
 
 app = Flask(__name__)
 
@@ -20,7 +23,7 @@ def create_account(username, usertype, email):
     name = utilities.check.check_username(username)
     user_type = utilities.check.check_user(usertype)
     email_id = utilities.check.check_email(email)
-    if name and usertype and email_id == "Approved":
+    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
         userID = account.create_app(algod_client, username, usertype, email)
         return "Username registration successful with user id: {}".format(userID)
     else:
@@ -39,15 +42,43 @@ def update_user(user_passphrase, user_id):
 # Creating a Campaign id for each campaign created by accounts.
 @app.route('/createCampaign/<string:your_passphrase>/<string:title>/<string:description>'
            '/<string:category>/<int:start_time>/<int:end_time>/<string:fund_category>'
-           '/<string:fund_limit>/<string:country>',
+           '/<string:fund_limit>/<string:reward_type>/<string:country>',
            methods=["POST"])
 def create_campaign(your_passphrase,  title, description,
                     category, start_time, end_time, fund_category,
-                    fund_limit, country):
+                    fund_limit, reward_type, country):
     campaignID = transcations.createCampaign.create_app(algod_client, your_passphrase,  title, description,
                                                         category, start_time, end_time, fund_category,
-                                                        fund_limit, country)
+                                                        fund_limit, reward_type, country)
     return campaignID
+
+
+# Rewards
+@app.route('/campaign_rewards/<string:campaign_id>/<string:check_address>')
+def rewards(campaign_id, check_address):
+    result = comFunc.Check_app_creator_address(campaign_id, check_address)
+    return result
+
+
+# create asset
+@app.route('/createAsset', methods=["POST"])
+def createAsset():
+    campaign_details = request.get_json()
+    campaignID = campaign_details['CampaignID']
+    check_address = campaign_details['PublicAddress']
+    private_key = campaign_details['Key']
+    asset_amount = campaign_details['asset_amount']
+    unit_name = campaign_details['unit_name']
+    asset_name = campaign_details['asset_name']
+    file_path = campaign_details['url']
+    manager = campaign_details['manager']
+    check = comFunc.Check_app_creator_address(campaignID, check_address)
+    if check == 'Match':
+        asset_id = transcations.createAsset.create_asset(algod_client, private_key, asset_amount,
+                                                         unit_name, asset_name, file_path,manager)
+        return asset_id
+    else:
+        return check
 
 
 # Investor Participating in Campaign by investing.
