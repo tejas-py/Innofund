@@ -1,10 +1,10 @@
-import requests
-from flask import Flask, jsonify, request
+from flask import Flask, request
 import API.connection
 import transcations.CreateAccount as account
 import transcations.createCampaign
 import transcations.UpdateAccount
 import transcations.createAsset
+import transcations.burn_asset
 import utilities.check
 import utilities.CommonFunctions as comFunc
 
@@ -79,6 +79,16 @@ def createAsset():
         return asset_id
     else:
         return check
+
+
+# Burn Asset
+@app.route('/burnAsset', methods=["POST"])
+def burnAsset():
+    asset_details = request.get_json()
+    private_key = asset_details['Private_key']
+    asset_id = asset_details['Asset_id']
+    burnAssetTxn = transcations.burn_asset.burn_asset(algod_client, private_key, asset_id)
+    return burnAssetTxn
 
 
 # Investor Participating in Campaign by investing.

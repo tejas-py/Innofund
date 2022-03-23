@@ -1,9 +1,6 @@
-import mnemonic as mnemonic
 from algosdk.future import transaction
 from billiard.five import string
-
 import utilities.CommonFunctions
-from algosdk.v2client import algod
 from algosdk import account
 
 
