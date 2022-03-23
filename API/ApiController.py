@@ -3,8 +3,8 @@ import API.connection
 import transcations.CreateAccount as account
 import transcations.createCampaign
 import transcations.UpdateAccount
-import transcations.createAsset
 import transcations.burn_asset
+import transcations.AssetCampaignCall
 import utilities.check
 import utilities.CommonFunctions as comFunc
 
@@ -60,34 +60,29 @@ def rewards(campaign_id, check_address):
     return result
 
 
-# create asset
+# create asset (Group Transaction, Call app and create asset )
 @app.route('/createAsset', methods=["POST"])
 def createAsset():
     campaign_details = request.get_json()
     campaignID = campaign_details['CampaignID']
-    check_address = campaign_details['PublicAddress']
     private_key = campaign_details['Key']
     asset_amount = campaign_details['asset_amount']
     unit_name = campaign_details['unit_name']
     asset_name = campaign_details['asset_name']
     file_path = campaign_details['url']
-    manager = campaign_details['manager']
-    check = comFunc.Check_app_creator_address(campaignID, check_address)
-    if check == 'Match':
-        asset_id = transcations.createAsset.create_asset(algod_client, private_key, asset_amount,
-                                                         unit_name, asset_name, file_path,manager)
-        return asset_id
-    else:
-        return check
+    asset_id = transcations.AssetCampaignCall.call_asset(algod_client, private_key, campaignID, asset_amount,
+                                                         unit_name, asset_name, file_path)
+    return asset_id
 
 
-# Burn Asset
+# destroy asset (group txn, destroy and call app )
 @app.route('/burnAsset', methods=["POST"])
 def burnAsset():
     asset_details = request.get_json()
     private_key = asset_details['Private_key']
     asset_id = asset_details['Asset_id']
-    burnAssetTxn = transcations.burn_asset.burn_asset(algod_client, private_key, asset_id)
+    campaignID = asset_details['CampaignID']
+    burnAssetTxn = transcations.AssetCampaignCall.call_asset_destroy(algod_client, private_key, asset_id, campaignID)
     return burnAssetTxn
 
 

@@ -35,6 +35,10 @@ def approval_program():
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("Check_again")
         ), check_again],
+        [And(
+            Global.group_size() == Int(2),
+            Txn.application_args[0] == Bytes("No Check")
+        ), Approve()],
     )
 
     program = Cond(

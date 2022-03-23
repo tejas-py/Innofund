@@ -17,7 +17,7 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l12
+bnz main_l14
 txn OnCompletion
 int NoOp
 ==
@@ -31,7 +31,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l9
+bnz main_l11
 global GroupSize
 int 2
 ==
@@ -39,33 +39,44 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l6
+bnz main_l8
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "No Check"
+==
+&&
+bnz main_l7
 err
-main_l6:
+main_l7:
+int 1
+return
+main_l8:
 byte "today_time"
 app_global_get
 byte "end_time"
 app_global_get
 >
-bnz main_l8
+bnz main_l10
 int 0
 return
-main_l8:
+main_l10:
 int 1
 return
-main_l9:
+main_l11:
 byte "end_time"
 app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l11
+bnz main_l13
 int 0
 return
-main_l11:
+main_l13:
 int 1
 return
-main_l12:
+main_l14:
 txn NumAppArgs
 int 10
 ==
@@ -196,8 +207,8 @@ def call_app(client, your_passphrase, campaignID, investment):
     print("Splitting unsigned transaction group...")
     # this example does not use files on disk, so splitting is implicit above
 
-    # sign transactions
-    print("Signing transactions...")
+    # split transaction group
+    print("Splitting unsigned transaction group...")
 
     stxn_1 = txn_1.sign(investor_private_key)
     print("Investor signed txn_1: ", stxn_1.get_txid())
