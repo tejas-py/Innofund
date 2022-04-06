@@ -146,15 +146,16 @@ def create_app(client, your_passphrase, title, description,
     params = client.suggested_params()
 
     params.flat_fee = True
-    params.fee = 1000
+    params.fee = 2000
 
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
                  bytes(fund_limit, 'utf8'), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(Today_seconds())]
 
-    txn = ApplicationCreateTxn(sender, params, on_complete,
-                               approval_program, clear_program,
-                               global_schema, local_schema, args_list)
+    txn = ApplicationCreateTxn(sender=sender, sp=params,on_complete=on_complete,
+                               approval_program=approval_program, clear_program=clear_program,
+                               global_schema=global_schema, local_schema=local_schema, app_args=args_list,
+                               note="Campaign")
 
     signed_txn = txn.sign(private_key)
     tx_id = signed_txn.transaction.get_txid()

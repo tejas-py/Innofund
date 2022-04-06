@@ -1,4 +1,4 @@
-from algosdk.v2client import algod
+from algosdk.v2client import algod, indexer
 
 
 def algo_conn():
@@ -10,3 +10,9 @@ def algo_conn():
     return conn
 
 
+def connect_indexer():
+    algod_indexer = "https://testnet-algorand.api.purestake.io/idx2"
+    indexer_token = "K7DgVll3W19DdHA3FTduX4XZTuCvTFf32HXUP5E4"
+    headers = {"X-API-Key": indexer_token}
+    myindexer = indexer.IndexerClient(indexer_token, algod_indexer, headers)
+    return myindexer

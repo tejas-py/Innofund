@@ -102,7 +102,7 @@ def burnAsset():
 
 
 # Investor Participating in Campaign by investing.
-@app.route('/participating/<string:your_passphrase>/<int:campaignID>/<int:investment>')
+@app.route('/participating', methods=["POST"])
 def participation():
     # get the details of investor participation's
     participation_details = request.get_json()
@@ -116,7 +116,7 @@ def participation():
 
 
 # Creator Pull out the investment that was done by the investors in the particular campaign
-@app.route('/pull_investment/<string:creator_passphrase>/<int:campaignID>/<int:pull>')
+@app.route('/pull_investment', methods=["POST"])
 def pull_investment():
     # get the details from the user
     investment_details = request.get_json()
