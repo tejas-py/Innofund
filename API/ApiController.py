@@ -3,7 +3,6 @@ import API.connection
 import transcations.CreateAccount as account
 import transcations.createCampaign
 import transcations.UpdateAccount
-import transcations.burn_asset
 import transcations.AssetCampaignCall
 import utilities.check
 import utilities.CommonFunctions as comFunc
