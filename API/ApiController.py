@@ -13,16 +13,20 @@ algod_client = API.connection.algo_conn()
 
 
 # Create unique id for respective accounts created.
-@app.route('/createAccount/'
-           '<string:username>'
-           '/<string:usertype>'
-           '/<string:email>',
-           methods=["POST"])
-def create_account(username, usertype, email):
+@app.route('/createAccount/', methods=["POST"])
+def create_account():
+    # Get details of the user
+    user_details = request.get_json()
+    username = user_details['username']
+    usertype = user_details['user_type']
+    email = user_details['email']
+
+    # check details of the user
     name = utilities.check.check_username(username)
     user_type = utilities.check.check_user(usertype)
     email_id = utilities.check.check_email(email)
     if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+        # give the user id for the user
         userID = account.create_app(algod_client, username, usertype, email)
         return "Username registration successful with user id: {}".format(userID)
     else:
@@ -39,13 +43,22 @@ def update_user(user_passphrase, user_id):
 
 
 # Creating a Campaign id for each campaign created by accounts.
-@app.route('/createCampaign/<string:your_passphrase>/<string:title>/<string:description>'
-           '/<string:category>/<int:start_time>/<int:end_time>/<string:fund_category>'
-           '/<string:fund_limit>/<string:reward_type>/<string:country>',
-           methods=["POST"])
-def create_campaign(your_passphrase,  title, description,
-                    category, start_time, end_time, fund_category,
-                    fund_limit, reward_type, country):
+@app.route('/createCampaign', methods=["POST"])
+def create_campaign():
+    # get details of the campaign to create
+    campaign_details = request.get_json()
+    your_passphrase = campaign_details['creator_passphrase']
+    title = campaign_details['title']
+    description = campaign_details['description']
+    category = campaign_details['category']
+    start_time = campaign_details['start_time']
+    end_time = campaign_details['end_time']
+    fund_category = campaign_details['fund_category']
+    fund_limit = campaign_details['fund_limit']
+    reward_type = campaign_details['reward_type']
+    country = campaign_details['country']
+
+    # pass the campaign details to the algorand
     campaignID = transcations.createCampaign.create_app(algod_client, your_passphrase,  title, description,
                                                         category, start_time, end_time, fund_category,
                                                         fund_limit, reward_type, country)
@@ -62,6 +75,7 @@ def rewards(campaign_id, check_address):
 # create asset (Group Transaction, Call app and create asset )
 @app.route('/createAsset', methods=["POST"])
 def createAsset():
+    # get the details of the campaign to mint asset
     campaign_details = request.get_json()
     campaignID = campaign_details['CampaignID']
     private_key = campaign_details['Key']
@@ -69,6 +83,8 @@ def createAsset():
     unit_name = campaign_details['unit_name']
     asset_name = campaign_details['asset_name']
     file_path = campaign_details['url']
+
+    # pass the details to algorand to mint asset
     asset_id = transcations.AssetCampaignCall.call_asset(algod_client, private_key, campaignID, asset_amount,
                                                          unit_name, asset_name, file_path)
     return asset_id
@@ -87,14 +103,28 @@ def burnAsset():
 
 # Investor Participating in Campaign by investing.
 @app.route('/participating/<string:your_passphrase>/<int:campaignID>/<int:investment>')
-def participation(your_passphrase, campaignID, investment):
+def participation():
+    # get the details of investor participation's
+    participation_details = request.get_json()
+    your_passphrase = participation_details['investor_passphrase']
+    campaignID = participation_details['campaign_id']
+    investment = participation_details['amount']
+
+    # pass the details to algorand to give the transaction id
     participationID = transcations.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
     return participationID
 
 
 # Creator Pull out the investment that was done by the investors in the particular campaign
 @app.route('/pull_investment/<string:creator_passphrase>/<int:campaignID>/<int:pull>')
-def pull_investment(creator_passphrase, campaignID, pull):
+def pull_investment():
+    # get the details from the user
+    investment_details = request.get_json()
+    creator_passphrase = investment_details['creator_passphrase']
+    campaignID = investment_details['campaign_id']
+    pull = investment_details['amount']
+
+    # pass the details to the algorand to run the transaction
     pullID = transcations.createCampaign.pull_investment(algod_client, creator_passphrase, campaignID, pull)
     return pullID
 
