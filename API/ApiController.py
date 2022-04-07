@@ -9,6 +9,7 @@ import utilities.CommonFunctions as comFunc
 
 app = Flask(__name__)
 
+# Setting up connection with algorand client
 algod_client = API.connection.algo_conn()
 
 
@@ -136,6 +137,7 @@ def pull_investment():
     return pullID
 
 
+# running the API
 if __name__ == "__main__":
     # table_creation()
     app.run(debug=True)
