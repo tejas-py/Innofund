@@ -1,9 +1,9 @@
 from flask import Flask, request
 import API.connection
-import transcations.CreateAccount as account
-import transcations.createCampaign
-import transcations.UpdateAccount
-import transcations.AssetCampaignCall
+import transactions.CreateAccount as account
+import transactions.createCampaign
+import transactions.UpdateAccount
+import transactions.AssetCampaignCall
 import utilities.check
 import utilities.CommonFunctions as comFunc
 
@@ -45,7 +45,7 @@ def update_user(user_passphrase, user_id):
     email = user_details['email']
 
     # send the details to algorand to update user details
-    update_user_id = transcations.UpdateAccount.update_user(algod_client, user_passphrase,
+    update_user_id = transactions.UpdateAccount.update_user(algod_client, user_passphrase,
                                                             user_id, username, usertype, email)
     return update_user_id
 
@@ -67,7 +67,7 @@ def create_campaign():
     country = campaign_details['country']
 
     # pass the campaign details to the algorand
-    campaignID = transcations.createCampaign.create_app(algod_client, your_passphrase,  title, description,
+    campaignID = transactions.createCampaign.create_app(algod_client, your_passphrase, title, description,
                                                         category, start_time, end_time, fund_category,
                                                         fund_limit, reward_type, country)
     return campaignID
@@ -93,7 +93,7 @@ def createAsset():
     file_path = campaign_details['url']
 
     # pass the details to algorand to mint asset
-    asset_id = transcations.AssetCampaignCall.call_asset(algod_client, private_key, campaignID, asset_amount,
+    asset_id = transactions.AssetCampaignCall.call_asset(algod_client, private_key, campaignID, asset_amount,
                                                          unit_name, asset_name, file_path)
     return asset_id
 
@@ -105,7 +105,7 @@ def burnAsset():
     private_key = asset_details['Private_key']
     asset_id = asset_details['Asset_id']
     campaignID = asset_details['CampaignID']
-    burnAssetTxn = transcations.AssetCampaignCall.call_asset_destroy(algod_client, private_key, asset_id, campaignID)
+    burnAssetTxn = transactions.AssetCampaignCall.call_asset_destroy(algod_client, private_key, asset_id, campaignID)
     return burnAssetTxn
 
 
@@ -118,8 +118,8 @@ def participation():
     campaignID = participation_details['campaign_id']
     investment = participation_details['amount']
     # pass the details to algorand to give the transaction id
-    participationID = transcations.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
-    app_id = transcations.createCampaign.update_app(algod_client, your_passphrase, campaignID, investment)
+    participationID = transactions.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
+    app_id = transactions.createCampaign.update_app(algod_client, your_passphrase, campaignID, investment)
     return participationID
 
 
@@ -133,7 +133,7 @@ def pull_investment():
     pull = investment_details['amount']
 
     # pass the details to the algorand to run the transaction
-    pullID = transcations.createCampaign.pull_investment(algod_client, creator_passphrase, campaignID, pull)
+    pullID = transactions.createCampaign.pull_investment(algod_client, creator_passphrase, campaignID, pull)
     return pullID
 
 
