@@ -14,6 +14,15 @@ int UpdateApplication
 bnz main_l3
 err
 main_l3:
+byte "username"
+txna ApplicationArgs 0
+app_global_put
+byte "usertype"
+txna ApplicationArgs 1
+app_global_put
+byte "email"
+txna ApplicationArgs 2
+app_global_put
 int 1
 return
 main_l4:
@@ -40,7 +49,7 @@ int 1
 """
 
 
-def update_user(client, user_passphrase, user_id):
+def update_user(client, user_passphrase, user_id, username, usertype, email):
     print("Updating existing user....")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -56,8 +65,10 @@ def update_user(client, user_passphrase, user_id):
     # get node suggested parameters
     params = client.suggested_params()
 
+    app_args = [bytes(username, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
+
     # create unsigned transaction
-    txn = ApplicationUpdateTxn(sender, params, user_id, approval_program, clear_program,)
+    txn = ApplicationUpdateTxn(sender, params, user_id, approval_program, clear_program, app_args)
 
     # sign transaction
     signed_txn = txn.sign(private_key)

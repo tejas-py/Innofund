@@ -2,13 +2,24 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l14
+bnz main_l16
 txn OnCompletion
 int NoOp
 ==
-bnz main_l3
+bnz main_l5
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l4
 err
-main_l3:
+main_l4:
+byte "fund_limit"
+txna ApplicationArgs 0
+btoi
+app_global_put
+int 1
+return
+main_l5:
 global GroupSize
 int 2
 ==
@@ -16,7 +27,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l11
+bnz main_l13
 global GroupSize
 int 2
 ==
@@ -24,7 +35,7 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l8
+bnz main_l10
 global GroupSize
 int 2
 ==
@@ -32,38 +43,43 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l7
+bnz main_l9
 err
-main_l7:
+main_l9:
 int 1
 return
-main_l8:
-byte "today_time"
-app_global_get
+main_l10:
+txna ApplicationArgs 1
+btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l10
+bnz main_l12
 int 0
 return
-main_l10:
+main_l12:
 int 1
 return
-main_l11:
+main_l13:
 byte "end_time"
 app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l13
-int 0
-return
-main_l13:
+txna ApplicationArgs 1
+btoi
+byte "fund_limit"
+app_global_get
+<=
+&&
+bnz main_l15
+err
+main_l15:
 int 1
 return
-main_l14:
+main_l16:
 txn NumAppArgs
-int 10
+int 9
 ==
 assert
 byte "title"
@@ -88,16 +104,13 @@ txna ApplicationArgs 5
 app_global_put
 byte "fund_limit"
 txna ApplicationArgs 6
+btoi
 app_global_put
 byte "reward_type"
 txna ApplicationArgs 7
 app_global_put
 byte "country"
 txna ApplicationArgs 8
-app_global_put
-byte "today_time"
-txna ApplicationArgs 9
-btoi
 app_global_put
 int 1
 return

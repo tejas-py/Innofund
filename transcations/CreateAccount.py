@@ -24,6 +24,15 @@ int UpdateApplication
 bnz main_l3
 err
 main_l3:
+byte "username"
+txna ApplicationArgs 0
+app_global_put
+byte "usertype"
+txna ApplicationArgs 1
+app_global_put
+byte "email"
+txna ApplicationArgs 2
+app_global_put
 int 1
 return
 main_l4:

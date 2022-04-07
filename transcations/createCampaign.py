@@ -17,13 +17,24 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l14
+bnz main_l16
 txn OnCompletion
 int NoOp
 ==
-bnz main_l3
+bnz main_l5
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l4
 err
-main_l3:
+main_l4:
+byte "fund_limit"
+txna ApplicationArgs 0
+btoi
+app_global_put
+int 1
+return
+main_l5:
 global GroupSize
 int 2
 ==
@@ -31,7 +42,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l11
+bnz main_l13
 global GroupSize
 int 2
 ==
@@ -39,7 +50,7 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l8
+bnz main_l10
 global GroupSize
 int 2
 ==
@@ -47,38 +58,43 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l7
+bnz main_l9
 err
-main_l7:
+main_l9:
 int 1
 return
-main_l8:
-byte "today_time"
-app_global_get
+main_l10:
+txna ApplicationArgs 1
+btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l10
+bnz main_l12
 int 0
 return
-main_l10:
+main_l12:
 int 1
 return
-main_l11:
+main_l13:
 byte "end_time"
 app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l13
-int 0
-return
-main_l13:
+txna ApplicationArgs 1
+btoi
+byte "fund_limit"
+app_global_get
+<=
+&&
+bnz main_l15
+err
+main_l15:
 int 1
 return
-main_l14:
+main_l16:
 txn NumAppArgs
-int 10
+int 9
 ==
 assert
 byte "title"
@@ -101,21 +117,7 @@ app_global_put
 byte "funding_category"
 txna ApplicationArgs 5
 app_global_put
-byte "fund_limit"
-txna ApplicationArgs 6
-app_global_put
-byte "reward_type"
-txna ApplicationArgs 7
-app_global_put
-byte "country"
-txna ApplicationArgs 8
-app_global_put
-byte "today_time"
-txna ApplicationArgs 9
-btoi
-app_global_put
-int 1
-return
+byte "
 """
 
 # Declare clear state program source
@@ -150,7 +152,7 @@ def create_app(client, your_passphrase, title, description,
 
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
-                 bytes(fund_limit, 'utf8'), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(Today_seconds())]
+                 int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8')]
 
     txn = ApplicationCreateTxn(sender=sender, sp=params,on_complete=on_complete,
                                approval_program=approval_program, clear_program=clear_program,
@@ -184,7 +186,7 @@ def call_app(client, your_passphrase, campaignID, investment):
 
     # Investor Account to call app.
     sender = investor_account
-    args_list = ["Check"]
+    args_list = ["Check", int(investment)]
     txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
     print("Created Transaction: ", txn_1.get_txid())
 
@@ -231,6 +233,42 @@ def call_app(client, your_passphrase, campaignID, investment):
     return string(tx_id)
 
 
+# update existing application
+def update_app(client, id_passphrase, app_id, fund_limit):
+    # declare sender
+    update_private_key = mnemonic.to_private_key(id_passphrase)
+    sender = account.address_from_private_key(update_private_key)
+
+    approval_program = com_func.compile_program(client, approval_program_source_initial)
+    clear_program = com_func.compile_program(client, clear_program_source)
+
+    # define updated arguments
+    app_args = [int(fund_limit)]
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    # create unsigned transaction
+    txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
+
+    # sign transaction
+    signed_txn = txn.sign(update_private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+
+    confirmed_txn = com_func.wait_for_confirmation(client, tx_id)
+    print("TXID: ", tx_id)
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+    # display results
+    transaction_response = client.pending_transaction_info(tx_id)
+    app_id = transaction_response['txn']['txn']['apid']
+    return string(app_id)
+
+
 # Creator pulls out the investment done in that campaign whenever the campaign is over
 def pull_investment(client, creator_passphrase, campaignID, pull):
     # Converting Passphrase to public and private key.
@@ -245,7 +283,7 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
 
     # Creator Account to call app.
     sender = creator_account
-    args_list = ["Check_again"]
+    args_list = ["Check_again", int(Today_seconds())]
     txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
     print("Created Transaction: ", txn_1.get_txid())
 

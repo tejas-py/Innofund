@@ -13,7 +13,7 @@ algod_client = API.connection.algo_conn()
 
 
 # Create unique id for respective accounts created.
-@app.route('/createAccount/', methods=["POST"])
+@app.route('/createAccount', methods=["POST"])
 def create_account():
     # Get details of the user
     user_details = request.get_json()
@@ -37,8 +37,15 @@ def create_account():
 # Updating user details
 @app.route('/updateAccount/<string:user_passphrase>/<int:user_id>')
 def update_user(user_passphrase, user_id):
+    # Get details of the user
+    user_details = request.get_json()
+    username = user_details['username']
+    usertype = user_details['user_type']
+    email = user_details['email']
+
+    # send the details to algorand to update user details
     update_user_id = transcations.UpdateAccount.update_user(algod_client, user_passphrase,
-                                                            user_id)
+                                                            user_id, username, usertype, email)
     return update_user_id
 
 
@@ -109,9 +116,9 @@ def participation():
     your_passphrase = participation_details['investor_passphrase']
     campaignID = participation_details['campaign_id']
     investment = participation_details['amount']
-
     # pass the details to algorand to give the transaction id
     participationID = transcations.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
+    app_id = transcations.createCampaign.update_app(algod_client, your_passphrase, campaignID, investment)
     return participationID
 
 

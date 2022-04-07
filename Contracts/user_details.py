@@ -11,9 +11,17 @@ def approval_program():
             Return(Int(1))
         ]
     )
+
+    update_user = Seq(
+        App.globalPut(Bytes("username"), Txn.application_args[0]),
+        App.globalPut(Bytes("usertype"), Txn.application_args[1]),
+        App.globalPut(Bytes("email"), Txn.application_args[2]),
+        Approve()
+    )
+
     program = Cond(
         [Txn.application_id() == Int(0), on_creation],
-        [Txn.on_completion() == OnComplete.UpdateApplication, Approve()]
+        [Txn.on_completion() == OnComplete.UpdateApplication, update_user]
     )
 
     return program
