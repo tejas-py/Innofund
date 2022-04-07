@@ -28,9 +28,12 @@ int UpdateApplication
 bnz main_l4
 err
 main_l4:
-byte "fund_limit"
+byte "total_investment"
+byte "total_investment"
+app_global_get
 txna ApplicationArgs 0
 btoi
++
 app_global_put
 int 1
 return
@@ -87,6 +90,12 @@ byte "fund_limit"
 app_global_get
 <=
 &&
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+>
+&&
 bnz main_l15
 err
 main_l15:
@@ -94,7 +103,7 @@ int 1
 return
 main_l16:
 txn NumAppArgs
-int 9
+int 10
 ==
 assert
 byte "title"
@@ -117,7 +126,22 @@ app_global_put
 byte "funding_category"
 txna ApplicationArgs 5
 app_global_put
-byte "
+byte "fund_limit"
+txna ApplicationArgs 6
+btoi
+app_global_put
+byte "reward_type"
+txna ApplicationArgs 7
+app_global_put
+byte "country"
+txna ApplicationArgs 8
+app_global_put
+byte "total_investment"
+txna ApplicationArgs 9
+btoi
+app_global_put
+int 1
+return
 """
 
 # Declare clear state program source
@@ -150,9 +174,12 @@ def create_app(client, your_passphrase, title, description,
     # params.flat_fee = True
     # params.fee = 2000
 
+    # investment in the campaign at the time of creation
+    investment = 0
+
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
-                 int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8')]
+                 int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(investment)]
 
     txn = ApplicationCreateTxn(sender=sender, sp=params,on_complete=on_complete,
                                approval_program=approval_program, clear_program=clear_program,
@@ -234,7 +261,7 @@ def call_app(client, your_passphrase, campaignID, investment):
 
 
 # update existing application
-def update_app(client, id_passphrase, app_id, fund_limit):
+def update_app(client, id_passphrase, app_id, investment):
     # declare sender
     update_private_key = mnemonic.to_private_key(id_passphrase)
     sender = account.address_from_private_key(update_private_key)
@@ -243,7 +270,7 @@ def update_app(client, id_passphrase, app_id, fund_limit):
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # define updated arguments
-    app_args = [int(fund_limit)]
+    app_args = [int(investment)]
 
     # get node suggested parameters
     params = client.suggested_params()

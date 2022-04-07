@@ -13,9 +13,12 @@ int UpdateApplication
 bnz main_l4
 err
 main_l4:
-byte "fund_limit"
+byte "total_investment"
+byte "total_investment"
+app_global_get
 txna ApplicationArgs 0
 btoi
++
 app_global_put
 int 1
 return
@@ -72,6 +75,12 @@ byte "fund_limit"
 app_global_get
 <=
 &&
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+>
+&&
 bnz main_l15
 err
 main_l15:
@@ -79,7 +88,7 @@ int 1
 return
 main_l16:
 txn NumAppArgs
-int 9
+int 10
 ==
 assert
 byte "title"
@@ -111,6 +120,10 @@ txna ApplicationArgs 7
 app_global_put
 byte "country"
 txna ApplicationArgs 8
+app_global_put
+byte "total_investment"
+txna ApplicationArgs 9
+btoi
 app_global_put
 int 1
 return
