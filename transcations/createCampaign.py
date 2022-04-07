@@ -145,8 +145,8 @@ def create_app(client, your_passphrase, title, description,
 
     params = client.suggested_params()
 
-    params.flat_fee = True
-    params.fee = 2000
+    # params.flat_fee = True
+    # params.fee = 2000
 
     args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
