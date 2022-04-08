@@ -1,7 +1,6 @@
 from flask import Flask, request
 import API.connection
 import utilities.check
-import utilities.CommonFunctions as comFunc
 import transactions.admin_account
 import transactions.CreateAccount
 import transactions.UpdateAccount
@@ -158,13 +157,6 @@ def update_campaign_details():
     return "Campaign details updated with campaign id {}".format(campaignID)
 
 
-# Rewards
-@app.route('/campaign_rewards/<string:campaign_id>/<string:check_address>')
-def rewards(campaign_id, check_address):
-    result = comFunc.Check_app_creator_address(campaign_id, check_address)
-    return result
-
-
 # create asset (Group Transaction, Call admin app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
@@ -183,6 +175,39 @@ def mint_nft():
     asset_id = transactions.admin_account.admin_asset(algod_client, admin_passphrase, usertype, password, admin_id,
                                                       asset_amount, unit_name, asset_name, file_path)
     return "Minted NFT id: {}".format(asset_id)
+
+
+# Transfer NFT from admin to campaign creator
+@app.route('/transfer_asset', methods=["POST"])
+def transfer_nft():
+    # get the details for transferring the NFT
+    transfer_details = request.get_json()
+    admin_passphrase = transfer_details['admin_passphrase']
+    asset_id = transfer_details['asset_id']
+    campaign_id = transfer_details['campaign_id']
+    campaign_creator_address = transfer_details['campaign_creator_address']
+    nft_amount = transfer_details['nft_amount']
+
+    # send the details to transfer NFT
+    txn_details = transactions.createCampaign.call_nft_transfer(algod_client, admin_passphrase, asset_id,
+                                                                campaign_id, campaign_creator_address, nft_amount)
+    return txn_details
+
+
+# Transfer NFT from Campaign Creator to Investor
+@app.route('/creator_investor', methods=["POST"])
+def creator_investor():
+    # getting the transaction details
+    transfer_details = request.get_json()
+    investor_passphrase = transfer_details['investor_passphrase']
+    creator_passphrase = transfer_details['creator_passphrase']
+    asset_id = transfer_details['asset_id']
+    asset_amount = transfer_details['asset_amount']
+
+    # send the details for transaction to occur
+    txn_details = transactions.createCampaign.nft_creator_investor(algod_client, investor_passphrase, creator_passphrase
+                                                                   , asset_id, asset_amount)
+    return txn_details
 
 
 # destroy asset (group txn, destroy and call app )

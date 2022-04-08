@@ -94,7 +94,7 @@ byte "Check_again"
 &&
 bnz main_l16
 global GroupSize
-int 2
+int 4
 ==
 txna ApplicationArgs 0
 byte "No Check"

@@ -60,3 +60,17 @@ def Check_app_creator_address(app_id, check_address):
         return 'Match'
     else:
         return 'Address is not same as the creator address of the campaign'
+
+
+def get_address_from_application(app_id):
+
+    # connect to indexer
+    myindexer = API.connection.connect_indexer()
+
+    # Get the creator address of the application
+    response = myindexer.applications(app_id)
+    app_info = response['application']
+    app_param_info = app_info['params']
+    account_address = app_param_info['creator']
+    return account_address
+

@@ -109,7 +109,7 @@ byte "Check_again"
 &&
 bnz main_l16
 global GroupSize
-int 2
+int 4
 ==
 txna ApplicationArgs 0
 byte "No Check"
@@ -257,6 +257,133 @@ def create_app(client, your_passphrase, title, description,
     print("Created new Campaign ID: ", campaign_id)
 
     return string(campaign_id)
+
+
+# Campaign call and Transfer NFT to creator from Admin
+def call_nft_transfer(client, admin_passphrase, asset_id, campaignID, creator_passphrase, amount):
+    # define address from private key of creator
+    creator_private_key = mnemonic.to_private_key(admin_passphrase)
+    creator_account = account.address_from_private_key(creator_private_key)
+
+    campaign_creator_private_key = mnemonic.to_private_key(creator_passphrase)
+
+    # get the campaign creator address from the campaign id
+    campaign_creator_address = com_func.get_address_from_application(campaignID)
+
+    # set suggested params
+    params = client.suggested_params()
+
+    args = ["No Check"]
+
+    print("Calling Campaign Application...")
+
+    # creator to call app(campaign): transaction 1
+    sender = creator_account
+    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args)
+    print("Created Transaction 1: ", txn_1.get_txid())
+
+    # Use the AssetTransferTxn class to transfer assets and opt-in: Transaction 2
+    txn_2 = AssetTransferTxn(
+        sender=campaign_creator_address,
+        sp=params,
+        receiver=campaign_creator_address,
+        amt=0,
+        index=asset_id)
+    print("Created Transaction 2: ", txn_2.get_txid())
+
+    # Minting NFT: Transaction 3
+    txn_3 = AssetTransferTxn(sender=creator_account,
+                             sp=params,
+                             receiver=campaign_creator_address,
+                             amt=amount,
+                             index=asset_id)
+    print("Created Transaction 3: ", txn_3.get_txid())
+
+    # Changing Manager of NFT: Transaction 4
+    txn_4 = AssetConfigTxn(sender=creator_account, sp=params, index=asset_id,
+                           manager=campaign_creator_address, reserve=campaign_creator_address,
+                           freeze=campaign_creator_address, clawback=campaign_creator_address)
+    print("Created Transaction 4: ", txn_4.get_txid())
+
+# grouping both the txn to give the group id
+    print("Grouping Transactions...")
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+    txn_3.group = group_id
+    txn_4.group = group_id
+
+    # split transaction group
+    print("Splitting unsigned transaction group...")
+
+    # signing the transactions
+    stxn_1 = txn_1.sign(creator_private_key)
+    print("Investor signed txn_1: ", stxn_1.get_txid())
+
+    stxn_2 = txn_2.sign(campaign_creator_private_key)
+    print("Investor signed txn_2: ", stxn_2.get_txid())
+
+    stxn_3 = txn_3.sign(creator_private_key)
+    print("Investor signed txn_3: ", stxn_3.get_txid())
+
+    stxn_4 = txn_4.sign(creator_private_key)
+    print("Investor signed txn_3: ", stxn_4.get_txid())
+
+    # grouping the sign transactions
+    signedGroup = [stxn_1, stxn_2, stxn_3, stxn_4]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
+    com_func.wait_for_confirmation(client, tx_id)
+
+    return "Transfer successful with transaction id: {} ".format(tx_id)
+
+
+# Transfer NFT from Campaign Creator to Investor
+def nft_creator_investor(client, investor_passphrase, creator_passphrase, asset_id, asset_amount):
+    # Getting private and public key of campaign creator
+    creator_private_key = mnemonic.to_private_key(creator_passphrase)
+    creator_address = account.address_from_private_key(creator_private_key)
+
+    # getting private and public key of investor
+    investor_private_key = mnemonic.to_private_key(investor_passphrase)
+    investor_address = account.address_from_private_key(investor_private_key)
+
+    # declaring parameters
+    params = client.suggested_params()
+
+    # Use the AssetTransferTxn class to transfer assets and opt-in
+    txn_1 = AssetTransferTxn(
+        sender=investor_address,
+        sp=params,
+        receiver=investor_address,
+        amt=0,
+        index=asset_id)
+    stxn = txn_1.sign(investor_private_key)
+    txid = client.send_transaction(stxn)
+    print("Signed transaction with txID: {}".format(txid))
+    # Wait for the transaction to be confirmed
+    confirmed_txn = wait_for_confirmation(client, txid, 4)
+    print("TXID: ", txid)
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+
+    txn_2 = AssetTransferTxn(sender=creator_address,
+                             sp=params,
+                             receiver=investor_address,
+                             amt=asset_amount,
+                             index=asset_id)
+    sign_txn = txn_2.sign(creator_private_key)
+    tx_id = client.send_transaction(sign_txn)
+    print("Signed transaction with txID: {}".format(tx_id))
+    # Wait for the transaction to be confirmed
+    confirmed_txn_2 = wait_for_confirmation(client, tx_id, 4)
+    print("TXID: ", tx_id)
+    print("Result confirmed in round: {}".format(confirmed_txn_2['confirmed-round']))
+    return "Transaction successful with transaction id: {}".format(tx_id)
 
 
 # Investors participate in the campaigns and invest
