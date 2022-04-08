@@ -243,8 +243,8 @@ def create_app(client, your_passphrase, title, description,
 # Investors participate in the campaigns and invest
 def call_app(client, your_passphrase, campaignID, investment):
     # Converting Passphrase to public and private key.
-    investor_account = mnemonic.to_public_key(your_passphrase)
     investor_private_key = mnemonic.to_private_key(your_passphrase)
+    investor_account = account.address_from_private_key(investor_private_key)
 
     escrow_account = "BJATCHES5YJZJ7JITYMVLSSIQAVAWBQRVGPQUDT5AZ2QSLDSXWWM46THOY"
 
