@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Innofund.iml" filepath="$PROJECT_DIR$/.idea/Innofund.iml" />
-      <module fileurl="file://$PROJECT_DIR$/algorand_contracts/algorand_contracts.iml" filepath="$PROJECT_DIR$/algorand_contracts/algorand_contracts.iml" />
     </modules>
   </component>
 </project>
