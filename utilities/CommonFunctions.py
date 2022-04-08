@@ -2,7 +2,7 @@ from algosdk import mnemonic
 import base64
 import os
 import time
-from algosdk.v2client import indexer
+import API.connection
 
 
 # compile program used to compile the source code, used when new application is created
@@ -49,12 +49,7 @@ def Today_seconds():
 def Check_app_creator_address(app_id, check_address):
 
     # connect to indexer
-    headers = {
-        "X-API-Key": "K7DgVll3W19DdHA3FTduX4XZTuCvTFf32HXUP5E4",
-    }
-    myindexer = indexer.IndexerClient(indexer_token="K7DgVll3W19DdHA3FTduX4XZTuCvTFf32HXUP5E4",
-                                      indexer_address="https://testnet-algorand.api.purestake.io/idx2",
-                                      headers=headers)
+    myindexer = API.connection.connect_indexer()
 
     # Get the creator address of the application
     response = myindexer.applications(app_id)
