@@ -17,27 +17,70 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l16
+bnz main_l20
 txn OnCompletion
 int NoOp
 ==
-bnz main_l5
+bnz main_l9
 txn OnCompletion
 int UpdateApplication
 ==
 bnz main_l4
 err
 main_l4:
+txna ApplicationArgs 0
+byte "update_investment"
+==
+bnz main_l8
+txna ApplicationArgs 0
+byte "update_details"
+==
+bnz main_l7
+err
+main_l7:
+byte "title"
+txna ApplicationArgs 1
+app_global_put
+byte "description"
+txna ApplicationArgs 2
+app_global_put
+byte "category"
+txna ApplicationArgs 3
+app_global_put
+byte "start_time"
+txna ApplicationArgs 4
+btoi
+app_global_put
+byte "end_time"
+txna ApplicationArgs 5
+btoi
+app_global_put
+byte "funding_category"
+txna ApplicationArgs 6
+app_global_put
+byte "fund_limit"
+txna ApplicationArgs 7
+btoi
+app_global_put
+byte "reward_type"
+txna ApplicationArgs 8
+app_global_put
+byte "country"
+txna ApplicationArgs 9
+app_global_put
+int 1
+return
+main_l8:
 byte "total_investment"
 byte "total_investment"
 app_global_get
-txna ApplicationArgs 0
+txna ApplicationArgs 1
 btoi
 +
 app_global_put
 int 1
 return
-main_l5:
+main_l9:
 global GroupSize
 int 2
 ==
@@ -45,7 +88,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l13
+bnz main_l17
 global GroupSize
 int 2
 ==
@@ -53,7 +96,7 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l10
+bnz main_l14
 global GroupSize
 int 2
 ==
@@ -61,24 +104,24 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l9
+bnz main_l13
 err
-main_l9:
+main_l13:
 int 1
 return
-main_l10:
+main_l14:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l12
+bnz main_l16
 int 0
 return
-main_l12:
+main_l16:
 int 1
 return
-main_l13:
+main_l17:
 byte "end_time"
 app_global_get
 byte "start_time"
@@ -96,12 +139,12 @@ byte "total_investment"
 app_global_get
 >
 &&
-bnz main_l15
+bnz main_l19
 err
-main_l15:
+main_l19:
 int 1
 return
-main_l16:
+main_l20:
 txn NumAppArgs
 int 10
 ==
@@ -260,7 +303,7 @@ def call_app(client, your_passphrase, campaignID, investment):
     return string(tx_id)
 
 
-# update existing application
+# update total investment of the campaign
 def update_app(client, id_passphrase, app_id, investment):
     # declare sender
     update_private_key = mnemonic.to_private_key(id_passphrase)
@@ -270,7 +313,7 @@ def update_app(client, id_passphrase, app_id, investment):
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # define updated arguments
-    app_args = [int(investment)]
+    app_args = ["update_investment", int(investment)]
 
     # get node suggested parameters
     params = client.suggested_params()

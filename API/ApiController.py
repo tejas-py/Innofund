@@ -4,6 +4,7 @@ import transactions.CreateAccount as account
 import transactions.createCampaign
 import transactions.UpdateAccount
 import transactions.AssetCampaignCall
+import transactions.update_campaign
 import utilities.check
 import utilities.CommonFunctions as comFunc
 
@@ -14,7 +15,7 @@ algod_client = API.connection.algo_conn()
 
 
 # Create unique id for respective accounts created.
-@app.route('/createAccount', methods=["POST"])
+@app.route('/create_account', methods=["POST"])
 def create_account():
     # Get details of the user
     user_details = request.get_json()
@@ -36,7 +37,7 @@ def create_account():
 
 
 # Updating user details
-@app.route('/updateAccount', methods=['POST'])
+@app.route('/update_account', methods=['POST'])
 def update_user():
     # Get details of the user
     user_details = request.get_json()
@@ -61,7 +62,7 @@ def update_user():
 
 
 # Creating a Campaign id for each campaign created by accounts.
-@app.route('/createCampaign', methods=["POST"])
+@app.route('/create_campaign', methods=["POST"])
 def create_campaign():
     # get details of the campaign to create
     campaign_details = request.get_json()
@@ -83,6 +84,30 @@ def create_campaign():
     return campaignID
 
 
+# update the existing campaign
+@app.route('/update_campaign', methods=['POST'])
+def update_campaign_details():
+    # get details of the campaign to update
+    campaign_details = request.get_json()
+    your_passphrase = campaign_details['creator_passphrase']
+    campaignID = campaign_details['campaign_id']
+    title = campaign_details['title']
+    description = campaign_details['description']
+    category = campaign_details['category']
+    start_time = campaign_details['start_time']
+    end_time = campaign_details['end_time']
+    fund_category = campaign_details['fund_category']
+    fund_limit = campaign_details['fund_limit']
+    reward_type = campaign_details['reward_type']
+    country = campaign_details['country']
+
+    # pass the campaign details to the algorand
+    campaignID = transactions.update_campaign.update_campaign(algod_client, your_passphrase, campaignID, title,
+                                                              description, category, start_time, end_time,
+                                                              fund_category, fund_limit, reward_type, country)
+    return "Campaign details updated with campaign id {}".format(campaignID)
+
+
 # Rewards
 @app.route('/campaign_rewards/<string:campaign_id>/<string:check_address>')
 def rewards(campaign_id, check_address):
@@ -91,7 +116,7 @@ def rewards(campaign_id, check_address):
 
 
 # create asset (Group Transaction, Call app and create asset )
-@app.route('/createAsset', methods=["POST"])
+@app.route('/create_asset', methods=["POST"])
 def createAsset():
     # get the details of the campaign to mint asset
     campaign_details = request.get_json()
@@ -109,7 +134,7 @@ def createAsset():
 
 
 # destroy asset (group txn, destroy and call app )
-@app.route('/burnAsset', methods=["POST"])
+@app.route('/burn_asset', methods=["POST"])
 def burnAsset():
     asset_details = request.get_json()
     private_key = asset_details['Private_key']

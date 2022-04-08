@@ -1,4 +1,10 @@
-#pragma version 5
+from algosdk import mnemonic
+from algosdk.future.transaction import *
+from billiard.five import string
+import utilities.CommonFunctions as com_func
+
+# Declare the approval program source
+approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
@@ -170,3 +176,49 @@ btoi
 app_global_put
 int 1
 return
+"""
+
+# Declare clear state program source
+clear_program_source = b"""#pragma version 5
+int 1
+"""
+
+
+# update existing details of the campaign
+def update_campaign(client, id_passphrase, app_id, title, description,
+                    category, start_time, end_time, fund_category,
+                    fund_limit, reward_type, country):
+    # declare sender
+    update_private_key = mnemonic.to_private_key(id_passphrase)
+    sender = account.address_from_private_key(update_private_key)
+
+    approval_program = com_func.compile_program(client, approval_program_source_initial)
+    clear_program = com_func.compile_program(client, clear_program_source)
+
+    # define updated arguments
+    app_args = ["update_details", bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
+                int(start_time), int(end_time), bytes(fund_category, 'utf8'),
+                int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8')]
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    # create unsigned transaction
+    txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
+
+    # sign transaction
+    signed_txn = txn.sign(update_private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+
+    confirmed_txn = com_func.wait_for_confirmation(client, tx_id)
+    print("TXID: ", tx_id)
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+    # display results
+    transaction_response = client.pending_transaction_info(tx_id)
+    app_id = transaction_response['txn']['txn']['apid']
+    return string(app_id)
