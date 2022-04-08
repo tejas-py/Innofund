@@ -2,11 +2,11 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l20
+bnz main_l22
 txn OnCompletion
 int NoOp
 ==
-bnz main_l9
+bnz main_l11
 txn OnCompletion
 int UpdateApplication
 ==
@@ -56,6 +56,17 @@ app_global_put
 int 1
 return
 main_l8:
+txna ApplicationArgs 1
+btoi
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+-
+<=
+bnz main_l10
+err
+main_l10:
 byte "total_investment"
 byte "total_investment"
 app_global_get
@@ -65,7 +76,7 @@ btoi
 app_global_put
 int 1
 return
-main_l9:
+main_l11:
 global GroupSize
 int 2
 ==
@@ -73,7 +84,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l17
+bnz main_l19
 global GroupSize
 int 2
 ==
@@ -81,7 +92,7 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l14
+bnz main_l16
 global GroupSize
 int 2
 ==
@@ -89,24 +100,24 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l13
+bnz main_l15
 err
-main_l13:
+main_l15:
 int 1
 return
-main_l14:
+main_l16:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l16
+bnz main_l18
 int 0
 return
-main_l16:
+main_l18:
 int 1
 return
-main_l17:
+main_l19:
 byte "end_time"
 app_global_get
 byte "start_time"
@@ -122,14 +133,14 @@ byte "fund_limit"
 app_global_get
 byte "total_investment"
 app_global_get
->
+>=
 &&
-bnz main_l19
+bnz main_l21
 err
-main_l19:
+main_l21:
 int 1
 return
-main_l20:
+main_l22:
 txn NumAppArgs
 int 10
 ==
@@ -168,5 +179,13 @@ byte "total_investment"
 txna ApplicationArgs 9
 btoi
 app_global_put
+byte "end_time"
+app_global_get
+byte "start_time"
+app_global_get
+>
+bnz main_l24
+err
+main_l24:
 int 1
 return

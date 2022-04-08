@@ -153,8 +153,8 @@ def participation():
     campaignID = participation_details['campaign_id']
     investment = participation_details['amount']
     # pass the details to algorand to give the transaction id
-    participationID = transactions.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
     app_id = transactions.createCampaign.update_app(algod_client, your_passphrase, campaignID, investment)
+    participationID = transactions.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
     return "Participation successful in campaign {} with transaction id {}".format(app_id, participationID)
 
 

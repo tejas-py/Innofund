@@ -2,6 +2,11 @@ from pyteal import *
 
 
 def approval_program():
+
+    time_check = Cond(
+        [App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")), Approve()]
+    )
+
     on_creation = Seq(
         [
             Assert(Txn.application_args.length() == Int(10)),
@@ -15,7 +20,7 @@ def approval_program():
             App.globalPut(Bytes("reward_type"), Txn.application_args[7]),
             App.globalPut(Bytes("country"), Txn.application_args[8]),
             App.globalPut(Bytes("total_investment"), Btoi(Txn.application_args[9])),
-            Return(Int(1))
+            time_check
         ]
     )
 
@@ -23,7 +28,7 @@ def approval_program():
         [And(
             App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")),
             Btoi(Txn.application_args[1]) <= App.globalGet(Bytes("fund_limit")),
-            App.globalGet(Bytes("fund_limit")) > App.globalGet(Bytes("total_investment"))
+            App.globalGet(Bytes("fund_limit")) >= App.globalGet(Bytes("total_investment"))
         ), Approve()
         ]
     )
@@ -51,6 +56,12 @@ def approval_program():
         Approve()
     )
 
+    investment_done_realtime = App.globalGet(Bytes("fund_limit")) - App.globalGet(Bytes("total_investment"))
+
+    check_investment_details = Cond(
+        [Btoi(Txn.application_args[1]) <= investment_done_realtime, update_investment_details]
+    )
+
     update_campaign_details = Seq(
         App.globalPut(Bytes("title"), Txn.application_args[1]),
         App.globalPut(Bytes("description"), Txn.application_args[2]),
@@ -65,7 +76,7 @@ def approval_program():
     )
 
     update_campaign = Cond(
-        [Txn.application_args[0] == Bytes("update_investment"), update_investment_details],
+        [Txn.application_args[0] == Bytes("update_investment"), check_investment_details],
         [Txn.application_args[0] == Bytes("update_details"), update_campaign_details]
     )
 
