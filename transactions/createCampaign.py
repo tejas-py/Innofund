@@ -204,7 +204,7 @@ def create_app(client, your_passphrase, title, description,
 
     # Fetching public and private address from the passphrase, passed as argument.
     private_key = mnemonic.to_private_key(your_passphrase)
-    address = mnemonic.to_public_key(your_passphrase)
+    address = account.address_from_private_key(your_passphrase)
 
     account_info = client.account_info(address)
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
@@ -224,7 +224,7 @@ def create_app(client, your_passphrase, title, description,
                  int(start_time), int(end_time), bytes(fund_category, 'utf8'),
                  int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(investment)]
 
-    txn = ApplicationCreateTxn(sender=sender, sp=params,on_complete=on_complete,
+    txn = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
                                approval_program=approval_program, clear_program=clear_program,
                                global_schema=global_schema, local_schema=local_schema, app_args=args_list,
                                note="Campaign")
@@ -342,7 +342,7 @@ def update_app(client, id_passphrase, app_id, investment):
 # Creator pulls out the investment done in that campaign whenever the campaign is over
 def pull_investment(client, creator_passphrase, campaignID, pull):
     # Converting Passphrase to public and private key.
-    creator_account = mnemonic.to_public_key(creator_passphrase)
+    creator_account = account.address_from_private_key(creator_passphrase)
     creator_private_key = mnemonic.to_private_key(creator_passphrase)
 
     # get node suggested parameters
