@@ -94,6 +94,6 @@ def create_app(client, username, usertype, email):
     com_func.wait_for_confirmation(client, tx_id)
     transaction_response = client.pending_transaction_info(tx_id)
     app_id = transaction_response['application-index']
-    print("Created new app-id: ", app_id)
+    print("Created new user id: ", app_id)
 
     return string(app_id)

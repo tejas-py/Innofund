@@ -36,18 +36,28 @@ def create_account():
 
 
 # Updating user details
-@app.route('/updateAccount/<string:user_passphrase>/<int:user_id>')
-def update_user(user_passphrase, user_id):
+@app.route('/updateAccount', methods=['POST'])
+def update_user():
     # Get details of the user
     user_details = request.get_json()
+    user_passphrase = user_details['user_passphrase']
+    user_id = user_details['user_id']
     username = user_details['username']
     usertype = user_details['user_type']
     email = user_details['email']
 
-    # send the details to algorand to update user details
-    update_user_id = transactions.UpdateAccount.update_user(algod_client, user_passphrase,
-                                                            user_id, username, usertype, email)
-    return update_user_id
+    # check details of the user
+    name = utilities.check.check_username(username)
+    user_type = utilities.check.check_user(usertype)
+    email_id = utilities.check.check_email(email)
+    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+        # give the user id for the user
+        userID = transactions.UpdateAccount.update_user(algod_client, user_passphrase, user_id,
+                                                        username, usertype, email)
+        return "User updated successful with user id: {}".format(userID)
+    else:
+        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
+        return lst_error
 
 
 # Creating a Campaign id for each campaign created by accounts.
