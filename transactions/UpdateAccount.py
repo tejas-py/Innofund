@@ -56,8 +56,8 @@ def update_user(client, user_passphrase, user_id, username, usertype, email):
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # Converting Passphrase to public and private key.
-    public_address = account.address_from_private_key(user_passphrase)
     private_key = mnemonic.to_private_key(user_passphrase)
+    public_address = account.address_from_private_key(private_key)
 
     # declare sender
     sender = public_address

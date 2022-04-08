@@ -204,7 +204,7 @@ def create_app(client, your_passphrase, title, description,
 
     # Fetching public and private address from the passphrase, passed as argument.
     private_key = mnemonic.to_private_key(your_passphrase)
-    address = account.address_from_private_key(your_passphrase)
+    address = account.address_from_private_key(private_key)
 
     account_info = client.account_info(address)
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
@@ -342,8 +342,8 @@ def update_app(client, id_passphrase, app_id, investment):
 # Creator pulls out the investment done in that campaign whenever the campaign is over
 def pull_investment(client, creator_passphrase, campaignID, pull):
     # Converting Passphrase to public and private key.
-    creator_account = account.address_from_private_key(creator_passphrase)
     creator_private_key = mnemonic.to_private_key(creator_passphrase)
+    creator_account = account.address_from_private_key(creator_private_key)
 
     # get node suggested parameters
     params = client.suggested_params()
