@@ -5,7 +5,6 @@ import time
 from algosdk.v2client import indexer
 
 
-
 # compile program used to compile the source code, used when new application is created
 def compile_program(client, source_code):
     compile_response = client.compile(source_code.decode('utf-8'))
