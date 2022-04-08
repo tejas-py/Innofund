@@ -68,8 +68,8 @@ def create_app(client, username, usertype, email):
 
     private_key, address = account.generate_account()
     print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))
-    print("Here is your private key: {}".format(private_key))
-    print("And this is your mnemonic: {}".format(mnemonic.from_private_key(private_key)))
+    print("Here is your private key: \n{}".format(private_key))
+    print("And this is your mnemonic: \n{}".format(mnemonic.from_private_key(private_key)))
 
     account_info = client.account_info(address)
     print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
@@ -79,9 +79,6 @@ def create_app(client, username, usertype, email):
     on_complete = transaction.OnComplete.NoOpOC.real
 
     params = client.suggested_params()
-
-    params.flat_fee = True
-    params.fee = 1000
 
     args_list = [bytes(username, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
 

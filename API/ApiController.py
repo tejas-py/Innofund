@@ -1,12 +1,13 @@
 from flask import Flask, request
 import API.connection
-import transactions.CreateAccount as account
-import transactions.createCampaign
-import transactions.UpdateAccount
-import transactions.AssetCampaignCall
-import transactions.update_campaign
 import utilities.check
 import utilities.CommonFunctions as comFunc
+import transactions.admin_account
+import transactions.CreateAccount
+import transactions.UpdateAccount
+import transactions.createCampaign
+import transactions.update_campaign
+import transactions.AssetCampaignCall
 
 app = Flask(__name__)
 
@@ -29,8 +30,31 @@ def create_account():
     email_id = utilities.check.check_email(email)
     if name == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the user id for the user
-        userID = account.create_app(algod_client, username, usertype, email)
+        userID = transactions.CreateAccount.create_app(algod_client, username, usertype, email)
         return "Username registration successful with user id: {}".format(userID)
+    else:
+        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
+        return lst_error
+
+
+# create unique id for admin user
+@app.route('/create_admin_account', methods=['POST'])
+def create_admin_account():
+    # Get details of the admin
+    user_details = request.get_json()
+    username = user_details['username']
+    usertype = user_details['user_type']
+    email = user_details['email']
+    password = user_details['password']
+
+    # check details of the admin
+    name = utilities.check.check_username(username)
+    user_type = utilities.check.check_admin(usertype)
+    email_id = utilities.check.check_email(email)
+    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+        # give the admin id for the admin
+        userID = transactions.admin_account.create_admin_account(algod_client, username, usertype, email, password)
+        return "Admin registration successful with admin user id: {}".format(userID)
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
         return lst_error
@@ -56,6 +80,32 @@ def update_user():
         userID = transactions.UpdateAccount.update_user(algod_client, user_passphrase, user_id,
                                                         username, usertype, email)
         return "User updated successful with user id: {}".format(userID)
+    else:
+        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
+        return lst_error
+
+
+# updating admin
+@app.route('/update_admin', methods=['POST'])
+def update_admin():
+    # Get details of the admin
+    user_details = request.get_json()
+    admin_passphrase = user_details['admin_passphrase']
+    admin_id = user_details['admin_id']
+    username = user_details['username']
+    usertype = user_details['user_type']
+    email = user_details['email']
+    password = user_details['password']
+
+    # check details of the user
+    name = utilities.check.check_username(username)
+    user_type = utilities.check.check_admin(usertype)
+    email_id = utilities.check.check_email(email)
+    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+        # give the admin id for the user
+        userID = transactions.admin_account.update_admin(algod_client, admin_passphrase, admin_id,
+                                                         username, usertype, email, password)
+        return "admin updated successful with admin user id: {}".format(userID)
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
         return lst_error
@@ -115,22 +165,24 @@ def rewards(campaign_id, check_address):
     return result
 
 
-# create asset (Group Transaction, Call app and create asset )
+# create asset (Group Transaction, Call admin app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
-def createAsset():
+def mint_nft():
     # get the details of the campaign to mint asset
     campaign_details = request.get_json()
-    campaignID = campaign_details['CampaignID']
-    private_key = campaign_details['Key']
+    admin_id = campaign_details['admin_id']
+    admin_passphrase = campaign_details['admin_passphrase']
+    usertype = campaign_details['usertype']
+    password = campaign_details['password']
     asset_amount = campaign_details['asset_amount']
     unit_name = campaign_details['unit_name']
     asset_name = campaign_details['asset_name']
     file_path = campaign_details['url']
 
     # pass the details to algorand to mint asset
-    asset_id = transactions.AssetCampaignCall.call_asset(algod_client, private_key, campaignID, asset_amount,
-                                                         unit_name, asset_name, file_path)
-    return asset_id
+    asset_id = transactions.admin_account.admin_asset(algod_client, admin_passphrase, usertype, password, admin_id,
+                                                      asset_amount, unit_name, asset_name, file_path)
+    return "Minted NFT id: {}".format(asset_id)
 
 
 # destroy asset (group txn, destroy and call app )

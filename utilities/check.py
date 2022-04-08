@@ -25,6 +25,14 @@ def check_user(user_type):
         return "Error: Check the spelling of User Type."
 
 
+# check admin
+def check_admin(user_type):
+    if user_type == "Admin" or user_type == "admin" or user_type == "ADMIN":
+        return "Approved"
+    else:
+        return "Error: Check the spelling of User Type."
+
+
 # Check the Input Email Address.
 def check_email(email):
     pat = "^[a-zA-Z0-9-_]+@[a-zA-Z0-9]+\.[a-z]{1,3}$"
