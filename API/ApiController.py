@@ -205,8 +205,8 @@ def creator_investor():
     asset_amount = transfer_details['asset_amount']
 
     # send the details for transaction to occur
-    txn_details = transactions.createCampaign.nft_creator_investor(algod_client, investor_passphrase, creator_passphrase
-                                                                   , asset_id, asset_amount)
+    txn_details = transactions.createCampaign.nft_creator_investor(algod_client, investor_passphrase,
+                                                                   creator_passphrase, asset_id, asset_amount)
     return txn_details
 
 
