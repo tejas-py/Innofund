@@ -210,7 +210,7 @@ def creator_investor():
     return txn_details
 
 
-# destroy asset (group txn, destroy and call app )
+# destroy asset (group txn, call app and destroy)
 @app.route('/burn_asset', methods=["POST"])
 def burnAsset():
     asset_details = request.get_json()
