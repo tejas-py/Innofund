@@ -70,7 +70,7 @@ main_l9:
 int 1
 return
 main_l10:
-txna ApplicationArgs 1
+txna ApplicationArgs 2
 btoi
 byte "fund_limit"
 app_global_get
@@ -78,13 +78,19 @@ byte "total_investment"
 app_global_get
 -
 <=
+byte "end_time"
+app_global_get
+txna ApplicationArgs 1
+btoi
+>
+&&
 bnz main_l12
 err
 main_l12:
 byte "total_investment"
 byte "total_investment"
 app_global_get
-txna ApplicationArgs 1
+txna ApplicationArgs 2
 btoi
 +
 app_global_put

@@ -51,7 +51,7 @@ def approval_program():
     )
 
     update_investment_details = Seq(
-        App.globalPut(Bytes("total_investment"), App.globalGet(Bytes("total_investment")) + Btoi(Txn.application_args[1]
+        App.globalPut(Bytes("total_investment"), App.globalGet(Bytes("total_investment")) + Btoi(Txn.application_args[2]
                                                                                                  )),
         Approve()
     )
@@ -59,7 +59,10 @@ def approval_program():
     investment_done_realtime = App.globalGet(Bytes("fund_limit")) - App.globalGet(Bytes("total_investment"))
 
     check_investment_details = Cond(
-        [Btoi(Txn.application_args[1]) <= investment_done_realtime, update_investment_details]
+        [And(
+            Btoi(Txn.application_args[2]) <= investment_done_realtime,
+            App.globalGet(Bytes("end_time")) > Btoi(Txn.application_args[1])
+        ), update_investment_details]
     )
 
     check_updated_time = Cond(

@@ -79,7 +79,7 @@ main_l9:
 int 1
 return
 main_l10:
-txna ApplicationArgs 1
+txna ApplicationArgs 2
 btoi
 byte "fund_limit"
 app_global_get
@@ -87,13 +87,19 @@ byte "total_investment"
 app_global_get
 -
 <=
+byte "end_time"
+app_global_get
+txna ApplicationArgs 1
+btoi
+>
+&&
 bnz main_l12
 err
 main_l12:
 byte "total_investment"
 byte "total_investment"
 app_global_get
-txna ApplicationArgs 1
+txna ApplicationArgs 2
 btoi
 +
 app_global_put
@@ -467,7 +473,7 @@ def update_app(client, id_passphrase, app_id, investment):
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # define updated arguments
-    app_args = ["update_investment", int(investment)]
+    app_args = ["update_investment", int(Today_seconds()), int(investment)]
 
     # get node suggested parameters
     params = client.suggested_params()
