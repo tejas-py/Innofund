@@ -1,5 +1,5 @@
 from algosdk.future import transaction
-from algosdk import account
+from algosdk import account, mnemonic
 from billiard.five import string
 import utilities.CommonFunctions as com_func
 
@@ -61,10 +61,11 @@ def call_asset(client, private_key, campaignID, total_nft, unit_name, asset_name
 
 
 # Creator destroy asset and call app.
-def call_asset_destroy(client, private_key, asset_id, campaignID):
+def call_asset_destroy(client, creator_passphrase, asset_id, campaignID):
     # define address from private key of creator
-    creator_account = account.address_from_private_key(private_key)
-    creator_private_key = private_key
+
+    creator_private_key = mnemonic.to_private_key(creator_passphrase)
+    creator_account = account.address_from_private_key(creator_private_key)
 
     # set suggested params
     params = client.suggested_params()
