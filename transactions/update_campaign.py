@@ -8,11 +8,11 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l22
+bnz main_l24
 txn OnCompletion
 int NoOp
 ==
-bnz main_l11
+bnz main_l13
 txn OnCompletion
 int UpdateApplication
 ==
@@ -22,7 +22,7 @@ main_l4:
 txna ApplicationArgs 0
 byte "update_investment"
 ==
-bnz main_l8
+bnz main_l10
 txna ApplicationArgs 0
 byte "update_details"
 ==
@@ -59,9 +59,17 @@ app_global_put
 byte "country"
 txna ApplicationArgs 9
 app_global_put
+byte "end_time"
+app_global_get
+byte "start_time"
+app_global_get
+>
+bnz main_l9
+err
+main_l9:
 int 1
 return
-main_l8:
+main_l10:
 txna ApplicationArgs 1
 btoi
 byte "fund_limit"
@@ -70,9 +78,9 @@ byte "total_investment"
 app_global_get
 -
 <=
-bnz main_l10
+bnz main_l12
 err
-main_l10:
+main_l12:
 byte "total_investment"
 byte "total_investment"
 app_global_get
@@ -82,7 +90,7 @@ btoi
 app_global_put
 int 1
 return
-main_l11:
+main_l13:
 global GroupSize
 int 2
 ==
@@ -90,7 +98,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l19
+bnz main_l21
 global GroupSize
 int 2
 ==
@@ -98,32 +106,32 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l16
+bnz main_l18
 global GroupSize
-int 2
+int 4
 ==
 txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l15
+bnz main_l17
 err
-main_l15:
+main_l17:
 int 1
 return
-main_l16:
+main_l18:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l18
+bnz main_l20
 int 0
 return
-main_l18:
+main_l20:
 int 1
 return
-main_l19:
+main_l21:
 byte "end_time"
 app_global_get
 byte "start_time"
@@ -141,12 +149,12 @@ byte "total_investment"
 app_global_get
 >=
 &&
-bnz main_l21
+bnz main_l23
 err
-main_l21:
+main_l23:
 int 1
 return
-main_l22:
+main_l24:
 txn NumAppArgs
 int 10
 ==
@@ -190,9 +198,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l24
+bnz main_l26
 err
-main_l24:
+main_l26:
 int 1
 return
 """

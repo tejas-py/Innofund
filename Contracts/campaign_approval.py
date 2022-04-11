@@ -62,6 +62,10 @@ def approval_program():
         [Btoi(Txn.application_args[1]) <= investment_done_realtime, update_investment_details]
     )
 
+    check_updated_time = Cond(
+        [App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")), Approve()]
+    )
+
     update_campaign_details = Seq(
         App.globalPut(Bytes("title"), Txn.application_args[1]),
         App.globalPut(Bytes("description"), Txn.application_args[2]),
@@ -72,7 +76,7 @@ def approval_program():
         App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[7])),
         App.globalPut(Bytes("reward_type"), Txn.application_args[8]),
         App.globalPut(Bytes("country"), Txn.application_args[9]),
-        Approve()
+        check_updated_time
     )
 
     update_campaign = Cond(

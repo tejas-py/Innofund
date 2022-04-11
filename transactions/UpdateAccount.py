@@ -7,13 +7,17 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l4
+bnz main_l10
+txn OnCompletion
+int NoOp
+==
+bnz main_l5
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l3
+bnz main_l4
 err
-main_l3:
+main_l4:
 byte "username"
 txna ApplicationArgs 0
 app_global_put
@@ -23,11 +27,39 @@ app_global_put
 byte "email"
 txna ApplicationArgs 2
 app_global_put
+byte "password"
+txna ApplicationArgs 3
+app_global_put
 int 1
 return
-main_l4:
+main_l5:
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "check_admin"
+==
+&&
+bnz main_l7
+err
+main_l7:
+txna ApplicationArgs 1
+byte "usertype"
+app_global_get
+==
+txna ApplicationArgs 2
+byte "password"
+app_global_get
+==
+&&
+bnz main_l9
+err
+main_l9:
+int 1
+return
+main_l10:
 txn NumAppArgs
-int 3
+int 4
 ==
 assert
 byte "username"
@@ -38,6 +70,9 @@ txna ApplicationArgs 1
 app_global_put
 byte "email"
 txna ApplicationArgs 2
+app_global_put
+byte "password"
+txna ApplicationArgs 3
 app_global_put
 int 1
 return
