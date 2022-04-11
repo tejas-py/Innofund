@@ -214,10 +214,11 @@ def creator_investor():
 @app.route('/burn_asset', methods=["POST"])
 def burnAsset():
     asset_details = request.get_json()
-    private_key = asset_details['Private_key']
+    creator_passphrase = asset_details['creator_passphrase']
     asset_id = asset_details['Asset_id']
     campaignID = asset_details['CampaignID']
-    burnAssetTxn = transactions.AssetCampaignCall.call_asset_destroy(algod_client, private_key, asset_id, campaignID)
+    burnAssetTxn = transactions.AssetCampaignCall.call_asset_destroy(algod_client, creator_passphrase,
+                                                                     asset_id, campaignID)
     return burnAssetTxn
 
 
