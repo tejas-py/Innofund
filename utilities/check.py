@@ -9,7 +9,7 @@ def check_username(username):
         return "Error: Username should contain one letter between [A-Z]"
     elif not re.search("[a-z]", username):
         return "Error: Username should contain one letter between [a-z]"
-    elif not re.search("[1-9]", username):
+    elif not re.search("[0-9]", username):
         return "Error: Username should contain one letter between [1-9]"
     elif re.search("[\s]", username):
         return "Error: Username should not contain any space"
