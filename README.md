@@ -122,3 +122,15 @@ Creator of the campaign pulls out the investment that was done by the investors 
 campaign application call, smart contract checks only if the campaign has ended, the creator is allowed to pull the investment.
 
 _API requires: creator passphrase, campaign id, amount (that has to be pulled by the creator)_
+
+## **13. /total_nft:**
+Get total NFT minted by Admin account.
+
+_API requires: admin account public address_
+
+## **13. /account_info:**
+Get the account information of particular account.
+
+_API requires: account public address_
+
+
