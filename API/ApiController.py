@@ -7,6 +7,7 @@ import transactions.UpdateAccount
 import transactions.createCampaign
 import transactions.update_campaign
 import transactions.AssetCampaignCall
+import transactions.total_nft
 
 app = Flask(__name__)
 
@@ -250,7 +251,24 @@ def pull_investment():
     return pullID
 
 
+# Get total NFT minted by Admin
+@app.route('/total_nft')
+def totalNFT():
+    admin_info = request.get_json()
+    admin = admin_info['admin_address']
+    all_nft = transactions.total_nft.total_assets_by_admin(admin)
+    return all_nft
+
+
+# get the account information of particular account
+@app.route('/account_info')
+def account_information():
+    account_data = request.get_json()
+    address = account_data['account']
+    account = transactions.total_nft.account_info(address)
+    return account
+
+
 # running the API
 if __name__ == "__main__":
-    # table_creation()
     app.run(debug=True)
