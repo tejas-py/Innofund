@@ -48,6 +48,3 @@ if __name__ == '__main__':
     data_txn = list(data)
 
     print(data_txn)
-
-
-

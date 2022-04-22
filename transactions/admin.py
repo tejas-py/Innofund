@@ -237,4 +237,3 @@ def admin_asset(client, admin_passphrase, usertype, password, admin_id, total_nf
     asset_id = ptx["asset-index"]
 
     return string(asset_id)
-
