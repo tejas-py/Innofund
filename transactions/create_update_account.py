@@ -63,7 +63,7 @@ int 1
 
 
 # Generate a new account as well as new user id for each user that registers
-def create_app(client, username, usertype, email) :
+def create_app(client, username, usertype, email):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)

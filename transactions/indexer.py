@@ -13,7 +13,7 @@ indexerConnection = API.connection.connect_indexer()
 
 # search total campaigns in the node(Application-campaign)
 def total_campaign():
-    response = indexerConnection.search_transactions(txn_type="appl")#, min_amount=1999, max_amount=3000)
+    response = indexerConnection.search_transactions(txn_type="appl")
     campaign_info = json.dumps(response, indent=2, sort_keys=True)
     return campaign_info
 

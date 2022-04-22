@@ -138,7 +138,7 @@ def create_admin_account(client, username, usertype, email, password):
 
 
 # update admin details on blockchain
-def update_admin(client, admin_passphrase,admin_id, username, usertype, email, password):
+def update_admin(client, admin_passphrase, admin_id, username, usertype, email, password):
     print("Updating existing admin....")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
