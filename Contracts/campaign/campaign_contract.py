@@ -97,6 +97,6 @@ def approval_program():
 
 
 if __name__ == "__main__":
-    with open("campaign_approval.teal", "w") as f:
+    with open("campaign_contract.teal", "w") as f:
         compiled = compileTeal(approval_program(), mode=Mode.Application, version=5)
         f.write(compiled)

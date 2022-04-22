@@ -5,12 +5,13 @@
 # 4. Investors participate in the campaigns and invest (Campaign Application update transaction)
 # 5. Update the total investment of the campaign (Update Campaign app transaction)
 # 6. Creator pulls out the investment done in that campaign whenever the campaign is over
+# 7. Group transaction of (Campaign App call and burn asset by campaign creator)
+# 8. Update the campaign app with new details of campaign (Campaign update application transaction)
 
 from algosdk import mnemonic
 from algosdk.future.transaction import *
 from billiard.five import string
 import utilities.CommonFunctions as com_func
-from utilities.CommonFunctions import Today_seconds
 
 # Declare application state storage (immutable)
 local_ints = 1
@@ -327,7 +328,7 @@ def call_nft_transfer(client, admin_passphrase, asset_id, campaignID, creator_pa
                            freeze=campaign_creator_address, clawback=campaign_creator_address)
     print("Created Transaction 4: ", txn_4.get_txid())
 
-# grouping both the txn to give the group id
+    # grouping both the txn to give the group id
     print("Grouping Transactions...")
     group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
     print("groupID of the Transaction: ", group_id)
@@ -481,7 +482,7 @@ def update_app(client, id_passphrase, app_id, investment):
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # define updated arguments
-    app_args = ["update_investment", int(Today_seconds()), int(investment)]
+    app_args = ["update_investment", int(com_func.Today_seconds()), int(investment)]
 
     # get node suggested parameters
     params = client.suggested_params()
@@ -521,7 +522,7 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
 
     # Creator Account to call app.
     sender = creator_account
-    args_list = ["Check_again", int(Today_seconds())]
+    args_list = ["Check_again", int(com_func.Today_seconds())]
     txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
     print("Created Transaction: ", txn_1.get_txid())
 
@@ -577,3 +578,96 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
     com_func.wait_for_confirmation(client, tx_id)
 
     return string(tx_id)
+
+
+# Group transaction: (Campaign app call and Burn Asset)
+def call_asset_destroy(client, creator_passphrase, asset_id, campaignID):
+
+    # define address from private key of creator
+    creator_private_key = mnemonic.to_private_key(creator_passphrase)
+    creator_account = account.address_from_private_key(creator_private_key)
+
+    # set suggested params
+    params = client.suggested_params()
+
+    args = ["No Check"]
+
+    print("Calling Campaign Application...")
+
+    # creator to call app(campaign): transaction 1
+    sender = creator_account
+    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args)
+    print("Created Transaction 1: ", txn_1.get_txid())
+
+    # destroying asset: transaction 2
+    txn_2 = AssetConfigTxn(sender=sender, sp=params, index=asset_id, strict_empty_address_check=False)
+    print("Created Transaction 2: ", txn_2.get_txid())
+
+    # grouping both the txn to give the group id
+    print("Grouping Transactions...")
+    group_id = calculate_group_id([txn_1, txn_2])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    # split transaction group
+    print("Splitting unsigned transaction group...")
+
+    # signing the transactions
+    stxn_1 = txn_1.sign(creator_private_key)
+    print("Investor signed txn_1: ", stxn_1.get_txid())
+
+    stxn_2 = txn_2.sign(creator_private_key)
+    print("Investor signed txn_2: ", stxn_2.get_txid())
+
+    # grouping the sign transactions
+    signedGroup = [stxn_1, stxn_2]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
+    com_func.wait_for_confirmation(client, tx_id)
+
+    return string(tx_id)
+
+
+# update existing details of the campaign
+def update_campaign(client, id_passphrase, app_id, title, description,
+                    category, start_time, end_time, fund_category,
+                    fund_limit, reward_type, country):
+    # declare sender
+    update_private_key = mnemonic.to_private_key(id_passphrase)
+    sender = account.address_from_private_key(update_private_key)
+
+    approval_program = com_func.compile_program(client, approval_program_source_initial)
+    clear_program = com_func.compile_program(client, clear_program_source)
+
+    # define updated arguments
+    app_args = ["update_details", bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
+                int(start_time), int(end_time), bytes(fund_category, 'utf8'),
+                int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8')]
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    # create unsigned transaction
+    txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
+
+    # sign transaction
+    signed_txn = txn.sign(update_private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+
+    confirmed_txn = com_func.wait_for_confirmation(client, tx_id)
+    print("TXID: ", tx_id)
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+    # display results
+    transaction_response = client.pending_transaction_info(tx_id)
+    app_id = transaction_response['txn']['txn']['apid']
+    return string(app_id)

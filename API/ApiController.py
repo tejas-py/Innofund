@@ -1,13 +1,11 @@
 from flask import Flask, request
 import API.connection
 import utilities.check
-import transactions.admin_account
-import transactions.CreateAccount
-import transactions.UpdateAccount
-import transactions.createCampaign
-import transactions.update_campaign
-import transactions.AssetCampaignCall
-import transactions.total_nft
+import transactions.admin
+import transactions.creator_investor
+import transactions.indexer
+import transactions.create_update_account
+
 
 app = Flask(__name__)
 
@@ -30,7 +28,7 @@ def create_account():
     email_id = utilities.check.check_email(email)
     if name == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the user id for the user
-        userID = transactions.CreateAccount.create_app(algod_client, username, usertype, email)
+        userID = transactions.create_update_account.create_app(algod_client, username, usertype, email)
         return "Username registration successful with user id: {}".format(userID)
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
@@ -53,7 +51,7 @@ def create_admin_account():
     email_id = utilities.check.check_email(email)
     if name == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the admin id for the admin
-        userID = transactions.admin_account.create_admin_account(algod_client, username, usertype, email, password)
+        userID = transactions.admin.create_admin_account(algod_client, username, usertype, email, password)
         return "Admin registration successful with admin user id: {}".format(userID)
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
@@ -77,8 +75,8 @@ def update_user():
     email_id = utilities.check.check_email(email)
     if name == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the user id for the user
-        userID = transactions.UpdateAccount.update_user(algod_client, user_passphrase, user_id,
-                                                        username, usertype, email)
+        userID = transactions.create_update_account.update_user(algod_client, user_passphrase, user_id,
+                                                                username, usertype, email)
         return "User updated successful with user id: {}".format(userID)
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
@@ -103,8 +101,8 @@ def update_admin():
     email_id = utilities.check.check_email(email)
     if name == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the admin id for the user
-        userID = transactions.admin_account.update_admin(algod_client, admin_passphrase, admin_id,
-                                                         username, usertype, email, password)
+        userID = transactions.admin.update_admin(algod_client, admin_passphrase, admin_id,
+                                                 username, usertype, email, password)
         return "admin updated successful with admin user id: {}".format(userID)
     else:
         lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
@@ -128,9 +126,9 @@ def create_campaign():
     country = campaign_details['country']
 
     # pass the campaign details to the algorand
-    campaignID = transactions.createCampaign.create_app(algod_client, your_passphrase, title, description,
-                                                        category, start_time, end_time, fund_category,
-                                                        fund_limit, reward_type, country)
+    campaignID = transactions.creator_investor.create_app(algod_client, your_passphrase, title, description,
+                                                          category, start_time, end_time, fund_category,
+                                                          fund_limit, reward_type, country)
     return campaignID
 
 
@@ -152,9 +150,9 @@ def update_campaign_details():
     country = campaign_details['country']
 
     # pass the campaign details to the algorand
-    campaignID = transactions.update_campaign.update_campaign(algod_client, your_passphrase, campaignID, title,
-                                                              description, category, start_time, end_time,
-                                                              fund_category, fund_limit, reward_type, country)
+    campaignID = transactions.creator_investor.update_campaign(algod_client, your_passphrase, campaignID, title,
+                                                               description, category, start_time, end_time,
+                                                               fund_category, fund_limit, reward_type, country)
     return "Campaign details updated with campaign id {}".format(campaignID)
 
 
@@ -173,8 +171,8 @@ def mint_nft():
     file_path = campaign_details['url']
 
     # pass the details to algorand to mint asset
-    asset_id = transactions.admin_account.admin_asset(algod_client, admin_passphrase, usertype, password, admin_id,
-                                                      asset_amount, unit_name, asset_name, file_path)
+    asset_id = transactions.admin.admin_asset(algod_client, admin_passphrase, usertype, password, admin_id,
+                                              asset_amount, unit_name, asset_name, file_path)
     return "Minted NFT id: {}".format(asset_id)
 
 
@@ -190,8 +188,8 @@ def transfer_nft():
     nft_amount = transfer_details['nft_amount']
 
     # send the details to transfer NFT
-    txn_details = transactions.createCampaign.call_nft_transfer(algod_client, admin_passphrase, asset_id,
-                                                                campaign_id, campaign_creator_address, nft_amount)
+    txn_details = transactions.creator_investor.call_nft_transfer(algod_client, admin_passphrase, asset_id,
+                                                                  campaign_id, campaign_creator_address, nft_amount)
     return txn_details
 
 
@@ -206,8 +204,8 @@ def creator_investor():
     asset_amount = transfer_details['asset_amount']
 
     # send the details for transaction to occur
-    txn_details = transactions.createCampaign.nft_creator_investor(algod_client, investor_passphrase,
-                                                                   creator_passphrase, asset_id, asset_amount)
+    txn_details = transactions.creator_investor.nft_creator_investor(algod_client, investor_passphrase,
+                                                                     creator_passphrase, asset_id, asset_amount)
     return txn_details
 
 
@@ -218,8 +216,8 @@ def burnAsset():
     creator_passphrase = asset_details['creator_passphrase']
     asset_id = asset_details['Asset_id']
     campaignID = asset_details['CampaignID']
-    burnAssetTxn = transactions.AssetCampaignCall.call_asset_destroy(algod_client, creator_passphrase,
-                                                                     asset_id, campaignID)
+    burnAssetTxn = transactions.creator_investor.call_asset_destroy(algod_client, creator_passphrase,
+                                                                    asset_id, campaignID)
     return burnAssetTxn
 
 
@@ -232,8 +230,8 @@ def participation():
     campaignID = participation_details['campaign_id']
     investment = participation_details['amount']
     # pass the details to algorand to give the transaction id
-    app_id = transactions.createCampaign.update_app(algod_client, your_passphrase, campaignID, investment)
-    participationID = transactions.createCampaign.call_app(algod_client, your_passphrase, campaignID, investment)
+    app_id = transactions.creator_investor.update_app(algod_client, your_passphrase, campaignID, investment)
+    participationID = transactions.creator_investor.call_app(algod_client, your_passphrase, campaignID, investment)
     return "Participation successful in campaign {} with transaction id {}".format(app_id, participationID)
 
 
@@ -247,7 +245,7 @@ def pull_investment():
     pull = investment_details['amount']
 
     # pass the details to the algorand to run the transaction
-    pullID = transactions.createCampaign.pull_investment(algod_client, creator_passphrase, campaignID, pull)
+    pullID = transactions.creator_investor.pull_investment(algod_client, creator_passphrase, campaignID, pull)
     return pullID
 
 
@@ -256,7 +254,7 @@ def pull_investment():
 def totalNFT():
     admin_info = request.get_json()
     admin = admin_info['admin_address']
-    all_nft = transactions.total_nft.total_assets_by_admin(admin)
+    all_nft = transactions.indexer.total_assets_by_admin(admin)
     return all_nft
 
 
@@ -265,7 +263,7 @@ def totalNFT():
 def account_information():
     account_data = request.get_json()
     address = account_data['account']
-    account = transactions.total_nft.account_info(address)
+    account = transactions.indexer.account_info(address)
     return account
 
 
