@@ -1,12 +1,12 @@
 # This transaction contains:
-# 1. Create new campaign and storing the data (Create application transaction)
-# 2. Group transaction: (Campaign application call and NFT transfer from Admin to Campaign creator)
-# 3. Transfer NFT from Campaign Creator to Investor (group transaction: opt-in NFT by investor and transfer NFT)
-# 4. Investors participate in the campaigns and invest (Campaign Application update transaction)
-# 5. Update the total investment of the campaign (Update Campaign app transaction)
-# 6. Creator pulls out the investment done in that campaign whenever the campaign is over
-# 7. Group transaction of (Campaign App call and burn asset by campaign creator)
-# 8. Update the campaign app with new details of campaign (Campaign update application transaction)
+# 1. Create new campaign and storing the data (Create application transaction).
+# 2. Group transaction: (Campaign application call and NFT transfer from Admin to Campaign creator).
+# 3. Transfer NFT from Campaign Creator to Investor (group transaction: opt-in NFT by investor and transfer NFT).
+# 4. Investors participate in the campaigns and invest (Campaign Application update transaction).
+# 5. Update the total investment of the campaign (Update Campaign app transaction).
+# 6. Creator pulls out the investment done in that campaign whenever the campaign is over.
+# 7. Group transaction of (Campaign App call and burn asset by campaign creator).
+# 8. Update the campaign app with new details of campaign (Campaign update application transaction).
 
 from algosdk import mnemonic
 from algosdk.future.transaction import *

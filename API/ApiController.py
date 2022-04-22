@@ -258,7 +258,7 @@ def totalNFT():
     return all_nft
 
 
-# get the account information of particular account
+# Get the account information of particular account
 @app.route('/account_info')
 def account_information():
     account_data = request.get_json()

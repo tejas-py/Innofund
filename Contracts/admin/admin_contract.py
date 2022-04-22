@@ -2,6 +2,7 @@ from pyteal import *
 
 
 def approval_program():
+
     on_creation = Seq(
         [
             Assert(Txn.application_args.length() == Int(4)),

@@ -1,6 +1,7 @@
 from algosdk.v2client import algod, indexer
 
 
+# Connection to the algorand network
 def algo_conn():
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     algod_token = "K7DgVll3W19DdHA3FTduX4XZTuCvTFf32HXUP5E4"
@@ -10,6 +11,7 @@ def algo_conn():
     return conn
 
 
+# Connection to Algorand Indexer
 def connect_indexer():
     algod_indexer = "https://testnet-algorand.api.purestake.io/idx2"
     indexer_token = "K7DgVll3W19DdHA3FTduX4XZTuCvTFf32HXUP5E4"

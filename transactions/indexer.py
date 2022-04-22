@@ -1,6 +1,6 @@
 # This transaction contains:
-# 1. List total campaigns in the node(Application-campaign)
-# 2. List total campaigns of the particular user
+# 1. List total campaigns in the node(Application-campaign).
+# 2. List total campaigns of the particular user.
 # 3. List out all the assets created by admin.
 # 4. List information of a particular address.
 

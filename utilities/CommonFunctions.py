@@ -1,3 +1,5 @@
+# common functions that are being used in transactions and API
+
 from algosdk import mnemonic
 import base64
 import os

@@ -100,3 +100,4 @@ if __name__ == "__main__":
     with open("campaign_contract.teal", "w") as f:
         compiled = compileTeal(approval_program(), mode=Mode.Application, version=5)
         f.write(compiled)
+

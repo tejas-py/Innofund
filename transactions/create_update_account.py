@@ -1,6 +1,6 @@
 # This transaction contains:
-# 1. Create Account for new users (Create application transaction)
-# 2. Update User(Creator and Investor) details (User update application transaction)
+# 1. Create Account for new users (Create application transaction).
+# 2. Update User(Creator and Investor) details (User update application transaction).
 
 from billiard.five import string
 from algosdk.future.transaction import *
