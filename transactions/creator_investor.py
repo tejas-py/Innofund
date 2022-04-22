@@ -7,6 +7,7 @@
 # 6. Creator pulls out the investment done in that campaign whenever the campaign is over.
 # 7. Group transaction of (Campaign App call and burn asset by campaign creator).
 # 8. Update the campaign app with new details of campaign (Campaign update application transaction).
+# 9. Add reason for Campaign to block/reject.
 
 from algosdk import mnemonic
 from algosdk.future.transaction import *
@@ -671,3 +672,35 @@ def update_campaign(client, id_passphrase, app_id, title, description,
     transaction_response = client.pending_transaction_info(tx_id)
     app_id = transaction_response['txn']['txn']['apid']
     return string(app_id)
+
+
+# Reason for blocking/rejecting Campaign
+def block_reason(client, passphrase, campaign_id, reason):
+    # declaring the sender
+    private_key = mnemonic.to_private_key(passphrase)
+    sender = account.address_from_private_key(private_key)
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    app_args = ["No Check"]
+
+    # create unsigned transaction
+    txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=reason)
+
+    # sign transaction
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+    confirmed_txn = wait_for_confirmation(client, tx_id, 4)
+    print("TXID: ", tx_id)
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+    # display results
+    transaction_response = client.pending_transaction_info(tx_id)
+    app_id = transaction_response['txn']['txn']['apid']
+
+    return app_id

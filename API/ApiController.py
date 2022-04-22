@@ -109,6 +109,19 @@ def update_admin():
         return lst_error
 
 
+# delete account
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    # Get the user Details
+    user_delete = request.get_json()
+    passphrase = user_delete['passphrase']
+    user_id = user_delete['user_id']
+
+    # delete the user by passing the params
+    deleted_id = transactions.create_update_account.delete_user(algod_client, passphrase, user_id)
+    return deleted_id
+
+
 # Creating a Campaign id for each campaign created by accounts.
 @app.route('/create_campaign', methods=["POST"])
 def create_campaign():
@@ -154,6 +167,20 @@ def update_campaign_details():
                                                                description, category, start_time, end_time,
                                                                fund_category, fund_limit, reward_type, country)
     return "Campaign details updated with campaign id {}".format(campaignID)
+
+
+# Block/Reject Campaign
+@app.route('/reject_campaign', methods=["POST"])
+def reject_campaign():
+    # Get Details
+    reject_campaign_details = request.get_json()
+    passphrase = reject_campaign_details['passphrase']
+    campaignID = reject_campaign_details['campaign_id']
+    reason = reject_campaign_details['reason']
+
+    # pass the details
+    reject_campaign_id = transactions.creator_investor.block_reason(algod_client, passphrase, campaignID, reason)
+    return reject_campaign_id
 
 
 # Group Transaction: (Call admin app and mint NFT)

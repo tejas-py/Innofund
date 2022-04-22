@@ -1,6 +1,7 @@
 # This transaction contains:
 # 1. Create Account for new users (Create application transaction).
 # 2. Update User(Creator and Investor) details (User update application transaction).
+# 3. Delete existing user. (User application delete transaction)
 
 from billiard.five import string
 from algosdk.future.transaction import *
@@ -20,13 +21,20 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l4
+bnz main_l6
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l3
+bnz main_l5
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l4
 err
-main_l3:
+main_l4:
+int 1
+return
+main_l5:
 byte "username"
 txna ApplicationArgs 0
 app_global_put
@@ -38,7 +46,7 @@ txna ApplicationArgs 2
 app_global_put
 int 1
 return
-main_l4:
+main_l6:
 txn NumAppArgs
 int 3
 ==
@@ -130,6 +138,39 @@ def update_user(client, user_passphrase, user_id, username, usertype, email):
 
     # await confirmation
 
+    confirmed_txn = wait_for_confirmation(client, tx_id, 4)
+    print("TXID: ", tx_id)
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+    # display results
+    transaction_response = client.pending_transaction_info(tx_id)
+    app_id = transaction_response['txn']['txn']['apid']
+
+    return string(app_id)
+
+
+# delete the user
+def delete_user(client, passphrase, user_id):
+
+    print("Deleting {} user".format(user_id))
+    # declare sender
+    private_key = mnemonic.to_private_key(passphrase)
+    sender = account.address_from_private_key(private_key)
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    print("Doing Transaction...")
+    # create unsigned transaction
+    txn = ApplicationDeleteTxn(sender, params, user_id)
+
+    # sign transaction
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
     confirmed_txn = wait_for_confirmation(client, tx_id, 4)
     print("TXID: ", tx_id)
     print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))

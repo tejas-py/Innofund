@@ -39,7 +39,8 @@ def approval_program():
     program = Cond(
         [Txn.application_id() == Int(0), on_creation],
         [Txn.on_completion() == OnComplete.NoOp, group_transaction],
-        [Txn.on_completion() == OnComplete.UpdateApplication, update_user]
+        [Txn.on_completion() == OnComplete.UpdateApplication, update_user],
+        [Txn.on_completion() == OnComplete.DeleteApplication, Approve()]
     )
 
     return program
