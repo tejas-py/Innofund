@@ -39,6 +39,7 @@ def load_resource(res):
     return data
 
 
+# get today second in epoch time
 def Today_seconds():
     today_time = time.localtime()
     seconds_today_time = time.mktime(today_time)
@@ -46,6 +47,7 @@ def Today_seconds():
     return today_seconds
 
 
+# matches the input address and application address
 def Check_app_creator_address(app_id, check_address):
 
     # connect to indexer
@@ -62,6 +64,7 @@ def Check_app_creator_address(app_id, check_address):
         return 'Address is not same as the creator address of the campaign'
 
 
+# gets the address from the application
 def get_address_from_application(app_id):
 
     # connect to indexer
