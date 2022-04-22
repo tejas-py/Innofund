@@ -1,3 +1,6 @@
+# This transaction contains:
+# 1. Create Account for new users (Create application transaction)
+
 from billiard.five import string
 from algosdk.future import transaction
 import utilities.CommonFunctions as com_func

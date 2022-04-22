@@ -1,4 +1,7 @@
-import time
+# This transaction contains:
+# 1. creation of admin account
+# 2. update admin account details
+# 3. group transaction: (Admin Call app and minting NFT by the admin)
 
 from billiard.five import string
 from algosdk.future import transaction
@@ -175,7 +178,7 @@ def update_admin(client, admin_passphrase,admin_id, username, usertype, email, p
     return string(app_id)
 
 
-# call admin user app and create asset
+# call admin app and create asset
 def admin_asset(client, admin_passphrase, usertype, password, admin_id, total_nft, unit_name, asset_name, file_path):
 
     # define address from private key of creator
@@ -189,7 +192,7 @@ def admin_asset(client, admin_passphrase, usertype, password, admin_id, total_nf
 
     print("Calling admin Application...")
 
-    # creator to call app(campaign): transaction 1
+    # admin to call app(admin): transaction 1
     sender = creator_account
     txn_1 = transaction.ApplicationNoOpTxn(sender, params, admin_id, args)
     print("Created Transaction 1: ", txn_1.get_txid())

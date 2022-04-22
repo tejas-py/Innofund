@@ -158,7 +158,7 @@ def update_campaign_details():
     return "Campaign details updated with campaign id {}".format(campaignID)
 
 
-# create asset (Group Transaction, Call admin app and mint NFT)
+# Group Transaction: (Call admin app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
     # get the details of the campaign to mint asset
@@ -211,7 +211,7 @@ def creator_investor():
     return txn_details
 
 
-# destroy asset (group txn, call app and destroy)
+# destroy asset, Group transaction: (campaign call app and destroy asset)
 @app.route('/burn_asset', methods=["POST"])
 def burnAsset():
     asset_details = request.get_json()

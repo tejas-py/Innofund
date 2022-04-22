@@ -1,3 +1,6 @@
+# This transaction contains:
+# 1. Update User(Creator and Investor) details (User update application transaction)
+
 from algosdk.future.transaction import *
 from billiard.five import string
 import utilities.CommonFunctions as com_func

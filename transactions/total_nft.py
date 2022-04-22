@@ -1,3 +1,7 @@
+# This transaction contains:
+# 1. List out all the assets created by admin.
+# 2. List information of a particular address.
+
 import json
 import API.connection
 

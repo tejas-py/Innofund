@@ -1,3 +1,6 @@
+# This transaction contains:
+# 1. Update the campaign app with new details of campaign (Campaign update application transaction)
+
 from algosdk import mnemonic
 from algosdk.future.transaction import *
 from billiard.five import string
