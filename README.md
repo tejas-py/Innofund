@@ -70,14 +70,20 @@ should be a (Admin, admin or ADMIN)
 iii) email:
 should be an email address i.e. _email@example.com_
 
-## **5. /create_campaign:**
+## **5. /delete_user:**
+Delete the account details of Admin, Creator, and Investor.
+Contains Smart Contract where it allows to delete admin, creator and investor's accounts.
+
+_API requires: Passphrase, user_id of the account that has to be deleted_
+
+## **6. /create_campaign:**
 Create campaign for the creator, by passing the information of the campaign, will generate the unique campaign id.
 Contains Smart Contract where details of the campaigns are passed as the arguments of the application. (campaign_approval.py & campaign_approval.teal)
 
 _API requires: creator passphrase, title, description, category, start time, end time, fund category, fund limit, reward type and country._
 checks in the smart contract: end time > start time.
 
-## **6. /update_campaign:**
+## **7. /update_campaign:**
 Update the existing campaign details for the same campaign id.
 Contains Smart Contract where details of the campaigns are passed as the arguments of the application. (campaign_approval.py & campaign_approval.teal)
 
@@ -85,29 +91,41 @@ _API requires: creator passphrase, campaign id,previous title, previous descript
 
 ###checks in the smart contract: end time > start time.
 
-## **7. /create_asset:**
+## **8. /reject_campaign:**
+When admin rejects or block the campaign with a reason, that reason gets stored in transaction by calling the campaign id.
+Contains smart contract that allow this transaction to occur.
+
+_API requires: passphrase, campaign_id and reason for rejecting or blocking the campaign
+
+## **9. /delete_campaign:**
+Delete the campaign details created by the creator
+Contains Smart Contract where it allows to delete the campaign.
+
+_API requires: Passphrase, campaign_id of the campaign that has to be deleted_
+
+## **10. /create_asset:**
 mint NFT, only by creator, it's a group transaction of admin application call and create asset.
 By calling application, it is checked that only admin is minting NFT, if the usertype is creator or investor, then the transaction is declined.
 
 _API requires: admin id, admin passphrase, usertype, password, asset amount, unit name, asset name and url._
 
-## **8. /transfer_asset:**
+## **11. /transfer_asset:**
 Transfer NFT from admin to campaign creator, it's a group transaction of campaign application call, creator opting in the asset, transfer of the NFT from admin to creator, and changing the manager, reserve, freeze, and clawback from admin to creator.
 By calling the application, it groups the NFT to that particular campaign id.
 
 _API requires: admin passphrase, asset id, campaign id, campaign creator address, asset amount._
 
-## **9. /creator_investor:**
+## **12. /creator_investor:**
 Transfer NFT from Campaign Creator to Investor, it's a group transaction of investor opting in the asset and transfer of asset from creator to investor.
 
 _API requires: in investor passphrase, creator passphrase, asset id, asset amount._
 
-## **10. /burn_asset:**
+## **13. /burn_asset:**
 Destroys the particular asset by creator, it's a group transaction of campaign application call and destroys asset
 
 _API requires: creator passphrase, asset id and campaign id._
 
-## **11. /participating:**
+## **14. /participating:**
 Investors participate in the running campaign by investing sum amount in the campaign. This API update the total investment done in the campaign by using smart contract.
 
 ### Smart contracts check:
@@ -117,20 +135,18 @@ iii) investment amount should not exceed the investment still required by campai
 
 _API requires: investor passphrase, campaign id, investment amount_
 
-## **12. /pull_investment:**
+## **15. /pull_investment:**
 Creator of the campaign pulls out the investment that was done by the investors in the particular campaign. It's a group transaction of campaign application call and amount transfer from escrow account to creator account.
 campaign application call, smart contract checks only if the campaign has ended, the creator is allowed to pull the investment.
 
 _API requires: creator passphrase, campaign id, amount (that has to be pulled by the creator)_
 
-## **13. /total_nft:**
+## **16. /total_nft:**
 Get total NFT minted by Admin account.
 
 _API requires: admin account public address_
 
-## **13. /account_info:**
+## **17. /account_info:**
 Get the account information of particular account.
 
 _API requires: account public address_
-
-

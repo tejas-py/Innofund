@@ -27,27 +27,34 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l24
+bnz main_l26
 txn OnCompletion
 int NoOp
 ==
-bnz main_l13
+bnz main_l15
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l4
+bnz main_l6
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l5
 err
-main_l4:
+main_l5:
+int 1
+return
+main_l6:
 txna ApplicationArgs 0
 byte "update_investment"
 ==
-bnz main_l10
+bnz main_l12
 txna ApplicationArgs 0
 byte "update_details"
 ==
-bnz main_l7
+bnz main_l9
 err
-main_l7:
+main_l9:
 byte "title"
 txna ApplicationArgs 1
 app_global_put
@@ -83,12 +90,12 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l9
+bnz main_l11
 err
-main_l9:
+main_l11:
 int 1
 return
-main_l10:
+main_l12:
 txna ApplicationArgs 2
 btoi
 byte "fund_limit"
@@ -103,9 +110,9 @@ txna ApplicationArgs 1
 btoi
 >
 &&
-bnz main_l12
+bnz main_l14
 err
-main_l12:
+main_l14:
 byte "total_investment"
 byte "total_investment"
 app_global_get
@@ -115,7 +122,7 @@ btoi
 app_global_put
 int 1
 return
-main_l13:
+main_l15:
 global GroupSize
 int 2
 ==
@@ -123,7 +130,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l21
+bnz main_l23
 global GroupSize
 int 2
 ==
@@ -131,7 +138,7 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l18
+bnz main_l20
 global GroupSize
 int 4
 ==
@@ -139,24 +146,24 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l17
+bnz main_l19
 err
-main_l17:
+main_l19:
 int 1
 return
-main_l18:
+main_l20:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l20
+bnz main_l22
 int 0
 return
-main_l20:
+main_l22:
 int 1
 return
-main_l21:
+main_l23:
 byte "end_time"
 app_global_get
 byte "start_time"
@@ -174,12 +181,12 @@ byte "total_investment"
 app_global_get
 >=
 &&
-bnz main_l23
+bnz main_l25
 err
-main_l23:
+main_l25:
 int 1
 return
-main_l24:
+main_l26:
 txn NumAppArgs
 int 10
 ==
@@ -223,9 +230,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l26
+bnz main_l28
 err
-main_l26:
+main_l28:
 int 1
 return
 """

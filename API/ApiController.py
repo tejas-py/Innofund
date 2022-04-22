@@ -183,6 +183,19 @@ def reject_campaign():
     return reject_campaign_id
 
 
+# delete account
+@app.route('/delete_campaign', methods=['POST'])
+def delete_campaign():
+    # Get the user Details
+    user_delete = request.get_json()
+    passphrase = user_delete['passphrase']
+    campaign_id = user_delete['campaign_id']
+
+    # delete the user by passing the params
+    deleted_campaign_id = transactions.create_update_account.delete_user(algod_client, passphrase, campaign_id)
+    return deleted_campaign_id
+
+
 # Group Transaction: (Call admin app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
