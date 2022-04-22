@@ -76,4 +76,3 @@ def get_address_from_application(app_id):
     app_param_info = app_info['params']
     account_address = app_param_info['creator']
     return account_address
-
