@@ -19,6 +19,14 @@ def check_username(username):
         return "Approved"
 
 
+# check the name.
+def check_name(name):
+    if len(name) > 255:
+        return "Error: Name should be less than 255 character"
+    else:
+        return "Approved"
+
+
 # Check the User type.
 def check_user(user_type):
     if user_type == "Investor" or user_type == "investor" or user_type == "Creator" or user_type == "creator":

@@ -29,9 +29,6 @@ app_global_put
 byte "email"
 txna ApplicationArgs 2
 app_global_put
-byte "password"
-txna ApplicationArgs 3
-app_global_put
 int 1
 return
 main_l7:
@@ -46,11 +43,11 @@ bnz main_l9
 err
 main_l9:
 txna ApplicationArgs 1
-byte "usertype"
+byte "name"
 app_global_get
 ==
 txna ApplicationArgs 2
-byte "password"
+byte "usertype"
 app_global_get
 ==
 &&
@@ -61,10 +58,10 @@ int 1
 return
 main_l12:
 txn NumAppArgs
-int 4
+int 3
 ==
 assert
-byte "username"
+byte "name"
 txna ApplicationArgs 0
 app_global_put
 byte "usertype"
@@ -72,9 +69,6 @@ txna ApplicationArgs 1
 app_global_put
 byte "email"
 txna ApplicationArgs 2
-app_global_put
-byte "password"
-txna ApplicationArgs 3
 app_global_put
 int 1
 return

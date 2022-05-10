@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import API.connection
 import utilities.check
 import transactions.admin
@@ -18,21 +18,22 @@ algod_client = API.connection.algo_conn()
 def create_account():
     # Get details of the user
     user_details = request.get_json()
-    username = user_details['username']
+    name = user_details['name']
     usertype = user_details['user_type']
     email = user_details['email']
 
     # check details of the user
-    name = utilities.check.check_username(username)
+    username = utilities.check.check_name(name)
     user_type = utilities.check.check_user(usertype)
     email_id = utilities.check.check_email(email)
-    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the user id for the user
-        userID = transactions.create_update_account.create_app(algod_client, username, usertype, email)
-        return "Username registration successful with user id: {}".format(userID)
+        userID = transactions.create_update_account.create_app(algod_client, name, usertype, email)
+        userid_json = {"user_id": userID}
+        return jsonify(userid_json)
     else:
-        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
-        return lst_error
+        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
+        return jsonify(lst_error)
 
 
 # create unique id for admin user
@@ -40,22 +41,22 @@ def create_account():
 def create_admin_account():
     # Get details of the admin
     user_details = request.get_json()
-    username = user_details['username']
+    name = user_details['name']
     usertype = user_details['user_type']
     email = user_details['email']
-    password = user_details['password']
 
     # check details of the admin
-    name = utilities.check.check_username(username)
+    username = utilities.check.check_name(name)
     user_type = utilities.check.check_admin(usertype)
     email_id = utilities.check.check_email(email)
-    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the admin id for the admin
-        userID = transactions.admin.create_admin_account(algod_client, username, usertype, email, password)
-        return "Admin registration successful with admin user id: {}".format(userID)
+        userID = transactions.admin.create_admin_account(algod_client, name, usertype, email)
+        userid_json = {"user_id": userID}
+        return jsonify(userid_json)
     else:
-        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
-        return lst_error
+        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
+        return jsonify(lst_error)
 
 
 # Updating user details
@@ -65,22 +66,23 @@ def update_user():
     user_details = request.get_json()
     user_passphrase = user_details['user_passphrase']
     user_id = user_details['user_id']
-    username = user_details['username']
+    name = user_details['name']
     usertype = user_details['user_type']
     email = user_details['email']
 
     # check details of the user
-    name = utilities.check.check_username(username)
+    username = utilities.check.check_name(name)
     user_type = utilities.check.check_user(usertype)
     email_id = utilities.check.check_email(email)
-    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the user id for the user
         userID = transactions.create_update_account.update_user(algod_client, user_passphrase, user_id,
-                                                                username, usertype, email)
-        return "User updated successful with user id: {}".format(userID)
+                                                                name, usertype, email)
+        userid_json = {"user_id": userID}
+        return jsonify(userid_json)
     else:
-        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
-        return lst_error
+        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
+        return jsonify(lst_error)
 
 
 # updating admin
@@ -90,23 +92,23 @@ def update_admin():
     user_details = request.get_json()
     admin_passphrase = user_details['admin_passphrase']
     admin_id = user_details['admin_id']
-    username = user_details['username']
+    name = user_details['name']
     usertype = user_details['user_type']
     email = user_details['email']
-    password = user_details['password']
 
     # check details of the user
-    name = utilities.check.check_username(username)
+    username = utilities.check.check_username(name)
     user_type = utilities.check.check_admin(usertype)
     email_id = utilities.check.check_email(email)
-    if name == "Approved" and user_type == "Approved" and email_id == "Approved":
+    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the admin id for the user
         userID = transactions.admin.update_admin(algod_client, admin_passphrase, admin_id,
-                                                 username, usertype, email, password)
-        return "admin updated successful with admin user id: {}".format(userID)
+                                                 name, usertype, email)
+        userid_json = {"user_id": userID}
+        return jsonify(userid_json)
     else:
-        lst_error = {"Username": name, "User Type": user_type, "Email": email_id}
-        return lst_error
+        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
+        return jsonify(lst_error)
 
 
 # delete account
@@ -119,7 +121,8 @@ def delete_user():
 
     # delete the user by passing the params
     deleted_id = transactions.create_update_account.delete_user(algod_client, passphrase, user_id)
-    return deleted_id
+    userid_json = {"deleted_user_id": deleted_id}
+    return jsonify(userid_json)
 
 
 # Creating a Campaign id for each campaign created by accounts.
@@ -142,7 +145,8 @@ def create_campaign():
     campaignID = transactions.creator_investor.create_app(algod_client, your_passphrase, title, description,
                                                           category, start_time, end_time, fund_category,
                                                           fund_limit, reward_type, country)
-    return campaignID
+    campaign_id_json = {"campaign_id": campaignID}
+    return jsonify(campaign_id_json)
 
 
 # update the existing campaign
@@ -166,7 +170,8 @@ def update_campaign_details():
     campaignID = transactions.creator_investor.update_campaign(algod_client, your_passphrase, campaignID, title,
                                                                description, category, start_time, end_time,
                                                                fund_category, fund_limit, reward_type, country)
-    return "Campaign details updated with campaign id {}".format(campaignID)
+    campaign_id_json = {"campaign_id": campaignID}
+    return jsonify(campaign_id_json)
 
 
 # Block/Reject Campaign
@@ -180,20 +185,23 @@ def reject_campaign():
 
     # pass the details
     reject_campaign_id = transactions.creator_investor.block_reason(algod_client, passphrase, campaignID, reason)
-    return reject_campaign_id
+    campaign_id_json = {"campaign_id": reject_campaign_id}
+    return jsonify(campaign_id_json)
 
 
-# delete account
+# delete account and unfreeze nft linked with the campaign
 @app.route('/delete_campaign', methods=['POST'])
 def delete_campaign():
     # Get the user Details
     user_delete = request.get_json()
     passphrase = user_delete['passphrase']
     campaign_id = user_delete['campaign_id']
+    nft_id = user_delete['nft_id']
 
     # delete the user by passing the params
-    deleted_campaign_id = transactions.create_update_account.delete_user(algod_client, passphrase, campaign_id)
-    return deleted_campaign_id
+    deleted_campaign_id = transactions.creator_investor.nft_delete(algod_client, passphrase, campaign_id, nft_id)
+    campaign_id_json = {"deleted_campaign_id": deleted_campaign_id}
+    return jsonify(campaign_id_json)
 
 
 # Group Transaction: (Call admin app and mint NFT)
@@ -203,17 +211,18 @@ def mint_nft():
     campaign_details = request.get_json()
     admin_id = campaign_details['admin_id']
     admin_passphrase = campaign_details['admin_passphrase']
+    name = campaign_details['name']
     usertype = campaign_details['usertype']
-    password = campaign_details['password']
     asset_amount = campaign_details['asset_amount']
     unit_name = campaign_details['unit_name']
     asset_name = campaign_details['asset_name']
     file_path = campaign_details['url']
 
     # pass the details to algorand to mint asset
-    asset_id = transactions.admin.admin_asset(algod_client, admin_passphrase, usertype, password, admin_id,
+    asset_id = transactions.admin.admin_asset(algod_client, admin_passphrase, name, usertype, admin_id,
                                               asset_amount, unit_name, asset_name, file_path)
-    return "Minted NFT id: {}".format(asset_id)
+    asset_id_json = {"asset_id": asset_id}
+    return jsonify(asset_id_json)
 
 
 # Transfer NFT from admin to campaign creator
@@ -223,14 +232,29 @@ def transfer_nft():
     transfer_details = request.get_json()
     admin_passphrase = transfer_details['admin_passphrase']
     asset_id = transfer_details['asset_id']
-    campaign_id = transfer_details['campaign_id']
-    campaign_creator_address = transfer_details['campaign_creator_address']
+    creator_passphrase = transfer_details['creator_passphrase']
     nft_amount = transfer_details['nft_amount']
 
     # send the details to transfer NFT
-    txn_details = transactions.creator_investor.call_nft_transfer(algod_client, admin_passphrase, asset_id,
-                                                                  campaign_id, campaign_creator_address, nft_amount)
-    return txn_details
+    txn_details = transactions.creator_investor.admin_creator(algod_client, admin_passphrase, asset_id,
+                                                              creator_passphrase, nft_amount)
+    txn_json = {"transaction_id": txn_details}
+    return jsonify(txn_json)
+
+
+# Assigning NFT to Campaign
+@app.route('/campaign_nft', methods=['POST'])
+def campaign_nft():
+    # get the details
+    nft = request.get_json()
+    campaign_creator_passphrase = nft['campaign_creator_passphrase']
+    asset_id = nft['asset_id']
+    campaign_id = nft['campaign_id']
+
+    # send the details
+    txn_id = transactions.creator_investor.call_nft(algod_client, campaign_creator_passphrase, asset_id, campaign_id)
+    txn_json = {"transaction_id": txn_id}
+    return jsonify(txn_json)
 
 
 # Transfer NFT from Campaign Creator to Investor
@@ -246,7 +270,8 @@ def creator_investor():
     # send the details for transaction to occur
     txn_details = transactions.creator_investor.nft_creator_investor(algod_client, investor_passphrase,
                                                                      creator_passphrase, asset_id, asset_amount)
-    return txn_details
+    txn_json = {"transaction_id": txn_details}
+    return jsonify(txn_json)
 
 
 # destroy asset, Group transaction: (campaign call app and destroy asset)
@@ -258,7 +283,8 @@ def burnAsset():
     campaignID = asset_details['CampaignID']
     burnAssetTxn = transactions.creator_investor.call_asset_destroy(algod_client, creator_passphrase,
                                                                     asset_id, campaignID)
-    return burnAssetTxn
+    txn_json = {"transaction_id": burnAssetTxn}
+    return jsonify(txn_json)
 
 
 # Investor Participating in Campaign by investing.
@@ -269,10 +295,15 @@ def participation():
     your_passphrase = participation_details['investor_passphrase']
     campaignID = participation_details['campaign_id']
     investment = participation_details['amount']
+
     # pass the details to algorand to give the transaction id
     app_id = transactions.creator_investor.update_app(algod_client, your_passphrase, campaignID, investment)
-    participationID = transactions.creator_investor.call_app(algod_client, your_passphrase, campaignID, investment)
-    return "Participation successful in campaign {} with transaction id {}".format(app_id, participationID)
+    if app_id:
+        participationID = transactions.creator_investor.call_app(algod_client, your_passphrase, campaignID, investment)
+        participation_json = {"participation_id": participationID}
+        return jsonify(participation_json)
+    else:
+        "Try Again"
 
 
 # Creator Pull out the investment that was done by the investors in the particular campaign
@@ -286,7 +317,8 @@ def pull_investment():
 
     # pass the details to the algorand to run the transaction
     pullID = transactions.creator_investor.pull_investment(algod_client, creator_passphrase, campaignID, pull)
-    return pullID
+    txn_details = {"transaction_id": pullID}
+    return jsonify(txn_details)
 
 
 # Get total NFT minted by Admin

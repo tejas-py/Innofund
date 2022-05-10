@@ -45,9 +45,12 @@ def approval_program():
             Txn.application_args[0] == Bytes("Check_again")
         ), check_again],
         [And(
-            Global.group_size() == Int(4),
+            Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("No Check")
         ), Approve()],
+        [
+            Txn.application_args[0] == Bytes("Blocking/Rejecting Campaign"), Approve()
+        ]
     )
 
     update_investment_details = Seq(

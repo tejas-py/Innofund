@@ -49,9 +49,6 @@ app_global_put
 byte "email"
 txna ApplicationArgs 2
 app_global_put
-byte "password"
-txna ApplicationArgs 3
-app_global_put
 int 1
 return
 main_l7:
@@ -66,11 +63,11 @@ bnz main_l9
 err
 main_l9:
 txna ApplicationArgs 1
-byte "usertype"
+byte "name"
 app_global_get
 ==
 txna ApplicationArgs 2
-byte "password"
+byte "usertype"
 app_global_get
 ==
 &&
@@ -81,10 +78,10 @@ int 1
 return
 main_l12:
 txn NumAppArgs
-int 4
+int 3
 ==
 assert
-byte "username"
+byte "name"
 txna ApplicationArgs 0
 app_global_put
 byte "usertype"
@@ -92,9 +89,6 @@ txna ApplicationArgs 1
 app_global_put
 byte "email"
 txna ApplicationArgs 2
-app_global_put
-byte "password"
-txna ApplicationArgs 3
 app_global_put
 int 1
 return
@@ -108,7 +102,7 @@ int 1
 
 
 # Generate a new admin account as well as new user id for each user that registers
-def create_admin_account(client, username, usertype, email, password):
+def create_admin_account(client, name, usertype, email):
     print("Creating application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -128,7 +122,7 @@ def create_admin_account(client, username, usertype, email, password):
 
     params = client.suggested_params()
 
-    args_list = [bytes(username, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8'), bytes(password, 'utf8')]
+    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
@@ -145,7 +139,7 @@ def create_admin_account(client, username, usertype, email, password):
 
 
 # update admin details on blockchain
-def update_admin(client, admin_passphrase, admin_id, username, usertype, email, password):
+def update_admin(client, admin_passphrase, admin_id, name, usertype, email):
     print("Updating existing admin....")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -161,7 +155,7 @@ def update_admin(client, admin_passphrase, admin_id, username, usertype, email, 
     # get node suggested parameters
     params = client.suggested_params()
 
-    app_args = [bytes(username, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8'), bytes(password, 'utf8')]
+    app_args = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
 
     # create unsigned transaction
     txn = transaction.ApplicationUpdateTxn(sender, params, admin_id, approval_program, clear_program, app_args)
@@ -186,7 +180,7 @@ def update_admin(client, admin_passphrase, admin_id, username, usertype, email, 
 
 
 # call admin app and create asset
-def admin_asset(client, admin_passphrase, usertype, password, admin_id, total_nft, unit_name, asset_name, file_path):
+def admin_asset(client, admin_passphrase, name, usertype, admin_id, total_nft, unit_name, asset_name, file_path):
 
     # define address from private key of creator
     creator_private_key = mnemonic.to_private_key(admin_passphrase)
@@ -195,7 +189,7 @@ def admin_asset(client, admin_passphrase, usertype, password, admin_id, total_nf
     # set suggested params
     params = client.suggested_params()
 
-    args = ["check_admin", bytes(usertype, 'utf-8'), bytes(password, 'utf-8')]
+    args = ["check_admin", bytes(name, 'utf-8'), bytes(usertype, 'utf-8')]
 
     print("Calling admin Application...")
 

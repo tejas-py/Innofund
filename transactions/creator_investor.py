@@ -27,7 +27,7 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l26
+bnz main_l28
 txn OnCompletion
 int NoOp
 ==
@@ -130,7 +130,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l23
+bnz main_l25
 global GroupSize
 int 2
 ==
@@ -138,32 +138,39 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l20
+bnz main_l22
 global GroupSize
-int 4
+int 2
 ==
 txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l19
+bnz main_l21
+txna ApplicationArgs 0
+byte "Blocking/Rejecting Campaign"
+==
+bnz main_l20
 err
-main_l19:
+main_l20:
 int 1
 return
-main_l20:
+main_l21:
+int 1
+return
+main_l22:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l22
+bnz main_l24
 int 0
 return
-main_l22:
+main_l24:
 int 1
 return
-main_l23:
+main_l25:
 byte "end_time"
 app_global_get
 byte "start_time"
@@ -181,12 +188,12 @@ byte "total_investment"
 app_global_get
 >=
 &&
-bnz main_l25
+bnz main_l27
 err
-main_l25:
+main_l27:
 int 1
 return
-main_l26:
+main_l28:
 txn NumAppArgs
 int 10
 ==
@@ -230,9 +237,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l28
+bnz main_l30
 err
-main_l28:
+main_l30:
 int 1
 return
 """
@@ -290,79 +297,116 @@ def create_app(client, your_passphrase, title, description,
     return string(campaign_id)
 
 
-# Campaign call and Transfer NFT to creator from Admin
-def call_nft_transfer(client, admin_passphrase, asset_id, campaignID, creator_passphrase, amount):
+# Transfer NFT to creator from Admin
+def admin_creator(client, admin_passphrase, asset_id, creator_passphrase, amount):
     # define address from private key of creator
-    creator_private_key = mnemonic.to_private_key(admin_passphrase)
-    creator_account = account.address_from_private_key(creator_private_key)
+    admin_private_key = mnemonic.to_private_key(admin_passphrase)
+    admin_account = account.address_from_private_key(admin_private_key)
 
     campaign_creator_private_key = mnemonic.to_private_key(creator_passphrase)
+    creator_address = account.address_from_private_key(campaign_creator_private_key)
 
-    # get the campaign creator address from the campaign id
-    campaign_creator_address = com_func.get_address_from_application(campaignID)
 
-    # set suggested params
+# set suggested params
     params = client.suggested_params()
 
-    args = ["No Check"]
-
-    print("Calling Campaign Application...")
-
-    # creator to call app(campaign): transaction 1
-    sender = creator_account
-    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args)
-    print("Created Transaction 1: ", txn_1.get_txid())
-
-    # Use the AssetTransferTxn class to transfer assets and opt-in: Transaction 2
-    txn_2 = AssetTransferTxn(
-        sender=campaign_creator_address,
+    # Use the AssetTransferTxn class to transfer assets and opt-in: Transaction 1
+    txn_1 = AssetTransferTxn(
+        sender=creator_address,
         sp=params,
-        receiver=campaign_creator_address,
+        receiver=creator_address,
         amt=0,
         index=asset_id)
-    print("Created Transaction 2: ", txn_2.get_txid())
+    print("Created Transaction 1: ", txn_1.get_txid())
 
-    # Minting NFT: Transaction 3
-    txn_3 = AssetTransferTxn(sender=creator_account,
+    # Transferring NFT from admin to campaign creator: Transaction 2
+    txn_2 = AssetTransferTxn(sender=admin_account,
                              sp=params,
-                             receiver=campaign_creator_address,
+                             receiver=creator_address,
                              amt=amount,
                              index=asset_id)
-    print("Created Transaction 3: ", txn_3.get_txid())
+    print("Created Transaction 2: ", txn_2.get_txid())
 
-    # Changing Manager of NFT: Transaction 4
-    txn_4 = AssetConfigTxn(sender=creator_account, sp=params, index=asset_id,
-                           manager=campaign_creator_address, reserve=campaign_creator_address,
-                           freeze=campaign_creator_address, clawback=campaign_creator_address)
-    print("Created Transaction 4: ", txn_4.get_txid())
+    # Changing Manager of NFT: Transaction 3
+    txn_3 = AssetConfigTxn(sender=admin_account, sp=params, index=asset_id,
+                           manager=creator_address, reserve=creator_address,
+                           freeze=creator_address, clawback=creator_address)
+    print("Created Transaction 3: ", txn_3.get_txid())
 
     # grouping both the txn to give the group id
     print("Grouping Transactions...")
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("groupID of the Transaction: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
     txn_3.group = group_id
-    txn_4.group = group_id
 
     # split transaction group
     print("Splitting unsigned transaction group...")
 
-    # signing the transactions
-    stxn_1 = txn_1.sign(creator_private_key)
-    print("Investor signed txn_1: ", stxn_1.get_txid())
+    stxn_1 = txn_1.sign(campaign_creator_private_key)
+    print("Creator signed txn_1: ", stxn_1.get_txid())
 
-    stxn_2 = txn_2.sign(campaign_creator_private_key)
-    print("Investor signed txn_2: ", stxn_2.get_txid())
+    stxn_2 = txn_2.sign(admin_private_key)
+    print("Creator signed txn_2: ", stxn_2.get_txid())
 
-    stxn_3 = txn_3.sign(creator_private_key)
-    print("Investor signed txn_3: ", stxn_3.get_txid())
-
-    stxn_4 = txn_4.sign(creator_private_key)
-    print("Investor signed txn_3: ", stxn_4.get_txid())
+    stxn_3 = txn_3.sign(admin_private_key)
+    print("Creator signed txn_3: ", stxn_3.get_txid())
 
     # grouping the sign transactions
-    signedGroup = [stxn_1, stxn_2, stxn_3, stxn_4]
+    signedGroup = [stxn_1, stxn_2, stxn_3]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
+    com_func.wait_for_confirmation(client, tx_id)
+
+    return "Transfer successful with transaction id: {} ".format(tx_id)
+
+
+# Campaign call and freeze nft
+def call_nft(client, campaign_creator_passphrase, asset_id, campaign_id):
+    # define address from private key of creator
+    creator_private_key = mnemonic.to_private_key(campaign_creator_passphrase)
+    creator_account = account.address_from_private_key(creator_private_key)
+
+    # set suggested params
+    params = client.suggested_params()
+
+    # Campaign application call: transaction 1
+    app_arg = ["No Check"]
+    txn_1 = ApplicationNoOpTxn(creator_account, params, campaign_id, app_arg)
+    print("Created Transaction 1: ", txn_1.get_txid())
+
+    # NFT Freeze: transaction 2
+    txn_2 = AssetFreezeTxn(
+        sender=creator_account,
+        sp=params,
+        index=asset_id,
+        target=creator_account,
+        new_freeze_state=True
+    )
+    print("Created Transaction 2: ", txn_2.get_txid())
+    # grouping both the txn to give the group id
+    print("Grouping Transactions...")
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    # split transaction group
+    print("Splitting unsigned transaction group...")
+
+    stxn_1 = txn_1.sign(creator_private_key)
+    print("Investor signed txn_2: ", stxn_1.get_txid())
+
+    stxn_2 = txn_2.sign(creator_private_key)
+    print("Investor signed txn_3: ", stxn_2.get_txid())
+
+    # grouping the sign transactions
+    signedGroup = [stxn_1, stxn_2]
 
     # send transactions
     print("Sending transaction group...")
@@ -623,10 +667,10 @@ def call_asset_destroy(client, creator_passphrase, asset_id, campaignID):
 
     # signing the transactions
     stxn_1 = txn_1.sign(creator_private_key)
-    print("Investor signed txn_1: ", stxn_1.get_txid())
+    print("Creator signed txn_1: ", stxn_1.get_txid())
 
     stxn_2 = txn_2.sign(creator_private_key)
-    print("Investor signed txn_2: ", stxn_2.get_txid())
+    print("Creator signed txn_2: ", stxn_2.get_txid())
 
     # grouping the sign transactions
     signedGroup = [stxn_1, stxn_2]
@@ -690,7 +734,7 @@ def block_reason(client, passphrase, campaign_id, reason):
     # get node suggested parameters
     params = client.suggested_params()
 
-    app_args = ["No Check"]
+    app_args = ["Blocking/Rejecting Campaign"]
 
     # create unsigned transaction
     txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=reason)
@@ -711,3 +755,56 @@ def block_reason(client, passphrase, campaign_id, reason):
     app_id = transaction_response['txn']['txn']['apid']
 
     return app_id
+
+
+# delete campaign and unfreeze NFT
+def nft_delete(client, creator_passphrase, campaign_id, asset_id):
+    # define address from private key of creator
+    creator_private_key = mnemonic.to_private_key(creator_passphrase)
+    creator_account = account.address_from_private_key(creator_private_key)
+
+    # set suggested params
+    params = client.suggested_params()
+
+    # unfreeze nft: Transaction 1
+    txn_1 = AssetFreezeTxn(
+        sender=creator_account,
+        sp=params,
+        index=asset_id,
+        target=creator_account,
+        new_freeze_state=False
+    )
+    print("Created Transaction 1: ", txn_1.get_txid())
+
+    # delete campaign: Transaction 2
+    txn_2 = ApplicationDeleteTxn(creator_account, params, campaign_id)
+    print("Created Transaction 2: ", txn_2.get_txid())
+
+    # grouping both the txn to give the group id
+    print("Grouping Transactions...")
+    group_id = calculate_group_id([txn_1, txn_2])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    # split transaction group
+    print("Splitting unsigned transaction group...")
+
+    # signing the transactions
+    stxn_1 = txn_1.sign(creator_private_key)
+    print("Creator signed txn_1: ", stxn_1.get_txid())
+
+    stxn_2 = txn_2.sign(creator_private_key)
+    print("Creator signed txn_2: ", stxn_2.get_txid())
+
+    # grouping the sign transactions
+    signedGroup = [stxn_1, stxn_2]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
+    com_func.wait_for_confirmation(client, tx_id)
+
+    return string(tx_id)

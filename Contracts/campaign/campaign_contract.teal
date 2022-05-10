@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l26
+bnz main_l28
 txn OnCompletion
 int NoOp
 ==
@@ -105,7 +105,7 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l23
+bnz main_l25
 global GroupSize
 int 2
 ==
@@ -113,32 +113,39 @@ txna ApplicationArgs 0
 byte "Check_again"
 ==
 &&
-bnz main_l20
+bnz main_l22
 global GroupSize
-int 4
+int 2
 ==
 txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l19
+bnz main_l21
+txna ApplicationArgs 0
+byte "Blocking/Rejecting Campaign"
+==
+bnz main_l20
 err
-main_l19:
+main_l20:
 int 1
 return
-main_l20:
+main_l21:
+int 1
+return
+main_l22:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l22
+bnz main_l24
 int 0
 return
-main_l22:
+main_l24:
 int 1
 return
-main_l23:
+main_l25:
 byte "end_time"
 app_global_get
 byte "start_time"
@@ -156,12 +163,12 @@ byte "total_investment"
 app_global_get
 >=
 &&
-bnz main_l25
+bnz main_l27
 err
-main_l25:
+main_l27:
 int 1
 return
-main_l26:
+main_l28:
 txn NumAppArgs
 int 10
 ==
@@ -205,8 +212,8 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l28
+bnz main_l30
 err
-main_l28:
+main_l30:
 int 1
 return

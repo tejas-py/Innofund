@@ -5,6 +5,7 @@ import base64
 import os
 import time
 import API.connection
+import json
 
 
 # compile program used to compile the source code, used when new application is created
@@ -78,3 +79,9 @@ def get_address_from_application(app_id):
     app_param_info = app_info['params']
     account_address = app_param_info['creator']
     return account_address
+
+
+# Convert to JSON
+def to_json(json_file):
+    json_result = json.dumps(json_file, indent=2, sort_keys=True)
+    return json_result
