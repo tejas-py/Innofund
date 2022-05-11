@@ -97,15 +97,16 @@ def create_app(client, username, usertype, email):
                                approval_program, clear_program,
                                global_schema, local_schema, args_list)
 
-    signed_txn = txn.sign(private_key)
-    tx_id = signed_txn.transaction.get_txid()
-    client.send_transactions([signed_txn])
-    com_func.wait_for_confirmation(client, tx_id)
-    transaction_response = client.pending_transaction_info(tx_id)
-    app_id = transaction_response['application-index']
-    print("Created new user id: ", app_id)
+    # signed_txn = txn.sign(private_key)
+    # tx_id = signed_txn.transaction.get_txid()
+    # client.send_transactions([signed_txn])
+    # com_func.wait_for_confirmation(client, tx_id)
+    # transaction_response = client.pending_transaction_info(tx_id)
+    # app_id = transaction_response['application-index']
+    # print("Created new user id: ", app_id)
 
-    return string(app_id)
+    # return string(app_id)
+    return string(txn)
 
 
 # Update User(Creator and Investor) details (User update application transaction)

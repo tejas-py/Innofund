@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import API.connection
 import utilities.check
+import utilities.CommonFunctions
 import transactions.admin
 import transactions.creator_investor
 import transactions.indexer
@@ -29,8 +30,8 @@ def create_account():
     if username == "Approved" and user_type == "Approved" and email_id == "Approved":
         # give the user id for the user
         userID = transactions.create_update_account.create_app(algod_client, name, usertype, email)
-        userid_json = {"user_id": userID}
-        return jsonify(userid_json)
+        # userid_json = {"user_id": userID}
+        return userID
     else:
         lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
         return jsonify(lst_error)
@@ -337,6 +338,18 @@ def account_information():
     address = account_data['account']
     account = transactions.indexer.account_info(address)
     return account
+
+
+# Get the confirmation of transaction from Algorand
+@app.route('/get_confirmation', methods=['POST'])
+def transaction_confirmation():
+    # get the transaction id
+    transaction_details = request.get_json()
+    txn_id = transaction_details['txn_id']
+
+    # send the transaction id
+    txn_info = utilities.CommonFunctions.wait_for_confirmation(algod_client, txn_id)
+    return jsonify(txn_info)
 
 
 # running the API
