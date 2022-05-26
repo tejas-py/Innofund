@@ -287,14 +287,26 @@ def admin_creator(client, asset_id, amount, admin_account, creator_address):
     params = client.suggested_params()
 
     # Transferring NFT from admin to campaign creator: Transaction 1
-    txn = AssetTransferTxn(sender=admin_account,
-                           sp=params,
-                           receiver=creator_address,
-                           amt=amount,
-                           index=asset_id)
+    txn_1 = AssetTransferTxn(sender=admin_account,
+                             sp=params,
+                             receiver=creator_address,
+                             amt=amount,
+                             index=asset_id)
+
+    # changing manager
+    txn_2 = AssetConfigTxn(sender=admin_account, sp=params, index=asset_id,
+                           manager=creator_address, reserve=creator_address,
+                           freeze=creator_address, clawback=creator_address)
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
 
     txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
 
     return txngrp
 
