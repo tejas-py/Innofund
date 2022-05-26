@@ -7,6 +7,9 @@ import time
 import API.connection
 import json
 
+# connect to indexer
+myindexer = API.connection.connect_indexer()
+
 
 # compile program used to compile the source code, used when new application is created
 def compile_program(client, source_code):
@@ -52,16 +55,11 @@ def Today_seconds():
 
 # matches the input address and application address
 def Check_app_creator_address(app_id, check_address):
-
-    # connect to indexer
-    myindexer = API.connection.connect_indexer()
-
     # Get the creator address of the application
     response = myindexer.applications(app_id)
-    app_info = response['application']
-    app_param_info = app_info['params']
+    app_info = response['application']['params']['creator']
 
-    if check_address == app_param_info['creator']:
+    if check_address == app_info:
         return 'Match'
     else:
         return 'Address is not same as the creator address of the campaign'
@@ -69,15 +67,9 @@ def Check_app_creator_address(app_id, check_address):
 
 # gets the address from the application
 def get_address_from_application(app_id):
-
-    # connect to indexer
-    myindexer = API.connection.connect_indexer()
-
     # Get the creator address of the application
     response = myindexer.applications(app_id)
-    app_info = response['application']
-    app_param_info = app_info['params']
-    account_address = app_param_info['creator']
+    account_address = response['application']['params']['creator']
     return account_address
 
 
@@ -85,3 +77,22 @@ def get_address_from_application(app_id):
 def to_json(json_file):
     json_result = json.dumps(json_file, indent=2, sort_keys=True)
     return json_result
+
+
+def check_balance(wallet_address, amt):
+    account_info = myindexer.account_info(wallet_address)
+    balance = account_info['account']['amount']
+    if balance >= amt:
+        return True
+    else:
+        return False
+
+
+def check_asset(asset_id):
+    try:
+        asset_info = myindexer.asset_info(asset_id)
+        if asset_info:
+            return "Asset exist"
+    except Exception as e:
+        return e
+

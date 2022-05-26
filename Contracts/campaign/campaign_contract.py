@@ -9,31 +9,32 @@ def approval_program():
 
     on_creation = Seq(
         [
-            Assert(Txn.application_args.length() == Int(10)),
+            Assert(Txn.application_args.length() == Int(8)),
             App.globalPut(Bytes("title"), Txn.application_args[0]),
-            App.globalPut(Bytes("description"), Txn.application_args[1]),
-            App.globalPut(Bytes("category"), Txn.application_args[2]),
-            App.globalPut(Bytes("start_time"), Btoi(Txn.application_args[3])),
-            App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[4])),
-            App.globalPut(Bytes("funding_category"), Txn.application_args[5]),
-            App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[6])),
-            App.globalPut(Bytes("reward_type"), Txn.application_args[7]),
-            App.globalPut(Bytes("country"), Txn.application_args[8]),
-            App.globalPut(Bytes("total_investment"), Btoi(Txn.application_args[9])),
+            App.globalPut(Bytes("category"), Txn.application_args[1]),
+            App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[2])),
+            App.globalPut(Bytes("funding_category"), Txn.application_args[3]),
+            App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[4])),
+            App.globalPut(Bytes("reward_type"), Txn.application_args[5]),
+            App.globalPut(Bytes("country"), Txn.application_args[6]),
+            App.globalPut(Bytes("total_investment"), Btoi(Txn.application_args[7])),
             time_check
         ]
     )
 
     check = Cond(
         [And(
-            App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")),
             Btoi(Txn.application_args[1]) <= App.globalGet(Bytes("fund_limit")),
             App.globalGet(Bytes("fund_limit")) >= App.globalGet(Bytes("total_investment"))
         ), Approve()
         ]
     )
 
-    check_again = If(Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")), Approve(), Reject())
+    check_campaign_end = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), Approve(), Reject())
 
     group_transaction = Cond(
         [And(
@@ -42,8 +43,8 @@ def approval_program():
         ), check],
         [And(
             Global.group_size() == Int(2),
-            Txn.application_args[0] == Bytes("Check_again")
-        ), check_again],
+            Txn.application_args[0] == Bytes("Check if the campaign has ended.")
+        ), check_campaign_end],
         [And(
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("No Check")
@@ -68,21 +69,15 @@ def approval_program():
         ), update_investment_details]
     )
 
-    check_updated_time = Cond(
-        [App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")), Approve()]
-    )
-
     update_campaign_details = Seq(
         App.globalPut(Bytes("title"), Txn.application_args[1]),
-        App.globalPut(Bytes("description"), Txn.application_args[2]),
-        App.globalPut(Bytes("category"), Txn.application_args[3]),
-        App.globalPut(Bytes("start_time"), Btoi(Txn.application_args[4])),
-        App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[5])),
-        App.globalPut(Bytes("funding_category"), Txn.application_args[6]),
-        App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[7])),
-        App.globalPut(Bytes("reward_type"), Txn.application_args[8]),
-        App.globalPut(Bytes("country"), Txn.application_args[9]),
-        check_updated_time
+        App.globalPut(Bytes("category"), Txn.application_args[2]),
+        App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[3])),
+        App.globalPut(Bytes("funding_category"), Txn.application_args[4]),
+        App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[5])),
+        App.globalPut(Bytes("reward_type"), Txn.application_args[6]),
+        App.globalPut(Bytes("country"), Txn.application_args[7]),
+        Approve()
     )
 
     update_campaign = Cond(

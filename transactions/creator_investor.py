@@ -27,11 +27,11 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l28
+bnz main_l26
 txn OnCompletion
 int NoOp
 ==
-bnz main_l15
+bnz main_l13
 txn OnCompletion
 int UpdateApplication
 ==
@@ -48,7 +48,7 @@ main_l6:
 txna ApplicationArgs 0
 byte "update_investment"
 ==
-bnz main_l12
+bnz main_l10
 txna ApplicationArgs 0
 byte "update_details"
 ==
@@ -58,44 +58,29 @@ main_l9:
 byte "title"
 txna ApplicationArgs 1
 app_global_put
-byte "description"
+byte "category"
 txna ApplicationArgs 2
 app_global_put
-byte "category"
-txna ApplicationArgs 3
-app_global_put
-byte "start_time"
-txna ApplicationArgs 4
-btoi
-app_global_put
 byte "end_time"
-txna ApplicationArgs 5
+txna ApplicationArgs 3
 btoi
 app_global_put
 byte "funding_category"
-txna ApplicationArgs 6
+txna ApplicationArgs 4
 app_global_put
 byte "fund_limit"
-txna ApplicationArgs 7
+txna ApplicationArgs 5
 btoi
 app_global_put
 byte "reward_type"
-txna ApplicationArgs 8
+txna ApplicationArgs 6
 app_global_put
 byte "country"
-txna ApplicationArgs 9
+txna ApplicationArgs 7
 app_global_put
-byte "end_time"
-app_global_get
-byte "start_time"
-app_global_get
->
-bnz main_l11
-err
-main_l11:
 int 1
 return
-main_l12:
+main_l10:
 txna ApplicationArgs 2
 btoi
 byte "fund_limit"
@@ -110,9 +95,9 @@ txna ApplicationArgs 1
 btoi
 >
 &&
-bnz main_l14
+bnz main_l12
 err
-main_l14:
+main_l12:
 byte "total_investment"
 byte "total_investment"
 app_global_get
@@ -122,7 +107,7 @@ btoi
 app_global_put
 int 1
 return
-main_l15:
+main_l13:
 global GroupSize
 int 2
 ==
@@ -130,15 +115,15 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l25
+bnz main_l23
 global GroupSize
 int 2
 ==
 txna ApplicationArgs 0
-byte "Check_again"
+byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l22
+bnz main_l20
 global GroupSize
 int 2
 ==
@@ -146,90 +131,83 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l21
+bnz main_l19
 txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
-bnz main_l20
+bnz main_l18
 err
+main_l18:
+int 1
+return
+main_l19:
+int 1
+return
 main_l20:
-int 1
-return
-main_l21:
-int 1
-return
-main_l22:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l24
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l22
 int 0
 return
-main_l24:
+main_l22:
 int 1
 return
-main_l25:
-byte "end_time"
-app_global_get
-byte "start_time"
-app_global_get
->
+main_l23:
 txna ApplicationArgs 1
 btoi
 byte "fund_limit"
 app_global_get
 <=
-&&
 byte "fund_limit"
 app_global_get
 byte "total_investment"
 app_global_get
 >=
 &&
-bnz main_l27
+bnz main_l25
 err
-main_l27:
+main_l25:
 int 1
 return
-main_l28:
+main_l26:
 txn NumAppArgs
-int 10
+int 8
 ==
 assert
 byte "title"
 txna ApplicationArgs 0
 app_global_put
-byte "description"
+byte "category"
 txna ApplicationArgs 1
 app_global_put
-byte "category"
-txna ApplicationArgs 2
-app_global_put
-byte "start_time"
-txna ApplicationArgs 3
-btoi
-app_global_put
 byte "end_time"
-txna ApplicationArgs 4
+txna ApplicationArgs 2
 btoi
 app_global_put
 byte "funding_category"
-txna ApplicationArgs 5
+txna ApplicationArgs 3
 app_global_put
 byte "fund_limit"
-txna ApplicationArgs 6
+txna ApplicationArgs 4
 btoi
 app_global_put
 byte "reward_type"
-txna ApplicationArgs 7
+txna ApplicationArgs 5
 app_global_put
 byte "country"
-txna ApplicationArgs 8
+txna ApplicationArgs 6
 app_global_put
 byte "total_investment"
-txna ApplicationArgs 9
+txna ApplicationArgs 7
 btoi
 app_global_put
 byte "end_time"
@@ -237,9 +215,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l30
+bnz main_l28
 err
-main_l30:
+main_l28:
 int 1
 return
 """
@@ -251,34 +229,25 @@ int 1
 
 
 # Create new campaign
-def create_app(client, your_passphrase, title, description,
-               category, start_time, end_time, fund_category,
-               fund_limit, reward_type, country):
-    print("Creating application...")
+def create_campaign_app(client, public_address, title,
+                        category, end_time, fund_category, fund_limit,
+                        reward_type, country):
+    print("Creating campaign application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
 
-    # Fetching public and private address from the passphrase, passed as argument.
-    private_key = mnemonic.to_private_key(your_passphrase)
-    address = account.address_from_private_key(private_key)
+    # Declaring sender
+    sender = public_address
 
-    account_info = client.account_info(address)
-    print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
-
-    sender = address
     on_complete = OnComplete.NoOpOC.real
-
     params = client.suggested_params()
-
-    # params.flat_fee = True
-    # params.fee = 2000
 
     # investment in the campaign at the time of creation
     investment = 0
 
-    args_list = [bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
-                 int(start_time), int(end_time), bytes(fund_category, 'utf8'),
+    args_list = [bytes(title, 'utf8'), bytes(category, 'utf8'),
+                 int(end_time), bytes(fund_category, 'utf8'),
                  int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(investment)]
 
     txn = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
@@ -286,91 +255,59 @@ def create_app(client, your_passphrase, title, description,
                                global_schema=global_schema, local_schema=local_schema, app_args=args_list,
                                note="Campaign")
 
-    signed_txn = txn.sign(private_key)
-    tx_id = signed_txn.transaction.get_txid()
-    client.send_transactions([signed_txn])
-    com_func.wait_for_confirmation(client, tx_id)
-    transaction_response = client.pending_transaction_info(tx_id)
-    campaign_id = transaction_response['application-index']
-    print("Created new Campaign ID: ", campaign_id)
-
-    return string(campaign_id)
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    return txngrp
 
 
-# Transfer NFT to creator from Admin
-def admin_creator(client, admin_passphrase, asset_id, creator_passphrase, amount):
-    # define address from private key of creator
-    admin_private_key = mnemonic.to_private_key(admin_passphrase)
-    admin_account = account.address_from_private_key(admin_private_key)
+# Opt-in to NFT
+def opt_in(client, creator_address, asset_id):
 
-    campaign_creator_private_key = mnemonic.to_private_key(creator_passphrase)
-    creator_address = account.address_from_private_key(campaign_creator_private_key)
-
-
-# set suggested params
+    print(f"Opt-in {asset_id} Asset...")
+    # set suggested params
     params = client.suggested_params()
 
-    # Use the AssetTransferTxn class to transfer assets and opt-in: Transaction 1
-    txn_1 = AssetTransferTxn(
+    # Use the AssetTransferTxn class to transfer assets and opt-in
+    txn = AssetTransferTxn(
         sender=creator_address,
         sp=params,
         receiver=creator_address,
         amt=0,
         index=asset_id)
-    print("Created Transaction 1: ", txn_1.get_txid())
 
-    # Transferring NFT from admin to campaign creator: Transaction 2
-    txn_2 = AssetTransferTxn(sender=admin_account,
-                             sp=params,
-                             receiver=creator_address,
-                             amt=amount,
-                             index=asset_id)
-    print("Created Transaction 2: ", txn_2.get_txid())
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn)})
 
-    # Changing Manager of NFT: Transaction 3
-    txn_3 = AssetConfigTxn(sender=admin_account, sp=params, index=asset_id,
-                           manager=creator_address, reserve=creator_address,
-                           freeze=creator_address, clawback=creator_address)
-    print("Created Transaction 3: ", txn_3.get_txid())
+    return txngrp
 
-    # grouping both the txn to give the group id
-    print("Grouping Transactions...")
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
-    print("groupID of the Transaction: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
-    txn_3.group = group_id
 
-    # split transaction group
-    print("Splitting unsigned transaction group...")
+# Transfer NFT to creator from Admin
+def admin_creator(client, asset_id, amount, admin_account, creator_address):
 
-    stxn_1 = txn_1.sign(campaign_creator_private_key)
-    print("Creator signed txn_1: ", stxn_1.get_txid())
+    print(f"Transferring {asset_id} NFT...")
 
-    stxn_2 = txn_2.sign(admin_private_key)
-    print("Creator signed txn_2: ", stxn_2.get_txid())
+    # set suggested params
+    params = client.suggested_params()
 
-    stxn_3 = txn_3.sign(admin_private_key)
-    print("Creator signed txn_3: ", stxn_3.get_txid())
+    # Transferring NFT from admin to campaign creator: Transaction 1
+    txn = AssetTransferTxn(sender=admin_account,
+                           sp=params,
+                           receiver=creator_address,
+                           amt=amount,
+                           index=asset_id)
 
-    # grouping the sign transactions
-    signedGroup = [stxn_1, stxn_2, stxn_3]
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn)})
 
-    # send transactions
-    print("Sending transaction group...")
-    tx_id = client.send_transactions(signedGroup)
-
-    # wait for confirmation
-    com_func.wait_for_confirmation(client, tx_id)
-
-    return "Transfer successful with transaction id: {} ".format(tx_id)
+    return txngrp
 
 
 # Campaign call and freeze nft
-def call_nft(client, campaign_creator_passphrase, asset_id, campaign_id):
+def call_nft(client, asset_id, campaign_id):
+
+    print(f"Assigning {asset_id} NFT to {campaign_id} Campaign...")
     # define address from private key of creator
-    creator_private_key = mnemonic.to_private_key(campaign_creator_passphrase)
-    creator_account = account.address_from_private_key(creator_private_key)
+    creator_account = com_func.get_address_from_application(campaign_id)
 
     # set suggested params
     params = client.suggested_params()
@@ -378,7 +315,6 @@ def call_nft(client, campaign_creator_passphrase, asset_id, campaign_id):
     # Campaign application call: transaction 1
     app_arg = ["No Check"]
     txn_1 = ApplicationNoOpTxn(creator_account, params, campaign_id, app_arg)
-    print("Created Transaction 1: ", txn_1.get_txid())
 
     # NFT Freeze: transaction 2
     txn_2 = AssetFreezeTxn(
@@ -388,84 +324,61 @@ def call_nft(client, campaign_creator_passphrase, asset_id, campaign_id):
         target=creator_account,
         new_freeze_state=True
     )
-    print("Created Transaction 2: ", txn_2.get_txid())
-    # grouping both the txn to give the group id
-    print("Grouping Transactions...")
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("groupID of the Transaction: ", group_id)
+    print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
 
-    # split transaction group
-    print("Splitting unsigned transaction group...")
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
 
-    stxn_1 = txn_1.sign(creator_private_key)
-    print("Investor signed txn_2: ", stxn_1.get_txid())
-
-    stxn_2 = txn_2.sign(creator_private_key)
-    print("Investor signed txn_3: ", stxn_2.get_txid())
-
-    # grouping the sign transactions
-    signedGroup = [stxn_1, stxn_2]
-
-    # send transactions
-    print("Sending transaction group...")
-    tx_id = client.send_transactions(signedGroup)
-
-    # wait for confirmation
-    com_func.wait_for_confirmation(client, tx_id)
-
-    return "Transfer successful with transaction id: {} ".format(tx_id)
+    return txngrp
 
 
 # Transfer NFT from Campaign Creator to Investor
-def nft_creator_investor(client, investor_passphrase, creator_passphrase, asset_id, asset_amount):
-    # Getting private and public key of campaign creator
-    creator_private_key = mnemonic.to_private_key(creator_passphrase)
-    creator_address = account.address_from_private_key(creator_private_key)
+def nft_creator_investor(client, creator_address, investor_address, asset_id, asset_amount):
 
-    # getting private and public key of investor
-    investor_private_key = mnemonic.to_private_key(investor_passphrase)
-    investor_address = account.address_from_private_key(investor_private_key)
+    print(f"Transfering {asset_id} NFT to {investor_address}")
 
     # declaring parameters
     params = client.suggested_params()
 
-    # Use the AssetTransferTxn class to transfer assets and opt-in
-    txn_1 = AssetTransferTxn(
-        sender=investor_address,
-        sp=params,
-        receiver=investor_address,
-        amt=0,
-        index=asset_id)
-    stxn = txn_1.sign(investor_private_key)
-    txid = client.send_transaction(stxn)
-    print("Signed transaction with txID: {}".format(txid))
-    # Wait for the transaction to be confirmed
-    confirmed_txn = wait_for_confirmation(client, txid, 4)
-    print("TXID: ", txid)
-    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
+    # unfreeze NFT
+    txn_1 = AssetFreezeTxn(sender=creator_address, sp=params, index=asset_id,
+                           target=creator_address, new_freeze_state=False)
 
-    txn_2 = AssetTransferTxn(sender=creator_address,
-                             sp=params,
-                             receiver=investor_address,
-                             amt=asset_amount,
-                             index=asset_id)
-    sign_txn = txn_2.sign(creator_private_key)
-    tx_id = client.send_transaction(sign_txn)
-    print("Signed transaction with txID: {}".format(tx_id))
-    # Wait for the transaction to be confirmed
-    confirmed_txn_2 = wait_for_confirmation(client, tx_id, 4)
-    print("TXID: ", tx_id)
-    print("Result confirmed in round: {}".format(confirmed_txn_2['confirmed-round']))
-    return "Transaction successful with transaction id: {}".format(tx_id)
+    # Change Manager
+    txn_2 = AssetConfigTxn(sender=creator_address, sp=params, index=asset_id,
+                           manager=investor_address, reserve=investor_address,
+                           freeze=investor_address, clawback=investor_address)
+
+    # transaction from creator to investor
+    txn_3 = AssetTransferTxn(sender=creator_address, sp=params, receiver=investor_address,
+                             amt=asset_amount, index=asset_id)
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+    txn_3.group = group_id
+
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_3)})
+    return txngrp
 
 
 # Investors participate in the campaigns and invest
-def call_app(client, your_passphrase, campaignID, investment):
-    # Converting Passphrase to public and private key.
-    investor_private_key = mnemonic.to_private_key(your_passphrase)
-    investor_account = account.address_from_private_key(investor_private_key)
+def update_call_app(client, campaignID, investment, investor_account):
+
+    print(f"Investing in {campaignID}...")
 
     escrow_account = "BJATCHES5YJZJ7JITYMVLSSIQAVAWBQRVGPQUDT5AZ2QSLDSXWWM46THOY"
 
@@ -475,13 +388,13 @@ def call_app(client, your_passphrase, campaignID, investment):
     # create transactions
     print("Creating transactions...")
 
-    # Investor Account to call app.
+    # Investor Account to call campaign app: Transaction 1
     sender = investor_account
     args_list = ["Check", int(investment)]
     txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
     print("Created Transaction: ", txn_1.get_txid())
 
-    # Transaction from Investor Account to Escrow Account
+    # Transaction from Investor Account to Escrow Account: Transaction 2
     sender = investor_account
     receiver = escrow_account
     amount = investment
@@ -493,42 +406,23 @@ def call_app(client, your_passphrase, campaignID, investment):
     print("Grouping transactions...")
     # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("groupID of the Transaction: ", group_id)
+    print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
 
-    # split transaction group
-    print("Splitting unsigned transaction group...")
-    # this example does not use files on disk, so splitting is implicit above
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
 
-    # split transaction group
-    print("Splitting unsigned transaction group...")
-
-    stxn_1 = txn_1.sign(investor_private_key)
-    print("Investor signed txn_1: ", stxn_1.get_txid())
-
-    stxn_2 = txn_2.sign(investor_private_key)
-    print("Investor signed txn_2: ", stxn_2.get_txid())
-
-    # assemble transaction group
-    print("Assembling transaction group...")
-    signedGroup = [stxn_1, stxn_2]
-
-    # send transactions
-    print("Sending transaction group...")
-    tx_id = client.send_transactions(signedGroup)
-
-    # wait for confirmation
-    com_func.wait_for_confirmation(client, tx_id)
-
-    return string(tx_id)
+    return txngrp
 
 
 # update total investment of the campaign
-def update_app(client, id_passphrase, app_id, investment):
+def update_app(client, app_id, investment):
+
+    print(f"Updating Investment in {app_id} Campaign...")
     # declare sender
-    update_private_key = mnemonic.to_private_key(id_passphrase)
-    sender = account.address_from_private_key(update_private_key)
+    sender = com_func.get_address_from_application(app_id)
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
@@ -542,22 +436,10 @@ def update_app(client, id_passphrase, app_id, investment):
     # create unsigned transaction
     txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
 
-    # sign transaction
-    signed_txn = txn.sign(update_private_key)
-    tx_id = signed_txn.transaction.get_txid()
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn)})
 
-    # send transaction
-    client.send_transactions([signed_txn])
-
-    # await confirmation
-
-    confirmed_txn = com_func.wait_for_confirmation(client, tx_id)
-    print("TXID: ", tx_id)
-    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
-    # display results
-    transaction_response = client.pending_transaction_info(tx_id)
-    app_id = transaction_response['txn']['txn']['apid']
-    return string(app_id)
+    return txngrp
 
 
 # Creator pulls out the investment done in that campaign whenever the campaign is over
@@ -574,7 +456,7 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
 
     # Creator Account to call app.
     sender = creator_account
-    args_list = ["Check_again", int(com_func.Today_seconds())]
+    args_list = ["Check if the campaign has ended.", int(com_func.Today_seconds())]
     txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
     print("Created Transaction: ", txn_1.get_txid())
 
@@ -633,11 +515,10 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
 
 
 # Group transaction: (Campaign app call and Burn Asset)
-def call_asset_destroy(client, creator_passphrase, asset_id, campaignID):
+def call_asset_destroy(client, asset_id, campaignID):
 
     # define address from private key of creator
-    creator_private_key = mnemonic.to_private_key(creator_passphrase)
-    creator_account = account.address_from_private_key(creator_private_key)
+    creator_account = com_func.get_address_from_application(campaignID)
 
     # set suggested params
     params = client.suggested_params()
@@ -655,50 +536,27 @@ def call_asset_destroy(client, creator_passphrase, asset_id, campaignID):
     txn_2 = AssetConfigTxn(sender=sender, sp=params, index=asset_id, strict_empty_address_check=False)
     print("Created Transaction 2: ", txn_2.get_txid())
 
-    # grouping both the txn to give the group id
-    print("Grouping Transactions...")
-    group_id = calculate_group_id([txn_1, txn_2])
-    print("groupID of the Transaction: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
+    txngrp = []
+    txngrp.append({'txn_1': encoding.msgpack_encode(txn_1)})
+    txngrp.append({'txn_2': encoding.msgpack_encode(txn_2)})
 
-    # split transaction group
-    print("Splitting unsigned transaction group...")
-
-    # signing the transactions
-    stxn_1 = txn_1.sign(creator_private_key)
-    print("Creator signed txn_1: ", stxn_1.get_txid())
-
-    stxn_2 = txn_2.sign(creator_private_key)
-    print("Creator signed txn_2: ", stxn_2.get_txid())
-
-    # grouping the sign transactions
-    signedGroup = [stxn_1, stxn_2]
-
-    # send transactions
-    print("Sending transaction group...")
-    tx_id = client.send_transactions(signedGroup)
-
-    # wait for confirmation
-    com_func.wait_for_confirmation(client, tx_id)
-
-    return string(tx_id)
+    return txngrp
 
 
 # update existing details of the campaign
-def update_campaign(client, id_passphrase, app_id, title, description,
-                    category, start_time, end_time, fund_category,
+def update_campaign(client, public_address, app_id, title,
+                    category, end_time, fund_category,
                     fund_limit, reward_type, country):
+    print("Updating existing campaign....")
     # declare sender
-    update_private_key = mnemonic.to_private_key(id_passphrase)
-    sender = account.address_from_private_key(update_private_key)
+    sender = public_address
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # define updated arguments
-    app_args = ["update_details", bytes(title, 'utf8'), bytes(description, 'utf8'), bytes(category, 'utf8'),
-                int(start_time), int(end_time), bytes(fund_category, 'utf8'),
+    app_args = ["update_details", bytes(title, 'utf8'), bytes(category, 'utf8'),
+                int(end_time), bytes(fund_category, 'utf8'),
                 int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8')]
 
     # get node suggested parameters
@@ -707,29 +565,18 @@ def update_campaign(client, id_passphrase, app_id, title, description,
     # create unsigned transaction
     txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
 
-    # sign transaction
-    signed_txn = txn.sign(update_private_key)
-    tx_id = signed_txn.transaction.get_txid()
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn)})
 
-    # send transaction
-    client.send_transactions([signed_txn])
-
-    # await confirmation
-
-    confirmed_txn = com_func.wait_for_confirmation(client, tx_id)
-    print("TXID: ", tx_id)
-    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
-    # display results
-    transaction_response = client.pending_transaction_info(tx_id)
-    app_id = transaction_response['txn']['txn']['apid']
-    return string(app_id)
+    return txngrp
 
 
 # Reason for blocking/rejecting Campaign
-def block_reason(client, passphrase, campaign_id, reason):
+def block_reason(client, public_address, campaign_id, reason):
+
+    print(f"Blocking/rejecting {campaign_id} campaign....")
     # declaring the sender
-    private_key = mnemonic.to_private_key(passphrase)
-    sender = account.address_from_private_key(private_key)
+    sender = public_address
 
     # get node suggested parameters
     params = client.suggested_params()
@@ -739,30 +586,19 @@ def block_reason(client, passphrase, campaign_id, reason):
     # create unsigned transaction
     txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=reason)
 
-    # sign transaction
-    signed_txn = txn.sign(private_key)
-    tx_id = signed_txn.transaction.get_txid()
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn)})
 
-    # send transaction
-    client.send_transactions([signed_txn])
-
-    # await confirmation
-    confirmed_txn = wait_for_confirmation(client, tx_id, 4)
-    print("TXID: ", tx_id)
-    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
-    # display results
-    transaction_response = client.pending_transaction_info(tx_id)
-    app_id = transaction_response['txn']['txn']['apid']
-
-    return app_id
+    return txngrp
 
 
 # delete campaign and unfreeze NFT
-def nft_delete(client, creator_passphrase, campaign_id, asset_id):
-    # define address from private key of creator
-    creator_private_key = mnemonic.to_private_key(creator_passphrase)
-    creator_account = account.address_from_private_key(creator_private_key)
+def nft_delete(client, campaign_id, asset_id):
 
+    print(f"Deleting {campaign_id} Campaign and unfreezing {asset_id} NFT....")
+
+    # define address from private key of creator
+    creator_account = com_func.get_address_from_application(campaign_id)
     # set suggested params
     params = client.suggested_params()
 
@@ -774,37 +610,19 @@ def nft_delete(client, creator_passphrase, campaign_id, asset_id):
         target=creator_account,
         new_freeze_state=False
     )
-    print("Created Transaction 1: ", txn_1.get_txid())
 
     # delete campaign: Transaction 2
     txn_2 = ApplicationDeleteTxn(creator_account, params, campaign_id)
-    print("Created Transaction 2: ", txn_2.get_txid())
 
-    # grouping both the txn to give the group id
-    print("Grouping Transactions...")
-    group_id = calculate_group_id([txn_1, txn_2])
-    print("groupID of the Transaction: ", group_id)
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
 
-    # split transaction group
-    print("Splitting unsigned transaction group...")
+    txngrp = []
+    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
+    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
 
-    # signing the transactions
-    stxn_1 = txn_1.sign(creator_private_key)
-    print("Creator signed txn_1: ", stxn_1.get_txid())
-
-    stxn_2 = txn_2.sign(creator_private_key)
-    print("Creator signed txn_2: ", stxn_2.get_txid())
-
-    # grouping the sign transactions
-    signedGroup = [stxn_1, stxn_2]
-
-    # send transactions
-    print("Sending transaction group...")
-    tx_id = client.send_transactions(signedGroup)
-
-    # wait for confirmation
-    com_func.wait_for_confirmation(client, tx_id)
-
-    return string(tx_id)
+    return txngrp

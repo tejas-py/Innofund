@@ -27,17 +27,26 @@ def check_name(name):
         return "Approved"
 
 
+user_type_list = ["Investor", "investor", "INVESTOR",
+                  "Creator", "creator", "CREATOR",
+                  "Institution", "institution", "INSTITUTION",
+                  "Applicant", "applicant", "APPLICANT"]
+
+
 # Check the User type.
 def check_user(user_type):
-    if user_type == "Investor" or user_type == "investor" or user_type == "Creator" or user_type == "creator":
+    if user_type in user_type_list:
         return "Approved"
     else:
         return "Error: Check the spelling of User Type."
 
 
+admin_list = ["admin", "ADMIN", "Admin"]
+
+
 # check admin
 def check_admin(user_type):
-    if user_type == "Admin" or user_type == "admin" or user_type == "ADMIN":
+    if user_type in admin_list:
         return "Approved"
     else:
         return "Error: Check the spelling of User Type."

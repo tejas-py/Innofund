@@ -13,7 +13,7 @@ def approval_program():
         ]
     )
 
-    check_admin = Cond(
+    check_user = Cond(
         [And(
             Txn.application_args[1] == App.globalGet(Bytes("name")),
             Txn.application_args[2] == App.globalGet(Bytes("usertype"))
@@ -23,12 +23,12 @@ def approval_program():
     group_transaction = Cond(
         [And(
             Global.group_size() == Int(2),
-            Txn.application_args[0] == Bytes("check_admin")
-        ), check_admin]
+            Txn.application_args[0] == Bytes("check_user")
+        ), check_user]
     )
 
     update_user = Seq(
-        App.globalPut(Bytes("username"), Txn.application_args[0]),
+        App.globalPut(Bytes("name"), Txn.application_args[0]),
         App.globalPut(Bytes("usertype"), Txn.application_args[1]),
         App.globalPut(Bytes("email"), Txn.application_args[2]),
         Approve()

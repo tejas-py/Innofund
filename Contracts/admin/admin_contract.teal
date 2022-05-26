@@ -20,7 +20,7 @@ main_l5:
 int 1
 return
 main_l6:
-byte "username"
+byte "name"
 txna ApplicationArgs 0
 app_global_put
 byte "usertype"
@@ -36,7 +36,7 @@ global GroupSize
 int 2
 ==
 txna ApplicationArgs 0
-byte "check_admin"
+byte "check_user"
 ==
 &&
 bnz main_l9

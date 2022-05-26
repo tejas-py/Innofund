@@ -2,11 +2,11 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l28
+bnz main_l26
 txn OnCompletion
 int NoOp
 ==
-bnz main_l15
+bnz main_l13
 txn OnCompletion
 int UpdateApplication
 ==
@@ -23,7 +23,7 @@ main_l6:
 txna ApplicationArgs 0
 byte "update_investment"
 ==
-bnz main_l12
+bnz main_l10
 txna ApplicationArgs 0
 byte "update_details"
 ==
@@ -33,44 +33,29 @@ main_l9:
 byte "title"
 txna ApplicationArgs 1
 app_global_put
-byte "description"
+byte "category"
 txna ApplicationArgs 2
 app_global_put
-byte "category"
-txna ApplicationArgs 3
-app_global_put
-byte "start_time"
-txna ApplicationArgs 4
-btoi
-app_global_put
 byte "end_time"
-txna ApplicationArgs 5
+txna ApplicationArgs 3
 btoi
 app_global_put
 byte "funding_category"
-txna ApplicationArgs 6
+txna ApplicationArgs 4
 app_global_put
 byte "fund_limit"
-txna ApplicationArgs 7
+txna ApplicationArgs 5
 btoi
 app_global_put
 byte "reward_type"
-txna ApplicationArgs 8
+txna ApplicationArgs 6
 app_global_put
 byte "country"
-txna ApplicationArgs 9
+txna ApplicationArgs 7
 app_global_put
-byte "end_time"
-app_global_get
-byte "start_time"
-app_global_get
->
-bnz main_l11
-err
-main_l11:
 int 1
 return
-main_l12:
+main_l10:
 txna ApplicationArgs 2
 btoi
 byte "fund_limit"
@@ -85,9 +70,9 @@ txna ApplicationArgs 1
 btoi
 >
 &&
-bnz main_l14
+bnz main_l12
 err
-main_l14:
+main_l12:
 byte "total_investment"
 byte "total_investment"
 app_global_get
@@ -97,7 +82,7 @@ btoi
 app_global_put
 int 1
 return
-main_l15:
+main_l13:
 global GroupSize
 int 2
 ==
@@ -105,15 +90,15 @@ txna ApplicationArgs 0
 byte "Check"
 ==
 &&
-bnz main_l25
+bnz main_l23
 global GroupSize
 int 2
 ==
 txna ApplicationArgs 0
-byte "Check_again"
+byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l22
+bnz main_l20
 global GroupSize
 int 2
 ==
@@ -121,90 +106,83 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l21
+bnz main_l19
 txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
-bnz main_l20
+bnz main_l18
 err
+main_l18:
+int 1
+return
+main_l19:
+int 1
+return
 main_l20:
-int 1
-return
-main_l21:
-int 1
-return
-main_l22:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
 app_global_get
 >
-bnz main_l24
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l22
 int 0
 return
-main_l24:
+main_l22:
 int 1
 return
-main_l25:
-byte "end_time"
-app_global_get
-byte "start_time"
-app_global_get
->
+main_l23:
 txna ApplicationArgs 1
 btoi
 byte "fund_limit"
 app_global_get
 <=
-&&
 byte "fund_limit"
 app_global_get
 byte "total_investment"
 app_global_get
 >=
 &&
-bnz main_l27
+bnz main_l25
 err
-main_l27:
+main_l25:
 int 1
 return
-main_l28:
+main_l26:
 txn NumAppArgs
-int 10
+int 8
 ==
 assert
 byte "title"
 txna ApplicationArgs 0
 app_global_put
-byte "description"
+byte "category"
 txna ApplicationArgs 1
 app_global_put
-byte "category"
-txna ApplicationArgs 2
-app_global_put
-byte "start_time"
-txna ApplicationArgs 3
-btoi
-app_global_put
 byte "end_time"
-txna ApplicationArgs 4
+txna ApplicationArgs 2
 btoi
 app_global_put
 byte "funding_category"
-txna ApplicationArgs 5
+txna ApplicationArgs 3
 app_global_put
 byte "fund_limit"
-txna ApplicationArgs 6
+txna ApplicationArgs 4
 btoi
 app_global_put
 byte "reward_type"
-txna ApplicationArgs 7
+txna ApplicationArgs 5
 app_global_put
 byte "country"
-txna ApplicationArgs 8
+txna ApplicationArgs 6
 app_global_put
 byte "total_investment"
-txna ApplicationArgs 9
+txna ApplicationArgs 7
 btoi
 app_global_put
 byte "end_time"
@@ -212,8 +190,8 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l30
+bnz main_l28
 err
-main_l30:
+main_l28:
 int 1
 return
