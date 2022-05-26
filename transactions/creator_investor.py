@@ -72,11 +72,8 @@ byte "fund_limit"
 txna ApplicationArgs 5
 btoi
 app_global_put
-byte "reward_type"
-txna ApplicationArgs 6
-app_global_put
 byte "country"
-txna ApplicationArgs 7
+txna ApplicationArgs 6
 app_global_put
 int 1
 return
@@ -546,7 +543,7 @@ def call_asset_destroy(client, asset_id, campaignID):
 # update existing details of the campaign
 def update_campaign(client, public_address, app_id, title,
                     category, end_time, fund_category,
-                    fund_limit, reward_type, country):
+                    fund_limit, country):
     print("Updating existing campaign....")
     # declare sender
     sender = public_address
@@ -557,7 +554,7 @@ def update_campaign(client, public_address, app_id, title,
     # define updated arguments
     app_args = ["update_details", bytes(title, 'utf8'), bytes(category, 'utf8'),
                 int(end_time), bytes(fund_category, 'utf8'),
-                int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8')]
+                int(fund_limit), bytes(country, 'utf8')]
 
     # get node suggested parameters
     params = client.suggested_params()

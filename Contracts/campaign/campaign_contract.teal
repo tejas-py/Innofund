@@ -47,11 +47,8 @@ byte "fund_limit"
 txna ApplicationArgs 5
 btoi
 app_global_put
-byte "reward_type"
-txna ApplicationArgs 6
-app_global_put
 byte "country"
-txna ApplicationArgs 7
+txna ApplicationArgs 6
 app_global_put
 int 1
 return

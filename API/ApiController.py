@@ -200,7 +200,6 @@ def update_campaign_details():
     end_time = campaign_details['end_time']
     fund_category = campaign_details['fund_category']
     fund_limit = campaign_details['fund_limit']
-    reward_type = campaign_details['reward_type']
     country = campaign_details['country']
 
     try:
@@ -209,7 +208,7 @@ def update_campaign_details():
                 # pass the campaign details to the algorand
                 update_campaign_txn = creator_investor.update_campaign(algod_client, address, campaignID,
                                                                        title, category, end_time,
-                                                                       fund_category, fund_limit, reward_type, country)
+                                                                       fund_category, fund_limit, country)
                 return jsonify(update_campaign_txn), 200
             except Exception as error:
                 return string(error), 500
