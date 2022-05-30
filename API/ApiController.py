@@ -236,7 +236,7 @@ def reject_campaign():
             except Exception as error:
                 return string(error), 500
         else:
-            return "To reject/block campaign, Minimum Balance should be 1000 microAlgos", 400
+            return "To Approve campaign, Minimum Balance should be 1000 microAlgos", 400
     except Exception as wallet_error:
         return f"Check Wallet Address, Error: {wallet_error}", 400
 
