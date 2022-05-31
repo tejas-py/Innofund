@@ -172,7 +172,6 @@ def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, meta_ha
     # admin to call app(admin): transaction 1
     sender = creator_account
     txn_1 = transaction.ApplicationNoOpTxn(sender, params, admin_id, args)
-    print(txn_1)
     params.fee = NFT_amt
     params.flat_fee = True
 
@@ -186,7 +185,6 @@ def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, meta_ha
     print("Grouping transactions...")
     # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
 
