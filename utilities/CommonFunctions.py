@@ -95,4 +95,3 @@ def check_asset(asset_id):
             return "Asset exist"
     except Exception as e:
         return e
-
