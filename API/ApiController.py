@@ -1,9 +1,9 @@
 from billiard.five import string
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import API.connection
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, indexer, create_update_account
+import connection
 
 app = Flask(__name__)
 
@@ -15,7 +15,7 @@ cors = CORS(app, resources={
 })
 
 # Setting up connection with algorand client
-algod_client = API.connection.algo_conn()
+algod_client = connection.algo_conn()
 
 
 # Create unique id for respective accounts created.
@@ -290,6 +290,8 @@ def mint_nft():
     asset_name = mint_asset['asset_name']
     meta_hash = mint_asset['image_hash']
     NFT_price = mint_asset['NFT_price']
+    meta = mint_asset['meta_data']
+
     address = CommonFunctions.get_address_from_application(app_id)
 
     try:
@@ -297,7 +299,7 @@ def mint_nft():
             try:
                 # pass the details to algorand to mint asset
                 asset_txn = admin.admin_asset(algod_client, name, usertype, app_id,
-                                              unit_name, asset_name, meta_hash, NFT_price)
+                                              unit_name, asset_name, meta_hash, NFT_price, bytes(meta, 'utf-8'))
 
                 return jsonify(asset_txn), 200
             except Exception as error:

@@ -5,11 +5,11 @@
 # 4. List information of a particular address.
 
 import json
-import API.connection
+from API import connection
 import utilities.CommonFunctions
 
 # connect to the indexer API
-indexerConnection = API.connection.connect_indexer()
+indexerConnection = connection.connect_indexer()
 
 
 # search total campaigns in the node(Application-campaign)

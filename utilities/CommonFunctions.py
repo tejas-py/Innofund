@@ -4,11 +4,11 @@ from algosdk import mnemonic
 import base64
 import os
 import time
-import API.connection
+from API import connection as algodconnection
 import json
 
 # connect to indexer
-myindexer = API.connection.connect_indexer()
+myindexer = algodconnection.connect_indexer()
 
 
 # compile program used to compile the source code, used when new application is created
