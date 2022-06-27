@@ -81,7 +81,10 @@ def approval_program():
 
     update_campaign = Cond(
         [Txn.application_args[0] == Bytes("update_investment"), check_investment_details],
-        [Txn.application_args[0] == Bytes("update_details"), update_campaign_details]
+        [And(
+            Global.group_size() == Int(4),
+            Txn.application_args[0] == Bytes("update_details")
+        ), update_campaign_details]
     )
 
     program = Cond(
@@ -98,4 +101,3 @@ if __name__ == "__main__":
     with open("campaign_contract.teal", "w") as f:
         compiled = compileTeal(approval_program(), mode=Mode.Application, version=5)
         f.write(compiled)
-

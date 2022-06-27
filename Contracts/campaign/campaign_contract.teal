@@ -24,9 +24,13 @@ txna ApplicationArgs 0
 byte "update_investment"
 ==
 bnz main_l10
+global GroupSize
+int 4
+==
 txna ApplicationArgs 0
 byte "update_details"
 ==
+&&
 bnz main_l9
 err
 main_l9:

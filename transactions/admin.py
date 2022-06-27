@@ -157,7 +157,7 @@ def update_admin(client, public_address, admin_id, name, usertype, email):
 
 
 # call admin app and create asset
-def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, meta_hash, NFT_amt, meta):
+def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, image_url, amt):
 
     # define address from private key of creator
     creator_account = com_func.get_address_from_application(admin_id)
@@ -172,16 +172,16 @@ def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, meta_ha
     # admin to call app(admin): transaction 1
     sender = creator_account
     txn_1 = transaction.ApplicationNoOpTxn(sender, params, admin_id, args)
-    params.fee = NFT_amt
+    params.fee = amt
     params.flat_fee = True
 
     print("Minting NFT...")
 
     # creating asset: transaction 2
     txn_2 = transaction.AssetConfigTxn(sender=sender, sp=params, total=1, default_frozen=False,
-                                       unit_name=unit_name, asset_name=asset_name, decimals=0, url=meta_hash,
+                                       unit_name=unit_name, asset_name=asset_name, decimals=0, url=image_url,
                                        manager=creator_account, freeze=creator_account, reserve=creator_account,
-                                       clawback=creator_account, metadata_hash=meta)
+                                       clawback=creator_account)
     print("Grouping transactions...")
     # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2])

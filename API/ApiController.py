@@ -1,4 +1,3 @@
-from billiard.five import string
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utilities import check, CommonFunctions
@@ -40,7 +39,7 @@ def create_account():
                     usertxn = create_update_account.create_app(algod_client, address, name, usertype, email)
                     return jsonify(usertxn), 200
                 except Exception as error:
-                    return string(error), 500
+                    return str(error), 500
             else:
                 return "For Account Creation, Minimum Balance should be 1000 microAlgos", 400
         except Exception as wallet_error:
@@ -94,7 +93,7 @@ def update_user():
                                                                         name)
                     return jsonify(update_user_txn), 200
                 except Exception as error:
-                    return string(error), 500
+                    return str(error), 500
             else:
                 return "For updating account information, Minimum Balance should be 1000 microAlgos", 400
         except Exception as wallet_error:
@@ -128,7 +127,7 @@ def update_admin():
                                                           name, usertype, email)
                     return jsonify(update_admin_txn), 200
                 except Exception as error:
-                    return string(error), 500
+                    return str(error), 500
             else:
                 return "For updating account information, Minimum Balance should be 1000 microAlgos"
         except Exception as wallet_error:
@@ -152,7 +151,7 @@ def delete_user():
                 deleted_id_txn = create_update_account.delete_user(algod_client, user_id)
                 return jsonify(deleted_id_txn), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return "To delete account, Minimum Balance should be 1000 microAlgos", 400
     except Exception as wallet_error:
@@ -165,6 +164,8 @@ def create_campaign():
     # get details of the campaign to create
     campaign_details = request.get_json()
     address = campaign_details['creator_wallet_address']
+
+    # campaign details
     title = campaign_details['title']
     category = campaign_details['category']
     end_time = campaign_details['end_time']
@@ -172,18 +173,26 @@ def create_campaign():
     fund_limit = campaign_details['fund_limit']
     reward_type = campaign_details['reward_type']
     country = campaign_details['country']
+    milestone = campaign_details['milestone']
+
+    # make the list from the dictionary
+    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'], milestone['milestone_title']['3'])
+    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'], milestone['milestone_number']['3'])
+    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'], milestone['end_time_milestone']['3'])
+
     try:
-        if CommonFunctions.check_balance(address, 1000):
+        if CommonFunctions.check_balance(address, 4000):
             try:
                 # pass the campaign details to the algorand
                 campaignID_txn = creator_investor.create_campaign_app(algod_client, address, title,
                                                                       category, end_time, fund_category, fund_limit,
-                                                                      reward_type, country)
+                                                                      reward_type, country, milestone_title_lst,
+                                                                      milestone_list, end_time_lst)
                 return jsonify(campaignID_txn), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
-            return "To create campaign, Minimum Balance should be 1000 microAlgos", 400
+            return "To create campaign, Minimum Balance should be 4000 microAlgos", 400
     except Exception as wallet_error:
         return f"Check Wallet Address, Error: {wallet_error}", 400
 
@@ -201,17 +210,25 @@ def update_campaign_details():
     fund_category = campaign_details['fund_category']
     fund_limit = campaign_details['fund_limit']
     country = campaign_details['country']
+    milestone = campaign_details['milestone']
+
+    # make the list from the dictionary
+    milestone_app_id_lst = (milestone['milestone_app_id']['1'], milestone['milestone_app_id']['2'], milestone['milestone_app_id']['3'])
+    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'], milestone['milestone_title']['3'])
+    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'], milestone['milestone_number']['3'])
+    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'], milestone['end_time_milestone']['3'])
 
     try:
         if CommonFunctions.check_balance(address, 1000):
             try:
                 # pass the campaign details to the algorand
-                update_campaign_txn = creator_investor.update_campaign(algod_client, address, campaignID,
-                                                                       title, category, end_time,
-                                                                       fund_category, fund_limit, country)
+                update_campaign_txn = creator_investor.update_campaign(algod_client, address, campaignID, title,
+                                                                       category, end_time, fund_category, fund_limit,
+                                                                       country, milestone_app_id_lst, milestone_title_lst,
+                                                                       milestone_list, end_time_lst)
                 return jsonify(update_campaign_txn), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return "To update campaign, Minimum Balance should be 1000 microAlgos", 400
     except Exception as wallet_error:
@@ -234,7 +251,7 @@ def reject_campaign():
                 reject_campaign_id_txn = creator_investor.block_reason(algod_client, address, campaignID, reason)
                 return jsonify(reject_campaign_id_txn), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return "To Approve campaign, Minimum Balance should be 1000 microAlgos", 400
     except Exception as wallet_error:
@@ -246,36 +263,95 @@ def reject_campaign():
 def delete_campaign():
     # Get the user Details
     user_delete = request.get_json()
-    campaign_id = user_delete['campaign_app_id']
-    nft_id = user_delete['nft_id']
-    address = CommonFunctions.get_address_from_application(campaign_id)
+    campaign_app_id = user_delete['campaign_app_id']
+    nft_id = int(user_delete['nft_id'])
+    milestone_app_id = user_delete['milestone_app_id']
+    address = CommonFunctions.get_address_from_application(campaign_app_id)
+
+    # creating the list of milestone app id
+    milestones_lst = (milestone_app_id['1'], milestone_app_id['2'], milestone_app_id['3'])
 
     # delete the user by passing the params
-    if nft_id == 0 or nft_id == '0':
+    if nft_id == 0 or nft_id == 0:
         try:
-            if CommonFunctions.check_balance(address, 1000):
+            if CommonFunctions.check_balance(address, 4000):
                 try:
-                    delete_campaign_txn = create_update_account.delete_user(algod_client, campaign_id)
+                    delete_campaign_txn = create_update_account.campaign_milestones(algod_client, campaign_app_id,
+                                                                                    milestones_lst)
                     return jsonify(delete_campaign_txn), 200
                 except Exception as error:
-                    return string(error), 500
+                    return str(error), 500
             else:
-                return "To delete the campaign, Minimum Balance should be 1000 microAlgos", 400
+                return "To delete the campaign, Minimum Balance should be 4000 microAlgos", 400
         except Exception as wallet_error:
             return f"Check Wallet Address, Error: {wallet_error}", 400
     else:
         try:
-            if CommonFunctions.check_balance(address, 2000):
+            if CommonFunctions.check_balance(address, 5000):
                 try:
-                    deleted_campaignID_txn = creator_investor.nft_delete(algod_client, campaign_id, nft_id)
+                    deleted_campaignID_txn = creator_investor.nft_delete(algod_client, campaign_app_id, nft_id,
+                                                                         milestones_lst)
                     return jsonify(deleted_campaignID_txn), 200
                 except Exception as error:
-                    return string(error), 500
+                    return str(error), 500
             else:
-                return f"To delete the campaign and unfreeze {nft_id} NFT," \
-                       "Minimum Balance should be 2000 microAlgos", 400
+                return f"To delete the campaign, milestones and unfreeze {nft_id} NFT," \
+                       "Minimum Balance should be 5000 microAlgos", 400
         except Exception as wallet_error:
             return f"Check Wallet Address, Error: {wallet_error}", 400
+
+
+# start the milestone
+@app.route('/start_milestone', methods=['POST'])
+def init_milestone():
+    # get the details
+    milestone_details = request.get_json()
+    campaign_app_id = milestone_details['campaign_app_id']
+    milestone_app_id = milestone_details['milestone_app_id']
+    milestone_title = milestone_details['milestone_title']
+    milestone_no = milestone_details['milestone_number']
+
+    milestone_txn = creator_investor.start_milestones(algod_client, campaign_app_id, milestone_app_id, milestone_title,
+                                                      milestone_no)
+    return jsonify(milestone_txn)
+
+
+# end milestone
+@app.route('/end_milestone', methods=['POST'])
+def milestone_end():
+    # get the details
+    milestone_details = request.get_json()
+    milestone_app_id = milestone_details['milestone_app_id']
+    milestone_title = milestone_details['milestone_title']
+    milestone_no = milestone_details['milestone_number']
+
+    end_txn = creator_investor.end_milestone(algod_client, milestone_app_id, milestone_title, milestone_no)
+
+    return jsonify(end_txn)
+
+
+# admin verifies the milestone
+@app.route('/verify_milestone', methods=['POST'])
+def check_milestone():
+    # get the details
+    verification_details = request.get_json()
+    note = verification_details['note']
+    check_milestone_app_id = verification_details['check_milestone_app_id']
+
+    # second milestone
+    milestone_app_id = verification_details['milestone_app_id']
+    milestone_title = verification_details['milestone_title']
+    milestone_no = verification_details['milestone_number']
+
+    approve_lst = ['approve', 'APPROVE', 'Approve']
+
+    if note in approve_lst:
+        grp_txn = creator_investor.approve_milestone(algod_client, note, check_milestone_app_id, milestone_app_id,
+                                                     milestone_title, milestone_no)
+        return jsonify(grp_txn)
+    else:
+        txn = creator_investor.reject_milestone(algod_client, note, milestone_app_id)
+        return jsonify(txn)
 
 
 # Group Transaction: (Call admin app and mint NFT)
@@ -285,12 +361,13 @@ def mint_nft():
     mint_asset = request.get_json()
     app_id = mint_asset['app_id']
     name = mint_asset['user_name']
-    usertype = mint_asset['user_type']
+    usertype = mint_asset['useir_type']
     unit_name = mint_asset['unit_name']
     asset_name = mint_asset['asset_name']
     meta_hash = mint_asset['image_hash']
     NFT_price = mint_asset['NFT_price']
-    meta = mint_asset['meta_data']
+    # meta = mint_asset['hash']
+    # b_meta = bytes(meta, 'utf-8')
 
     address = CommonFunctions.get_address_from_application(app_id)
 
@@ -299,15 +376,52 @@ def mint_nft():
             try:
                 # pass the details to algorand to mint asset
                 asset_txn = admin.admin_asset(algod_client, name, usertype, app_id,
-                                              unit_name, asset_name, meta_hash, NFT_price, bytes(meta, 'utf-8'))
+                                              unit_name, asset_name, meta_hash, NFT_price)
 
                 return jsonify(asset_txn), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos", 400
     except Exception as wallet_error:
         return f"Check Wallet Address, Error: {wallet_error}", 400
+#     # get the details of the campaign to mint asset
+#     mint_asset = request.get_json()
+#     app_id = mint_asset['app_id']
+#     user_name = mint_asset['name']
+#     usertype = mint_asset['user_type']
+#     unit_name = mint_asset['unit_name']
+#     asset_name = mint_asset['asset_name']
+#     total_amount = mint_asset['amount']
+#     picture = mint_asset['image_hash']
+#     meta_data = mint_asset['meta_data']
+#
+#     # get the wallet address from the user application id
+#     address = CommonFunctions.get_address_from_application(app_id)
+#
+#     # create a blank array for the transactions
+#     asset_create_txn = []
+#
+#     if len(unit_name) == total_amount and len(asset_name) == total_amount \
+#             and len(picture) == total_amount and len(meta_data) == total_amount:
+#         for unit, name, image, meta in zip(unit_name, asset_name, picture, meta_data):
+#             print(unit_name[unit], asset_name[name], picture[image])
+#             try:
+#                 if CommonFunctions.check_balance(address, 1000):
+#                     try:
+#                         # pass the details to algorand to mint asset
+#                         asset_txn = admin.admin_asset(algod_client, user_name, usertype, app_id, unit_name[unit],
+#                                                       asset_name[name], picture[image], meta_data[meta])
+#                         asset_create_txn.append(asset_txn)
+#                     except Exception as error:
+#                         return str(error), 500
+#                 else:
+#                     return f"To Mint NFT, Minimum Balance should be 1000 microAlgos", 400
+#             except Exception as wallet_error:
+#                 return f"Check Wallet Address, Error: {wallet_error}", 400
+#         return jsonify(asset_create_txn), 200
+#     else:
+#         return "Please check the total amount of NFT and other fields.", 400
 
 
 # Opt-in to NFT
@@ -324,7 +438,7 @@ def asset_optin():
                 txn_details = creator_investor.opt_in(algod_client, address, asset_id)
                 return jsonify(txn_details), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return f"To Opt-in in {asset_id} NFT, Minimum Balance should be 1000 microAlgos", 400
     except Exception as wallet_error:
@@ -349,7 +463,7 @@ def transfer_nft():
                                                              nft_amount, admin_address, creator_address)
                 return jsonify(txn_details), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return f"To transfer {asset_id} NFT, Minimum Balance should be 1000 microAlgos", 400
     except Exception as wallet_error:
@@ -372,7 +486,7 @@ def campaign_nft():
                 txn_id = creator_investor.call_nft(algod_client, asset_id, campaign_id)
                 return jsonify(txn_id), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return "To assign NFT to a campaign, Minimum Balance should be 2000 microAlgos", 400
     except Exception as wallet_error:
@@ -397,7 +511,7 @@ def NFT_transfer():
                                                                     creator_address, asset_id, asset_amount)
                 return jsonify(txn_details), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return f"To transfer {asset_id} NFT, Minimum Balance should be 3000 microAlgos", 400
     except Exception as wallet_error:
@@ -437,7 +551,7 @@ def participation():
                     participation_json = {"participation_id": participationID}
                     return jsonify(participation_json), 200
             except Exception as error:
-                return string(error), 500
+                return str(error), 500
         else:
             return "To Participate in a campaign, Minimum Balance should be 3000 microAlgos", 400
     except Exception as wallet_error:
@@ -488,7 +602,7 @@ def account_information():
         account = indexer.account_info(address)
         return jsonify(account), 200
     except Exception as error:
-        return string(error), 500
+        return str(error), 500
 
 
 # running the API

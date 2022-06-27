@@ -49,9 +49,13 @@ txna ApplicationArgs 0
 byte "update_investment"
 ==
 bnz main_l10
+global GroupSize
+int 4
+==
 txna ApplicationArgs 0
 byte "update_details"
 ==
+&&
 bnz main_l9
 err
 main_l9:
@@ -219,6 +223,144 @@ int 1
 return
 """
 
+
+# Declare the approval program source
+approval_program_source_initial_milestone = b"""#pragma version 5
+txn ApplicationID
+int 0
+==
+bnz main_l20
+txn OnCompletion
+int NoOp
+==
+bnz main_l9
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l6
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l5
+err
+main_l5:
+int 1
+return
+main_l6:
+global GroupSize
+int 4
+==
+txna ApplicationArgs 0
+byte "update_details"
+==
+&&
+bnz main_l8
+err
+main_l8:
+byte "milestone_title"
+txna ApplicationArgs 1
+app_global_put
+byte "milestone_number"
+txna ApplicationArgs 2
+btoi
+app_global_put
+byte "end_time"
+txna ApplicationArgs 3
+btoi
+app_global_put
+int 1
+return
+main_l9:
+global GroupSize
+int 2
+==
+txna ApplicationArgs 0
+byte "start"
+==
+&&
+bnz main_l17
+global GroupSize
+int 1
+==
+txna ApplicationArgs 0
+byte "end"
+==
+&&
+bnz main_l14
+txna ApplicationArgs 0
+byte "no_check"
+==
+bnz main_l13
+err
+main_l13:
+int 1
+return
+main_l14:
+txna ApplicationArgs 1
+btoi
+byte "milestone_title"
+app_global_get
+==
+txna ApplicationArgs 2
+btoi
+byte "milestone_number"
+app_global_get
+==
+&&
+txna ApplicationArgs 3
+btoi
+byte "end_time"
+app_global_get
+<=
+&&
+bnz main_l16
+err
+main_l16:
+int 1
+return
+main_l17:
+txna ApplicationArgs 1
+btoi
+byte "milestone_title"
+app_global_get
+==
+txna ApplicationArgs 2
+btoi
+byte "milestone_number"
+app_global_get
+==
+&&
+txna ApplicationArgs 3
+btoi
+byte "end_time"
+app_global_get
+<
+&&
+bnz main_l19
+err
+main_l19:
+int 1
+return
+main_l20:
+txn NumAppArgs
+int 3
+==
+assert
+byte "milestone_title"
+txna ApplicationArgs 0
+app_global_put
+byte "milestone_number"
+txna ApplicationArgs 1
+btoi
+app_global_put
+byte "end_time"
+txna ApplicationArgs 2
+btoi
+app_global_put
+int 1
+return
+"""
+
 # Declare clear state program source
 clear_program_source = b"""#pragma version 5
 int 1
@@ -228,11 +370,12 @@ int 1
 # Create new campaign
 def create_campaign_app(client, public_address, title,
                         category, end_time, fund_category, fund_limit,
-                        reward_type, country):
+                        reward_type, country, milestone_title, milestone_number, end_time_milestone):
     print("Creating campaign application...")
 
-    approval_program = com_func.compile_program(client, approval_program_source_initial)
+    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
     clear_program = com_func.compile_program(client, clear_program_source)
+    approval_program_milestone = com_func.compile_program(client, approval_program_source_initial_milestone)
 
     # Declaring sender
     sender = public_address
@@ -243,17 +386,139 @@ def create_campaign_app(client, public_address, title,
     # investment in the campaign at the time of creation
     investment = 0
 
+    # create campaign application
     args_list = [bytes(title, 'utf8'), bytes(category, 'utf8'),
                  int(end_time), bytes(fund_category, 'utf8'),
                  int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(investment)]
 
-    txn = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
-                               approval_program=approval_program, clear_program=clear_program,
-                               global_schema=global_schema, local_schema=local_schema, app_args=args_list,
-                               note="Campaign")
+    txn_1 = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
+                                 approval_program=approval_program_campaign, clear_program=clear_program,
+                                 global_schema=global_schema, local_schema=local_schema, app_args=args_list,
+                                 note="Campaign")
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    # create milestone 1 application
+    milestone_args = [bytes(milestone_title[0], 'utf-8'), int(milestone_number[0]), int(end_time_milestone[0])]
+
+    txn_2 = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
+                                 approval_program=approval_program_milestone, clear_program=clear_program,
+                                 global_schema=global_schema, local_schema=local_schema, app_args=milestone_args,
+                                 note="milestone_1")
+
+    # create milestone 2 application
+    milestone_args = [bytes(milestone_title[1], 'utf-8'), int(milestone_number[1]), int(end_time_milestone[1])]
+
+    txn_3 = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
+                                 approval_program=approval_program_milestone, clear_program=clear_program,
+                                 global_schema=global_schema, local_schema=local_schema, app_args=milestone_args,
+                                 note="milestone_2")
+
+    # create milestone 3 application
+    milestone_args = [bytes(milestone_title[2], 'utf-8'), int(milestone_number[2]), int(end_time_milestone[2])]
+
+    txn_4 = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
+                                 approval_program=approval_program_milestone, clear_program=clear_program,
+                                 global_schema=global_schema, local_schema=local_schema, app_args=milestone_args,
+                                 note="milestone_3")
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+    txn_3.group = group_id
+    txn_4.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)}, {'txn': encoding.msgpack_encode(txn_4)}]
+
+    return txngrp
+
+
+# initiating milestone
+def start_milestones(client, campaign_app_id, milestone_app_id, milestone_title, milestone_number):
+    print("Starting the milestone...")
+
+    sender = com_func.get_address_from_application(campaign_app_id)
+
+    params = client.suggested_params()
+
+    # call the campaign to see if the campaign has ended
+    args_list_campaign = ["Check if the campaign has ended.", int(com_func.Today_seconds())]
+    txn_1 = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_campaign)
+
+    # call the milestone to start the application
+    args_list_milestone = ['start', bytes(milestone_title, 'utf-8'), int(milestone_number), int(com_func.Today_seconds())]
+    txn_2 = ApplicationNoOpTxn(sender, params, milestone_app_id, args_list_milestone)
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
+
+    return txngrp
+
+
+# end milestone
+def end_milestone(client, milestone_app_id, milestone_title, milestone_number):
+
+    print(f'Ending {milestone_app_id} milestone...')
+
+    params = client.suggested_params()
+    sender = com_func.get_address_from_application(milestone_app_id)
+
+    # 100 days after the current date
+    submission_time = com_func.Today_seconds() - 7948800
+    app_args = ['end', bytes(milestone_title, 'utf-8'), int(milestone_number), int(submission_time)]
+
+    txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args)
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
+
+    return txngrp
+
+
+# Approve Milestone and start next milestone
+def approve_milestone(client, note, check_milestone_app_id, milestone_app_id, milestone_title, milestone_number):
+    print(f"Approving {milestone_app_id} milestone...")
+
+    params = client.suggested_params()
+    sender = com_func.get_address_from_application(milestone_app_id)
+    app_args_1 = ['no_check']
+
+    txn_1 = ApplicationNoOpTxn(sender, params, check_milestone_app_id, app_args_1, note=note)
+
+    app_args_2 = ['start', bytes(milestone_title, 'utf-8'), int(milestone_number), int(com_func.Today_seconds())]
+    txn_2 = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args_2)
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
+
+    return txngrp
+
+
+# reject milestone
+def reject_milestone(client, note, milestone_app_id):
+    print(f"Rejecting {milestone_app_id} milestone...")
+
+    params = client.suggested_params()
+    sender = com_func.get_address_from_application(milestone_app_id)
+    app_args = ['no_check']
+
+    txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args, note=note)
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
+
     return txngrp
 
 
@@ -272,8 +537,7 @@ def opt_in(client, creator_address, asset_id):
         amt=0,
         index=asset_id)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     return txngrp
 
@@ -296,7 +560,7 @@ def admin_creator(client, asset_id, amount, admin_account, creator_address):
     # changing manager
     txn_2 = AssetConfigTxn(sender=admin_account, sp=params, index=asset_id,
                            manager=creator_address, reserve=creator_address,
-                           freeze=creator_address, clawback=creator_address)
+                           freeze=creator_address)
     print("Grouping transactions...")
     # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2])
@@ -304,9 +568,7 @@ def admin_creator(client, asset_id, amount, admin_account, creator_address):
     txn_1.group = group_id
     txn_2.group = group_id
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
 
     return txngrp
 
@@ -341,9 +603,7 @@ def call_nft(client, asset_id, campaign_id):
     txn_1.group = group_id
     txn_2.group = group_id
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
 
     return txngrp
 
@@ -377,10 +637,8 @@ def nft_creator_investor(client, creator_address, investor_address, asset_id, as
     txn_2.group = group_id
     txn_3.group = group_id
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_3)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)}]
     return txngrp
 
 
@@ -419,9 +677,7 @@ def update_call_app(client, campaignID, investment, investor_account):
     txn_1.group = group_id
     txn_2.group = group_id
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
 
     return txngrp
 
@@ -445,8 +701,7 @@ def update_app(client, app_id, investment):
     # create unsigned transaction
     txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     return txngrp
 
@@ -545,9 +800,7 @@ def call_asset_destroy(client, asset_id, campaignID):
     txn_2 = AssetConfigTxn(sender=sender, sp=params, index=asset_id, strict_empty_address_check=False)
     print("Created Transaction 2: ", txn_2.get_txid())
 
-    txngrp = []
-    txngrp.append({'txn_1': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn_2': encoding.msgpack_encode(txn_2)})
+    txngrp = [{'txn_1': encoding.msgpack_encode(txn_1)}, {'txn_2': encoding.msgpack_encode(txn_2)}]
 
     return txngrp
 
@@ -555,27 +808,49 @@ def call_asset_destroy(client, asset_id, campaignID):
 # update existing details of the campaign
 def update_campaign(client, public_address, app_id, title,
                     category, end_time, fund_category,
-                    fund_limit, country):
+                    fund_limit, country, milestone_id, milestones_title, milestone_number, milestone_end_time):
     print("Updating existing campaign....")
     # declare sender
     sender = public_address
 
-    approval_program = com_func.compile_program(client, approval_program_source_initial)
+    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
+    approval_program_milestone = com_func.compile_program(client, approval_program_source_initial_milestone)
     clear_program = com_func.compile_program(client, clear_program_source)
 
     # define updated arguments
-    app_args = ["update_details", bytes(title, 'utf8'), bytes(category, 'utf8'),
+    campaign = ["update_details", bytes(title, 'utf8'), bytes(category, 'utf8'),
                 int(end_time), bytes(fund_category, 'utf8'),
                 int(fund_limit), bytes(country, 'utf8')]
 
     # get node suggested parameters
     params = client.suggested_params()
 
-    # create unsigned transaction
-    txn = ApplicationUpdateTxn(sender, params, app_id, approval_program, clear_program, app_args)
+    # update campaign transaction
+    txn_1 = ApplicationUpdateTxn(sender, params, app_id, approval_program_campaign, clear_program, campaign)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    # update milestones transactions
+    milestone_1 = ["update_details", bytes(milestones_title[0], 'utf-8'), int(milestone_number[0]), int(milestone_end_time[0])]
+    txn_2 = ApplicationUpdateTxn(sender, params, milestone_id[0], approval_program_milestone, clear_program, milestone_1)
+
+    milestone_2 = ["update_details", bytes(milestones_title[1], 'utf-8'), int(milestone_number[1]), int(milestone_end_time[1])]
+    txn_3 = ApplicationUpdateTxn(sender, params, milestone_id[1], approval_program_milestone, clear_program, milestone_2)
+
+    milestone_3 = ["update_details", bytes(milestones_title[2], 'utf-8'), int(milestone_number[2]), int(milestone_end_time[2])]
+    txn_4 = ApplicationUpdateTxn(sender, params, milestone_id[2], approval_program_milestone, clear_program, milestone_3)
+
+    # compute group id and put it into each transaction
+    print("Grouping transactions...")
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+    txn_3.group = group_id
+    txn_4.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)},
+              {'txn': encoding.msgpack_encode(txn_4)}]
 
     return txngrp
 
@@ -595,43 +870,52 @@ def block_reason(client, public_address, campaign_id, reason):
     # create unsigned transaction
     txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=reason)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     return txngrp
 
 
 # delete campaign and unfreeze NFT
-def nft_delete(client, campaign_id, asset_id):
+def nft_delete(client, campaign_id, asset_id, milestone_app_id):
 
-    print(f"Deleting {campaign_id} Campaign and unfreezing {asset_id} NFT....")
+    print(f"Deleting {campaign_id} Campaign, {milestone_app_id} milestones and unfreezing {asset_id} NFT....")
 
     # define address from private key of creator
-    creator_account = com_func.get_address_from_application(campaign_id)
+    sender = com_func.get_address_from_application(campaign_id)
     # set suggested params
     params = client.suggested_params()
 
     # unfreeze nft: Transaction 1
     txn_1 = AssetFreezeTxn(
-        sender=creator_account,
+        sender=sender,
         sp=params,
         index=asset_id,
-        target=creator_account,
+        target=sender,
         new_freeze_state=False
     )
 
     # delete campaign: Transaction 2
-    txn_2 = ApplicationDeleteTxn(creator_account, params, campaign_id)
+    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
+
+    # delete milestones: transaction 3,4,5
+    txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
+    txn_4 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])
+    txn_5 = ApplicationDeleteTxn(sender, params, milestone_app_id[2])
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4, txn_5])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
+    txn_3.group = group_id
+    txn_4.group = group_id
+    txn_5.group = group_id
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)},
+              {'txn': encoding.msgpack_encode(txn_4)},
+              {'txn': encoding.msgpack_encode(txn_5)}]
 
     return txngrp
