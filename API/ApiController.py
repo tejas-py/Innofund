@@ -361,7 +361,7 @@ def mint_nft():
     mint_asset = request.get_json()
     app_id = mint_asset['app_id']
     name = mint_asset['user_name']
-    usertype = mint_asset['useir_type']
+    usertype = mint_asset['user_type']
     unit_name = mint_asset['unit_name']
     asset_name = mint_asset['asset_name']
     meta_hash = mint_asset['image_hash']
