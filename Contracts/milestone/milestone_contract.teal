@@ -70,7 +70,6 @@ int 1
 return
 main_l14:
 txna ApplicationArgs 1
-btoi
 byte "milestone_title"
 app_global_get
 ==
@@ -93,7 +92,6 @@ int 1
 return
 main_l17:
 txna ApplicationArgs 1
-btoi
 byte "milestone_title"
 app_global_get
 ==

@@ -297,7 +297,6 @@ int 1
 return
 main_l14:
 txna ApplicationArgs 1
-btoi
 byte "milestone_title"
 app_global_get
 ==
@@ -320,7 +319,6 @@ int 1
 return
 main_l17:
 txna ApplicationArgs 1
-btoi
 byte "milestone_title"
 app_global_get
 ==
@@ -734,6 +732,7 @@ def pull_investment(client, creator_passphrase, campaignID, pull):
     programstr = response['result']
     t = programstr.encode("ascii")
     program = base64.decodebytes(t)
+    print(program)
     lsig = LogicSigAccount(program)
 
     sender = lsig.address()
