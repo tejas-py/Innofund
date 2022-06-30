@@ -3,6 +3,9 @@ from pyteal import *
 
 def approval_program():
 
+    # Checks that the sender is the app creator
+    is_app_creator = Txn.sender() == Global.creator_address()
+
     time_check = Cond(
         [App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")), Approve()]
     )
@@ -30,17 +33,59 @@ def approval_program():
         ]
     )
 
+    inner_txn1 = Seq(
+        InnerTxnBuilder.Begin(),
+        # Transaction: Opt-in NFT
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.asset_receiver: Global.current_application_address(),
+            TxnField.asset_amount: Int(0),
+            TxnField.xfer_asset: Txn.assets[0],
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
+    inner_txn2 = Seq(
+        InnerTxnBuilder.Begin(),
+        # Transaction: NFT Transfer to investor
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.asset_receiver: Txn.sender(),
+            TxnField.asset_amount: Btoi(Txn.application_args[1]),
+            TxnField.xfer_asset: Txn.assets[0],
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
+    inner_txn3 = Seq(
+        InnerTxnBuilder.Begin(),
+        # Transaction: NFT Transfer to creator
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.asset_receiver: Txn.accounts[0],
+            TxnField.asset_amount: Int(1),
+            TxnField.xfer_asset: Txn.assets[0],
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
     check_campaign_end = If(
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), Approve(), Reject())
 
+
     group_transaction = Cond(
-        [And(
-            Global.group_size() == Int(2),
-            Txn.application_args[0] == Bytes("Check")
-        ), check],
         [And(
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("Check if the campaign has ended.")
@@ -51,12 +96,31 @@ def approval_program():
         ), Approve()],
         [
             Txn.application_args[0] == Bytes("Blocking/Rejecting Campaign"), Approve()
-        ]
+        ],
+        [And(
+            Global.group_size() == Int(2),
+            is_app_creator,
+            Txn.application_args[0] == Bytes("Send NFT to Campaign")
+        ), inner_txn1],
+        [And(
+            Global.group_size() == Int(1),
+            Or(
+                Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+                App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+            ),
+            Txn.application_args[0] == Bytes("Send NFT to Investor")
+        ), inner_txn2],
+        [And(
+            Global.group_size() == Int(5),
+            is_app_creator,
+            Txn.application_args[0] == Bytes("Transfer NFT to Creator")
+        ), inner_txn3]
     )
 
     update_investment_details = Seq(
-        App.globalPut(Bytes("total_investment"), App.globalGet(Bytes("total_investment")) + Btoi(Txn.application_args[2]
-                                                                                                 )),
+        App.globalPut(Bytes("total_investment"),
+            App.globalGet(Bytes("total_investment")) + Btoi(Txn.application_args[2])
+        ),
         Approve()
     )
 
@@ -80,7 +144,10 @@ def approval_program():
     )
 
     update_campaign = Cond(
-        [Txn.application_args[0] == Bytes("update_investment"), check_investment_details],
+        [And(
+            Global.group_size() == Int(2),
+            Txn.application_args[0] == Bytes("update_investment")
+        ), check_investment_details],
         [And(
             Global.group_size() == Int(4),
             Txn.application_args[0] == Bytes("update_details")

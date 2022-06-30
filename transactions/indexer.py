@@ -7,6 +7,7 @@
 import json
 from API import connection
 import utilities.CommonFunctions
+from algosdk.v2client import indexer
 
 # connect to the indexer API
 indexerConnection = connection.connect_indexer()
@@ -42,10 +43,10 @@ def account_info(address):
 
 
 # get the transaction information for asset by an account
-def get_minted_asset_transaction(app_id):
+def get_minted_asset_transaction(address):
 
     # get address from app id
-    address = utilities.CommonFunctions.get_address_from_application(app_id)
+    # address = utilities.CommonFunctions.get_address_from_application(app_id)
 
     # get asset create transactions
     response = indexerConnection.search_transactions_by_address(address=address, txn_type="acfg")
@@ -54,25 +55,30 @@ def get_minted_asset_transaction(app_id):
     # get frozen state of assets
     response_frozen = indexerConnection.account_info(address=address)
     frozen_asset_info = response_frozen['account']['assets']
+    print(json.dumps(frozen_asset_info, indent=2, sort_keys=True))
+
     frozen_asset = reversed(frozen_asset_info)
 
     total_assets = []
+    asset_txn = []
 
     # sort the data
     for transaction_info, frozen_state in zip(asset_transactions, frozen_asset):
         params = transaction_info['asset-config-transaction']['params']
-        asset_info = transaction_info
+        # print(asset_transactions)
+        asset_txn.append(transaction_info)
         asset = {
             "asset-name": params.get('name'),
             "unit-name": params.get('unit-name'),
             "url": params.get('url'),
             "total": frozen_state.get('amount'),
             "asset-id": frozen_state.get('asset-id'),
-            "Price": asset_info.get('fee'),
+            # "Price": asset_info.get('fee'),
             "frozen-state": frozen_state.get('is-frozen')
         }
 
         total_assets.append(asset)
+
 
     return total_assets
 
@@ -99,3 +105,34 @@ def asset_details(asset_id):
              }
 
     return asset
+
+
+
+# check if the milestone start transaction exist or not
+def assets_in_wallet(app_id):
+
+    # get address from app id
+    address = utilities.CommonFunctions.get_address_from_application(app_id)
+
+    # get frozen state of assets
+    response_frozen = indexerConnection.account_info(address=address)
+    total_asset_info = response_frozen['account']['assets']
+
+    # create blank array to store loop data
+    total_assets = []
+
+    # loop for searching info for one asset at a time
+    for one_asset_info in total_asset_info:
+        asset_detail = indexerConnection.asset_info(one_asset_info['asset-id'])
+        one_asset_information = asset_detail['asset']
+        one_asset_param = one_asset_information['params']
+        asset = {"asset-name": one_asset_param.get('name'),
+                 "unit-name": one_asset_param.get('unit-name'),
+                 "frozen-state": one_asset_param.get('default-frozen'),
+                 "url": one_asset_param.get('url'),
+                 "total": one_asset_param.get('total'),
+                 "asset-id": one_asset_information.get('index'),
+                 }
+        total_assets.append(asset)
+
+    return total_assets

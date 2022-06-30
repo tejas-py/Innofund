@@ -354,7 +354,7 @@ def check_milestone():
         return jsonify(txn)
 
 
-# Group Transaction: (Call admin app and mint NFT)
+# Group Transaction: (Call user app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
     # get the details of the campaign to mint asset
@@ -470,7 +470,7 @@ def transfer_nft():
         return f"Check Wallet Address, Error: {wallet_error}", 400
 
 
-# Assigning NFT to Campaign
+# sending NFT to Campaign
 @app.route('/campaign_nft', methods=['POST'])
 def campaign_nft():
     # get the details
@@ -480,35 +480,35 @@ def campaign_nft():
     address = CommonFunctions.get_address_from_application(campaign_id)
 
     try:
-        if CommonFunctions.check_balance(address, 2000):
+        if CommonFunctions.check_balance(address, 3000):
             try:
                 # send the details
-                txn_id = creator_investor.call_nft(algod_client, asset_id, campaign_id)
+                txn_id = creator_investor.nft_to_campaign(algod_client, asset_id, campaign_id)
                 return jsonify(txn_id), 200
             except Exception as error:
                 return str(error), 500
         else:
-            return "To assign NFT to a campaign, Minimum Balance should be 2000 microAlgos", 400
+            return "To assign NFT to a campaign, Minimum Balance should be 3000 microAlgos", 400
     except Exception as wallet_error:
         return f"Check Wallet Address, Error: {wallet_error}", 400
 
 
 # Transfer NFT from Campaign Creator to Investor
-@app.route('/creator_investor', methods=["POST"])
-def NFT_transfer():
+@app.route('/claim_nft', methods=["POST"])
+def clamming_nft():
     # getting the transaction details
     transfer_details = request.get_json()
     investor_address = transfer_details['investor_wallet_address']
-    creator_address = transfer_details['creator_wallet_address']
     asset_id = transfer_details['NFT_asset_id']
     asset_amount = transfer_details['asset_amount']
+    campaign_app_id = transfer_details['campaign_app_id']
 
     try:
-        if CommonFunctions.check_balance(creator_address, 3000):
+        if CommonFunctions.check_balance(investor_address, 3000):
             try:
                 # send the details for transaction to occur
-                txn_details = creator_investor.nft_creator_investor(algod_client, investor_address,
-                                                                    creator_address, asset_id, asset_amount)
+                txn_details = creator_investor.claim_nft(algod_client, investor_address,
+                                                                    asset_id, asset_amount, campaign_app_id)
                 return jsonify(txn_details), 200
             except Exception as error:
                 return str(error), 500
@@ -544,12 +544,9 @@ def participation():
         if CommonFunctions.check_balance(address, 3000):
             # pass the details to algorand to give the transaction id
             try:
-                app_id = creator_investor.update_app(algod_client, campaignID, investment)
-                if app_id:
-                    participationID = creator_investor.update_call_app(algod_client, campaignID,
+                participationID = creator_investor.update_call_app(algod_client, campaignID,
                                                                        investment, investor_account)
-                    participation_json = {"participation_id": participationID}
-                    return jsonify(participation_json), 200
+                return jsonify(participationID), 200
             except Exception as error:
                 return str(error), 500
         else:
@@ -577,7 +574,7 @@ def pull_investment():
 @app.route('/total_nft/<int:app_id>')
 def totalNFT(app_id):
     try:
-        assets = indexer.get_minted_asset_transaction(app_id)
+        assets = indexer.assets_in_wallet(app_id)
         return jsonify(assets), 200
     except Exception as Error:
         print(f"Check User App ID! Error: {Error}")
@@ -607,4 +604,4 @@ def account_information():
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=4000)

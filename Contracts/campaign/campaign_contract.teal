@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l26
+bnz main_l28
 txn OnCompletion
 int NoOp
 ==
@@ -20,9 +20,13 @@ main_l5:
 int 1
 return
 main_l6:
+global GroupSize
+int 2
+==
 txna ApplicationArgs 0
 byte "update_investment"
 ==
+&&
 bnz main_l10
 global GroupSize
 int 4
@@ -88,18 +92,10 @@ global GroupSize
 int 2
 ==
 txna ApplicationArgs 0
-byte "Check"
-==
-&&
-bnz main_l23
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l20
+bnz main_l25
 global GroupSize
 int 2
 ==
@@ -107,19 +103,26 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l19
+bnz main_l24
 txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
-bnz main_l18
-err
-main_l18:
+bnz main_l23
+global GroupSize
+int 2
+==
+txn Sender
+global CreatorAddress
+==
+&&
+txna ApplicationArgs 0
+byte "Send NFT to Campaign"
+==
+&&
+bnz main_l22
+global GroupSize
 int 1
-return
-main_l19:
-int 1
-return
-main_l20:
+==
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -131,30 +134,96 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l22
+&&
+txna ApplicationArgs 0
+byte "Send NFT to Investor"
+==
+&&
+bnz main_l21
+global GroupSize
+int 5
+==
+txn Sender
+global CreatorAddress
+==
+&&
+txna ApplicationArgs 0
+byte "Transfer NFT to Creator"
+==
+&&
+bnz main_l20
+err
+main_l20:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 1
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
 int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l21:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 1
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
 return
 main_l22:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
 int 1
 return
 main_l23:
+int 1
+return
+main_l24:
+int 1
+return
+main_l25:
 txna ApplicationArgs 1
 btoi
-byte "fund_limit"
+byte "end_time"
 app_global_get
-<=
+>
 byte "fund_limit"
 app_global_get
 byte "total_investment"
 app_global_get
->=
-&&
-bnz main_l25
-err
-main_l25:
+==
+||
+bnz main_l27
+int 0
+return
+main_l27:
 int 1
 return
-main_l26:
+main_l28:
 txn NumAppArgs
 int 8
 ==
@@ -191,8 +260,8 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l28
+bnz main_l30
 err
-main_l28:
+main_l30:
 int 1
 return

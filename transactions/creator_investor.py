@@ -1,18 +1,8 @@
-# This transaction contains:
-# 1. Create new campaign and storing the data (Create application transaction).
-# 2. Group transaction: (Campaign application call and NFT transfer from Admin to Campaign creator).
-# 3. Transfer NFT from Campaign Creator to Investor (group transaction: opt-in NFT by investor and transfer NFT).
-# 4. Investors participate in the campaigns and invest (Campaign Application update transaction).
-# 5. Update the total investment of the campaign (Update Campaign app transaction).
-# 6. Creator pulls out the investment done in that campaign whenever the campaign is over.
-# 7. Group transaction of (Campaign App call and burn asset by campaign creator).
-# 8. Update the campaign app with new details of campaign (Campaign update application transaction).
-# 9. Add reason for Campaign to block/reject.
-
 from algosdk import mnemonic
 from algosdk.future.transaction import *
 from billiard.five import string
 import utilities.CommonFunctions as com_func
+
 
 # Declare application state storage (immutable)
 local_ints = 1
@@ -27,7 +17,7 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l26
+bnz main_l28
 txn OnCompletion
 int NoOp
 ==
@@ -45,9 +35,13 @@ main_l5:
 int 1
 return
 main_l6:
+global GroupSize
+int 2
+==
 txna ApplicationArgs 0
 byte "update_investment"
 ==
+&&
 bnz main_l10
 global GroupSize
 int 4
@@ -113,18 +107,10 @@ global GroupSize
 int 2
 ==
 txna ApplicationArgs 0
-byte "Check"
-==
-&&
-bnz main_l23
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l20
+bnz main_l25
 global GroupSize
 int 2
 ==
@@ -132,19 +118,26 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l19
+bnz main_l24
 txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
-bnz main_l18
-err
-main_l18:
+bnz main_l23
+global GroupSize
+int 2
+==
+txn Sender
+global CreatorAddress
+==
+&&
+txna ApplicationArgs 0
+byte "Send NFT to Campaign"
+==
+&&
+bnz main_l22
+global GroupSize
 int 1
-return
-main_l19:
-int 1
-return
-main_l20:
+==
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -156,30 +149,96 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l22
+&&
+txna ApplicationArgs 0
+byte "Send NFT to Investor"
+==
+&&
+bnz main_l21
+global GroupSize
+int 5
+==
+txn Sender
+global CreatorAddress
+==
+&&
+txna ApplicationArgs 0
+byte "Transfer NFT to Creator"
+==
+&&
+bnz main_l20
+err
+main_l20:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 1
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
 int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l21:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 1
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
 return
 main_l22:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
 int 1
 return
 main_l23:
+int 1
+return
+main_l24:
+int 1
+return
+main_l25:
 txna ApplicationArgs 1
 btoi
-byte "fund_limit"
+byte "end_time"
 app_global_get
-<=
+>
 byte "fund_limit"
 app_global_get
 byte "total_investment"
 app_global_get
->=
-&&
-bnz main_l25
-err
-main_l25:
+==
+||
+bnz main_l27
+int 0
+return
+main_l27:
 int 1
 return
-main_l26:
+main_l28:
 txn NumAppArgs
 int 8
 ==
@@ -216,9 +275,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l28
+bnz main_l30
 err
-main_l28:
+main_l30:
 int 1
 return
 """
@@ -447,7 +506,7 @@ def start_milestones(client, campaign_app_id, milestone_app_id, milestone_title,
 
     # call the milestone to start the application
     args_list_milestone = ['start', bytes(milestone_title, 'utf-8'), int(milestone_number), int(com_func.Today_seconds())]
-    txn_2 = ApplicationNoOpTxn(sender, params, milestone_app_id, args_list_milestone)
+    txn_2 = ApplicationNoOpTxn(sender, params, milestone_app_id, args_list_milestone, note="Milestone Started")
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
@@ -473,7 +532,7 @@ def end_milestone(client, milestone_app_id, milestone_title, milestone_number):
     submission_time = com_func.Today_seconds() - 7948800
     app_args = ['end', bytes(milestone_title, 'utf-8'), int(milestone_number), int(submission_time)]
 
-    txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args)
+    txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args, note="Milestone Ended")
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
@@ -548,50 +607,50 @@ def admin_creator(client, asset_id, amount, admin_account, creator_address):
     # set suggested params
     params = client.suggested_params()
 
-    # Transferring NFT from admin to campaign creator: Transaction 1
-    txn_1 = AssetTransferTxn(sender=admin_account,
+    # Transferring NFT from admin to campaign creator
+    txn = AssetTransferTxn(sender=admin_account,
                              sp=params,
                              receiver=creator_address,
                              amt=amount,
                              index=asset_id)
 
-    # changing manager
-    txn_2 = AssetConfigTxn(sender=admin_account, sp=params, index=asset_id,
-                           manager=creator_address, reserve=creator_address,
-                           freeze=creator_address)
-    print("Grouping transactions...")
-    # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("...computed groupId: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
 
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     return txngrp
 
 
 # Campaign call and freeze nft
-def call_nft(client, asset_id, campaign_id):
+def nft_to_campaign(client, asset_id, campaign_id):
 
     print(f"Assigning {asset_id} NFT to {campaign_id} Campaign...")
     # define address from private key of creator
     creator_account = com_func.get_address_from_application(campaign_id)
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
 
-    # set suggested params
-    params = client.suggested_params()
+    # set suggested params for transaction 1
+    params_txn1 = client.suggested_params()
+    params_txn1.fee = 2000
+    params_txn1.flat_fee = True
 
     # Campaign application call: transaction 1
-    app_arg = ["No Check"]
-    txn_1 = ApplicationNoOpTxn(creator_account, params, campaign_id, app_arg)
+    app_arg = ["Send NFT to Campaign"]
+    asset_lst = [asset_id]
+    txn_1 = ApplicationNoOpTxn(creator_account, params_txn1, campaign_id, app_arg, foreign_assets=asset_lst)
 
-    # NFT Freeze: transaction 2
-    txn_2 = AssetFreezeTxn(
+
+    # set suggested params for transaction 1
+    params_txn2 = client.suggested_params()
+    params_txn2.fee = 1000
+    params_txn2.flat_fee = True
+
+    # NFT transfer to campaign wallet address: transaction 2
+    txn_2 = AssetTransferTxn(
         sender=creator_account,
-        sp=params,
-        index=asset_id,
-        target=creator_account,
-        new_freeze_state=True
+        sp=params_txn2,
+        receiver= campaign_wallet_address,
+        amt=1,
+        index=asset_id
     )
 
     print("Grouping transactions...")
@@ -606,37 +665,27 @@ def call_nft(client, asset_id, campaign_id):
     return txngrp
 
 
-# Transfer NFT from Campaign Creator to Investor
-def nft_creator_investor(client, creator_address, investor_address, asset_id, asset_amount):
+# Claiming NFT by Investor (the one who call this receives the NFT.)
+def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
 
-    print(f"Transfering {asset_id} NFT to {investor_address}")
+    print(f"Claiming {asset_id} NFT by {wallet_address}")
 
-    # declaring parameters
+    # get node suggested parameters
     params = client.suggested_params()
+    params.fee = 2000
+    params.flat_fee = True
 
-    # unfreeze NFT
-    txn_1 = AssetFreezeTxn(sender=creator_address, sp=params, index=asset_id,
-                           target=creator_address, new_freeze_state=False)
+    # define the arguments
+    app_args_list = ["Send NFT to Investor", int(asset_amount)]
+    asset_list = [asset_id]
 
-    # Change Manager
-    txn_2 = AssetConfigTxn(sender=creator_address, sp=params, index=asset_id,
-                           manager=investor_address, reserve=investor_address,
-                           freeze=investor_address, clawback=investor_address)
+    # Transaction: Campaign Application Call
+    txn = ApplicationNoOpTxn(sender=wallet_address, sp=params, index=campaign_app_id,
+                               app_args=app_args_list, foreign_assets=asset_list)
 
-    # transaction from creator to investor
-    txn_3 = AssetTransferTxn(sender=creator_address, sp=params, receiver=investor_address,
-                             amt=asset_amount, index=asset_id)
 
-    print("Grouping transactions...")
-    # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
-    print("...computed groupId: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
-    txn_3.group = group_id
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)},
-              {'txn': encoding.msgpack_encode(txn_3)}]
     return txngrp
 
 
@@ -645,28 +694,26 @@ def update_call_app(client, campaignID, investment, investor_account):
 
     print(f"Investing in {campaignID}...")
 
-    escrow_account = "BJATCHES5YJZJ7JITYMVLSSIQAVAWBQRVGPQUDT5AZ2QSLDSXWWM46THOY"
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaignID.to_bytes (8, 'big')))
+
+    # state the smart contract
+    approval_program = com_func.compile_program(client, approval_program_source_initial)
+    clear_program = com_func.compile_program(client, clear_program_source)
 
     # get node suggested parameters
     params = client.suggested_params()
 
-    # create transactions
-    print("Creating transactions...")
-
-    # Investor Account to call campaign app: Transaction 1
+    # declare the sender and receiver
     sender = investor_account
-    args_list = ["Check", int(investment)]
-    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, args_list)
-    print("Created Transaction: ", txn_1.get_txid())
+    receiver = campaign_wallet_address
 
-    # Transaction from Investor Account to Escrow Account: Transaction 2
-    sender = investor_account
-    receiver = escrow_account
+    # Update the investment of the campaign application: Transaction 1
+    app_args = ["update_investment", int(com_func.Today_seconds()), int(investment)]
+    txn_1 = ApplicationUpdateTxn(sender, params, campaignID, approval_program, clear_program, app_args)
+
+    # Transaction from Investor Account to Escrow Account: Transaction 3
     amount = investment
     txn_2 = PaymentTxn(sender, params, receiver, amount)
-    print("Transaction 2 : from {} to {} for {} microAlgos".format(
-        sender, receiver, amount))
-    print("Created Transaction 2: ", txn_2.get_txid())
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
@@ -675,7 +722,8 @@ def update_call_app(client, campaignID, investment, investor_account):
     txn_1.group = group_id
     txn_2.group = group_id
 
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)}]
 
     return txngrp
 
@@ -877,20 +925,24 @@ def block_reason(client, public_address, campaign_id, reason):
 # delete campaign and unfreeze NFT
 def nft_delete(client, campaign_id, asset_id, milestone_app_id):
 
-    print(f"Deleting {campaign_id} Campaign, {milestone_app_id} milestones and unfreezing {asset_id} NFT....")
+    print(f"Deleting {campaign_id} Campaign, {milestone_app_id} milestones and transferring {asset_id} NFT....")
 
     # define address from private key of creator
     sender = com_func.get_address_from_application(campaign_id)
+
     # set suggested params
     params = client.suggested_params()
 
-    # unfreeze nft: Transaction 1
-    txn_1 = AssetFreezeTxn(
-        sender=sender,
-        sp=params,
-        index=asset_id,
-        target=sender,
-        new_freeze_state=False
+    # set params for transaction 1
+    params_txn1 = client.suggested_params()
+    params_txn1.fee = 2000
+    params_txn1.flat_fee = True
+
+    # transfer nft back to creator: Transaction 1
+    args_list = ["Transfer NFT to Creator"]
+    asset_list = [asset_id]
+    txn_1 = ApplicationNoOpTxn(
+        sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list
     )
 
     # delete campaign: Transaction 2

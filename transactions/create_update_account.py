@@ -1,8 +1,3 @@
-# This transaction contains:
-# 1. Create Account for new users (Create application transaction).
-# 2. Update User(Creator and Investor) details (User update application transaction).
-# 3. Delete existing user. (User application delete transaction)
-
 from algosdk.future.transaction import *
 import utilities.CommonFunctions as com_func
 from algosdk import encoding
@@ -174,8 +169,6 @@ def campaign_milestones(client, campaign_app_id, milestone_app_id):
     # deleting campaign 
     txn_1 = ApplicationDeleteTxn(sender, params, campaign_app_id)
 
-    print(milestone_app_id)
-    
     # deleting milestones
     txn_2 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
     txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])

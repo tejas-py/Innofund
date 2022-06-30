@@ -156,7 +156,7 @@ def update_admin(client, public_address, admin_id, name, usertype, email):
     return txngrp
 
 
-# call admin app and create asset
+# call user app and create asset
 def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, image_url, amt):
 
     # define address from private key of creator
