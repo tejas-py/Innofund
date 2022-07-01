@@ -24,9 +24,7 @@ def approval_program():
 
     end_check = Cond(
         [And(
-            Txn.application_args[1] == App.globalGet(Bytes("milestone_title")),
-            Btoi(Txn.application_args[2]) == App.globalGet(Bytes("milestone_number")),
-            Btoi(Txn.application_args[3]) <= App.globalGet(Bytes("end_time")),
+            Btoi(Txn.application_args[1]) <= App.globalGet(Bytes("end_time")),
         ), Approve()
         ]
     )

@@ -322,10 +322,9 @@ def milestone_end():
     # get the details
     milestone_details = request.get_json()
     milestone_app_id = milestone_details['milestone_app_id']
-    milestone_title = milestone_details['milestone_title']
-    milestone_no = milestone_details['milestone_number']
 
-    end_txn = creator_investor.end_milestone(algod_client, milestone_app_id, milestone_title, milestone_no)
+
+    end_txn = creator_investor.end_milestone(algod_client, milestone_app_id)
 
     return jsonify(end_txn)
 
@@ -555,18 +554,20 @@ def participation():
         return f"Check Wallet Address, Error: {wallet_error}", 400
 
 
-# Creator Pull out the investment that was done by the investors in the particular campaign
+# admin approves the milestone and investment get transfer to creator
 @app.route('/pull_investment', methods=["POST"])
 def pull_investment():
     # get the details from the user
     investment_details = request.get_json()
-    creator_passphrase = investment_details['creator_passphrase']
-    campaignID = investment_details['campaign_app_id']
-    pull = investment_details['amount']
+    campaign_app_id = investment_details['campaign_app_id']
+    total_investment = investment_details['total_investment']
+    milestone_no = investment_details['milestone_number']
+    admin_wallet_address = investment_details['admin_wallet_address']
+    milestone_app_id = investment_details['milestone_app_id']
+    note = investment_details['note']
 
     # pass the details to the algorand to run the transaction
-    pullID = creator_investor.pull_investment(algod_client, creator_passphrase, campaignID, pull)
-    txn_details = {"transaction_id": pullID}
+    txn_details = creator_investor.pull_investment(algod_client, note, campaign_app_id, admin_wallet_address, total_investment, milestone_no, milestone_app_id)
     return jsonify(txn_details)
 
 

@@ -70,21 +70,10 @@ int 1
 return
 main_l14:
 txna ApplicationArgs 1
-byte "milestone_title"
-app_global_get
-==
-txna ApplicationArgs 2
-btoi
-byte "milestone_number"
-app_global_get
-==
-&&
-txna ApplicationArgs 3
 btoi
 byte "end_time"
 app_global_get
 <=
-&&
 bnz main_l16
 err
 main_l16:

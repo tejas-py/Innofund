@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l28
+bnz main_l32
 txn OnCompletion
 int NoOp
 ==
@@ -91,11 +91,23 @@ main_l13:
 global GroupSize
 int 2
 ==
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+&&
 txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l25
+bnz main_l31
 global GroupSize
 int 2
 ==
@@ -103,11 +115,11 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l24
+bnz main_l30
 txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
-bnz main_l23
+bnz main_l29
 global GroupSize
 int 2
 ==
@@ -119,7 +131,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l22
+bnz main_l28
 global GroupSize
 int 1
 ==
@@ -139,7 +151,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Investor"
 ==
 &&
-bnz main_l21
+bnz main_l27
 global GroupSize
 int 5
 ==
@@ -151,9 +163,145 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l20
+bnz main_l26
+global GroupSize
+int 1
+==
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+&&
+txna ApplicationArgs 0
+byte "Start Milestone 1"
+==
+&&
+bnz main_l25
+global GroupSize
+int 1
+==
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+&&
+txna ApplicationArgs 0
+byte "Start Milestone 2"
+==
+&&
+bnz main_l24
+global GroupSize
+int 1
+==
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+&&
+txna ApplicationArgs 0
+byte "Start Milestone 3"
+==
+&&
+bnz main_l23
 err
-main_l20:
+main_l23:
+itxn_begin
+int appl
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Applications 1
+itxn_field ApplicationID
+txna ApplicationArgs 4
+itxn_field ApplicationArgs
+txna ApplicationArgs 1
+itxn_field ApplicationArgs
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+global CreatorAddress
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l24:
+itxn_begin
+int appl
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Applications 1
+itxn_field ApplicationID
+txna ApplicationArgs 4
+itxn_field ApplicationArgs
+txna ApplicationArgs 1
+itxn_field ApplicationArgs
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+global CreatorAddress
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l25:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+global CreatorAddress
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l26:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -168,7 +316,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l21:
+main_l27:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -184,7 +332,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l22:
+main_l28:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -199,31 +347,16 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l23:
+main_l29:
 int 1
 return
-main_l24:
+main_l30:
 int 1
 return
-main_l25:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l27
-int 0
-return
-main_l27:
+main_l31:
 int 1
 return
-main_l28:
+main_l32:
 txn NumAppArgs
 int 8
 ==
@@ -260,8 +393,8 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l30
+bnz main_l34
 err
-main_l30:
+main_l34:
 int 1
 return
