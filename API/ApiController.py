@@ -330,6 +330,7 @@ def milestone_end():
 
 
 # admin verifies the milestone
+#******************************
 @app.route('/verify_milestone', methods=['POST'])
 def check_milestone():
     # get the details
@@ -555,7 +556,7 @@ def participation():
 
 
 # admin approves the milestone and investment get transfer to creator
-@app.route('/pull_investment', methods=["POST"])
+@app.route('/approve_reject_milestone', methods=["POST"])
 def pull_investment():
     # get the details from the user
     investment_details = request.get_json()

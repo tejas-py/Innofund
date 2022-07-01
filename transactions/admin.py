@@ -1,8 +1,3 @@
-# This transaction contains:
-# 1. creation of admin account.
-# 2. update admin account details.
-# 3. group transaction: (Admin Call app and minting NFT by the admin).
-
 from algosdk.future import transaction
 import utilities.CommonFunctions as com_func
 from algosdk import account, mnemonic, encoding

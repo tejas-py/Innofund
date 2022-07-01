@@ -1,5 +1,6 @@
 from algosdk.future.transaction import *
 import utilities.CommonFunctions as com_func
+import time
 
 
 # Declare application state storage (immutable)
@@ -11,11 +12,11 @@ global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
 # Declare the approval program source
-approval_program_source_initial = b"""#pragma version 5
+approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l32
+bnz main_l34
 txn OnCompletion
 int NoOp
 ==
@@ -104,18 +105,6 @@ main_l13:
 global GroupSize
 int 2
 ==
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-&&
 txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
@@ -129,9 +118,13 @@ byte "No Check"
 ==
 &&
 bnz main_l30
+global GroupSize
+int 1
+==
 txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
+&&
 bnz main_l29
 global GroupSize
 int 2
@@ -367,9 +360,24 @@ main_l30:
 int 1
 return
 main_l31:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l33
+int 0
+return
+main_l33:
 int 1
 return
-main_l32:
+main_l34:
 txn NumAppArgs
 int 8
 ==
@@ -406,16 +414,16 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l34
+bnz main_l36
 err
-main_l34:
+main_l36:
 int 1
 return
 """
 
 
 # Declare the approval program source
-approval_program_source_initial_milestone = b"""#pragma version 5
+approval_program_source_initial_milestone = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
@@ -539,7 +547,7 @@ return
 """
 
 # Declare clear state program source
-clear_program_source = b"""#pragma version 5
+clear_program_source = b"""#pragma version 6
 int 1
 """
 
@@ -563,7 +571,7 @@ def create_campaign_app(client, public_address, title,
     # investment in the campaign at the time of creation
     investment = 0
 
-    # create campaign application
+# create campaign application
     args_list = [bytes(title, 'utf8'), bytes(category, 'utf8'),
                  int(end_time), bytes(fund_category, 'utf8'),
                  int(fund_limit), bytes(reward_type, 'utf-8'), bytes(country, 'utf8'), int(investment)]
@@ -757,7 +765,6 @@ def nft_to_campaign(client, asset_id, campaign_id):
     app_arg = ["Send NFT to Campaign"]
     asset_lst = [asset_id]
     txn_1 = ApplicationNoOpTxn(creator_account, params_txn1, campaign_id, app_arg, foreign_assets=asset_lst)
-
     # set suggested params for transaction 1
     params_txn2 = client.suggested_params()
     params_txn2.fee = 1000
@@ -790,9 +797,13 @@ def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
     print(f"Claiming {asset_id} NFT by {wallet_address}")
 
     # get node suggested parameters
-    params = client.suggested_params()
-    params.fee = 2000
-    params.flat_fee = True
+    params_txn1 = client.suggested_params()
+    params_txn1.fee = 1000
+    params_txn1.flat_fee = True
+
+    params_txn2 = client.suggested_params()
+    params_txn2.fee = 2000
+    params_txn2.flat_fee = True
 
     # define the arguments
     app_args_list = ["Send NFT to Investor", int(asset_amount)]
@@ -800,11 +811,11 @@ def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
 
     # Transaction 1: Opting to asset
     txn_1 = AssetTransferTxn(sender=wallet_address, receiver=wallet_address,
-                             sp=params, amt=0, index=asset_id)
+                             sp=params_txn1, amt=0, index=asset_id)
 
 
     # Transaction 2: Campaign Application Call
-    txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params, index=campaign_app_id,
+    txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params_txn2, index=campaign_app_id,
                                app_args=app_args_list, foreign_assets=asset_list)
 
     print("Grouping transactions...")

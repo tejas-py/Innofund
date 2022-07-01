@@ -67,5 +67,5 @@ def approval_program():
 
 if __name__ == "__main__":
     with open("milestone_contract.teal", "w") as f:
-        compiled = compileTeal(approval_program(), mode=Mode.Application, version=5)
+        compiled = compileTeal(approval_program(), mode=Mode.Application, version=6)
         f.write(compiled)
