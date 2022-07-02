@@ -118,21 +118,28 @@ def assets_in_wallet(app_id):
     response_frozen = indexerConnection.account_info(address=address)
     total_asset_info = response_frozen['account']['assets']
 
+    print("Account Info: ", total_asset_info)
+
+    print("_______________________________________")
+
     # create blank array to store loop data
     total_assets = []
 
     # loop for searching info for one asset at a time
     for one_asset_info in total_asset_info:
-        asset_detail = indexerConnection.asset_info(one_asset_info['asset-id'])
-        one_asset_information = asset_detail['asset']
-        one_asset_param = one_asset_information['params']
-        asset = {"asset-name": one_asset_param.get('name'),
-                 "unit-name": one_asset_param.get('unit-name'),
-                 "frozen-state": one_asset_param.get('default-frozen'),
-                 "url": one_asset_param.get('url'),
-                 "total": one_asset_param.get('total'),
-                 "asset-id": one_asset_information.get('index'),
-                 }
-        total_assets.append(asset)
+        if one_asset_info.get('amount') > 0:
+            asset_detail = indexerConnection.asset_info(one_asset_info['asset-id'])
+            one_asset_information = asset_detail['asset']
+            one_asset_param = one_asset_information['params']
+            asset = {"asset-name": one_asset_param.get('name'),
+                     "unit-name": one_asset_param.get('unit-name'),
+                     "frozen-state": one_asset_param.get('default-frozen'),
+                     "url": one_asset_param.get('url'),
+                     "total":one_asset_info.get('amount'),
+                     "asset-id": one_asset_information.get('index')
+                     }
+            total_assets.append(asset)
+
+    print(json.dumps(total_assets, indent=2, sort_keys=True))
 
     return total_assets

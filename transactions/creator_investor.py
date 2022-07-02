@@ -755,23 +755,27 @@ def nft_to_campaign(client, asset_id, campaign_id):
     # define address from private key of creator
     creator_account = com_func.get_address_from_application(campaign_id)
     campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
+    print("campaign wallet:", campaign_wallet_address)
 
     # set suggested params for transaction 1
     params_txn1 = client.suggested_params()
-    params_txn1.fee = 2000
+    params_txn1.fee = 1000
     params_txn1.flat_fee = True
+
+    # payment to escrow account
+    txn_1 = PaymentTxn(sender=creator_account, receiver=campaign_wallet_address, amt=100000, sp=params_txn1)
 
     # Campaign application call: transaction 1
     app_arg = ["Send NFT to Campaign"]
     asset_lst = [asset_id]
-    txn_1 = ApplicationNoOpTxn(creator_account, params_txn1, campaign_id, app_arg, foreign_assets=asset_lst)
+    txn_2 = ApplicationNoOpTxn(creator_account, params_txn1, campaign_id, app_arg, foreign_assets=asset_lst)
     # set suggested params for transaction 1
     params_txn2 = client.suggested_params()
-    params_txn2.fee = 1000
+    params_txn2.fee = 2000
     params_txn2.flat_fee = True
 
     # NFT transfer to campaign wallet address: transaction 2
-    txn_2 = AssetTransferTxn(
+    txn_3 = AssetTransferTxn(
         sender=creator_account,
         sp=params_txn2,
         receiver= campaign_wallet_address,
@@ -785,8 +789,11 @@ def nft_to_campaign(client, asset_id, campaign_id):
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
+    txn_3.group = group_id
 
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)}]
 
     return txngrp
 
