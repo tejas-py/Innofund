@@ -5,9 +5,8 @@
 # 4. List information of a particular address.
 
 import json
-from API import connection
+import connection
 import utilities.CommonFunctions
-from algosdk.v2client import indexer
 
 # connect to the indexer API
 indexerConnection = connection.connect_indexer()
