@@ -104,8 +104,7 @@ def create_app(client, sender, name, usertype, email):
                                approval_program, clear_program,
                                global_schema, local_schema, args_list)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
 
     return txngrp
 
@@ -128,8 +127,7 @@ def update_user(client, user_id, name):
     # create unsigned transaction
     txn = ApplicationUpdateTxn(sender, params, user_id, approval_program, clear_program, app_args)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
 
     return txngrp
 
@@ -149,8 +147,7 @@ def delete_user(client, user_id):
     # create unsigned transaction
     txn = ApplicationDeleteTxn(sender, params, user_id)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
 
     return txngrp
 

@@ -5,6 +5,9 @@
 # 4. List information of a particular address.
 
 import json
+
+from algosdk import encoding
+
 import connection
 import utilities.CommonFunctions
 
@@ -117,10 +120,6 @@ def assets_in_wallet(app_id):
     response_frozen = indexerConnection.account_info(address=address)
     total_asset_info = response_frozen['account']['assets']
 
-    print("Account Info: ", total_asset_info)
-
-    print("_______________________________________")
-
     # create blank array to store loop data
     total_assets = []
 
@@ -139,6 +138,53 @@ def assets_in_wallet(app_id):
                      }
             total_assets.append(asset)
 
-    print(json.dumps(total_assets, indent=2, sort_keys=True))
-
     return total_assets
+
+
+# get the details of the campaign
+def campaign(campaign_id):
+
+    # define variables
+    invested_amount = "None"
+    fund_limit = "None"
+
+    try:
+        # get the information of the application
+        campaign_info = indexerConnection.search_applications(application_id=campaign_id)
+        campaign_args = campaign_info['applications'][0]['params']['global-state']
+
+        # find the total invested amount in the campaign
+        for one_arg in campaign_args:
+            key = one_arg['key']
+            if "dG90YWxfaW52ZXN0bWVudA==" == key:
+                value = one_arg['value']['uint']
+                invested_amount = value
+
+        # find the total invested needed in the campaign
+        for one_arg in campaign_args:
+            key = one_arg['key']
+            if "ZnVuZF9saW1pdA==" == key:
+                value = one_arg['value']['uint']
+                fund_limit = value
+
+    except Exception as error:
+        print(error)
+
+    investment_details = {"Total Invested": invested_amount, "Fund_limit": fund_limit}
+
+    return investment_details
+
+
+# indexer
+def transaction_search():
+    txid = "7YZUDWPCY6LNQAWJANXGYZJR35VAEV4C6DRABC5BRWWBDBD5OHHA"
+    campaign_id = 98361589
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
+
+    info = indexerConnection.search_transactions(txid=txid, address=campaign_wallet_address)
+    asset_info = json.dumps(info, indent=2, sort_keys=True)
+    print(asset_info)
+
+# 1 algo = 1_000_000 microAlgos
+
+transaction_search()

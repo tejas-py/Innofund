@@ -121,8 +121,7 @@ def create_admin_account(client, name, usertype, email):
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
                                            global_schema, local_schema, args_list)
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
 
     return txngrp
 
@@ -145,8 +144,7 @@ def update_admin(client, public_address, admin_id, name, usertype, email):
     # create unsigned transaction
     txn = transaction.ApplicationUpdateTxn(sender, params, admin_id, approval_program, clear_program, app_args)
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn)})
+    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
 
     return txngrp
 
@@ -183,8 +181,6 @@ def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, image_u
     txn_1.group = group_id
     txn_2.group = group_id
 
-    txngrp = []
-    txngrp.append({'txn': encoding.msgpack_encode(txn_1)})
-    txngrp.append({'txn': encoding.msgpack_encode(txn_2)})
+    txngrp = [{'txn':encoding.msgpack_encode (txn_1)}, {'txn':encoding.msgpack_encode (txn_2)}]
 
     return txngrp

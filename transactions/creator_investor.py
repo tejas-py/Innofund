@@ -1,11 +1,10 @@
 from algosdk.future.transaction import *
 import utilities.CommonFunctions as com_func
-import time
-
+import transactions.indexer
 
 # Declare application state storage (immutable)
-local_ints = 1
-local_bytes = 1
+local_ints = 5
+local_bytes = 5
 global_ints = 20
 global_bytes = 20
 global_schema = StateSchema(global_ints, global_bytes)
@@ -16,7 +15,7 @@ approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l34
+bnz main_l46
 txn OnCompletion
 int NoOp
 ==
@@ -109,7 +108,7 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l31
+bnz main_l43
 global GroupSize
 int 2
 ==
@@ -117,7 +116,7 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 &&
-bnz main_l30
+bnz main_l42
 global GroupSize
 int 1
 ==
@@ -125,7 +124,7 @@ txna ApplicationArgs 0
 byte "Blocking/Rejecting Campaign"
 ==
 &&
-bnz main_l29
+bnz main_l41
 global GroupSize
 int 2
 ==
@@ -137,27 +136,15 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l28
+bnz main_l38
 global GroupSize
 int 1
 ==
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-&&
 txna ApplicationArgs 0
 byte "Send NFT to Investor"
 ==
 &&
-bnz main_l27
+bnz main_l35
 global GroupSize
 int 5
 ==
@@ -169,62 +156,26 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l26
+bnz main_l32
 global GroupSize
 int 1
 ==
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-&&
 txna ApplicationArgs 0
 byte "Start Milestone 1"
 ==
 &&
-bnz main_l25
+bnz main_l29
 global GroupSize
 int 1
 ==
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-&&
 txna ApplicationArgs 0
 byte "Start Milestone 2"
 ==
 &&
-bnz main_l24
+bnz main_l26
 global GroupSize
 int 1
 ==
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-&&
 txna ApplicationArgs 0
 byte "Start Milestone 3"
 ==
@@ -232,66 +183,35 @@ byte "Start Milestone 3"
 bnz main_l23
 err
 main_l23:
-itxn_begin
-int appl
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-txna Applications 1
-itxn_field ApplicationID
-txna ApplicationArgs 4
-itxn_field ApplicationArgs
 txna ApplicationArgs 1
-itxn_field ApplicationArgs
-int 0
-itxn_field Fee
-itxn_submit
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-global CreatorAddress
-itxn_field Receiver
-txna ApplicationArgs 2
 btoi
-itxn_field Amount
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l25
 int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l24:
-itxn_begin
-int appl
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-txna Applications 1
-itxn_field ApplicationID
-txna ApplicationArgs 4
-itxn_field ApplicationArgs
-txna ApplicationArgs 1
-itxn_field ApplicationArgs
-int 0
-itxn_field Fee
-itxn_submit
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-global CreatorAddress
-itxn_field Receiver
-txna ApplicationArgs 2
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-int 1
 return
 main_l25:
+itxn_begin
+int appl
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Applications 1
+itxn_field ApplicationID
+txna ApplicationArgs 4
+itxn_field ApplicationArgs
+txna ApplicationArgs 1
+itxn_field ApplicationArgs
+int 0
+itxn_field Fee
+itxn_submit
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -308,6 +228,97 @@ itxn_submit
 int 1
 return
 main_l26:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l28
+int 0
+return
+main_l28:
+itxn_begin
+int appl
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Applications 1
+itxn_field ApplicationID
+txna ApplicationArgs 4
+itxn_field ApplicationArgs
+txna ApplicationArgs 1
+itxn_field ApplicationArgs
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+global CreatorAddress
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l29:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l31
+int 0
+return
+main_l31:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+global CreatorAddress
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l32:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l34
+int 0
+return
+main_l34:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -322,7 +333,22 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l27:
+main_l35:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l37
+int 0
+return
+main_l37:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -338,7 +364,22 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l28:
+main_l38:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l40
+int 0
+return
+main_l40:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -353,13 +394,13 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l29:
+main_l41:
 int 1
 return
-main_l30:
+main_l42:
 int 1
 return
-main_l31:
+main_l43:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -371,13 +412,13 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l33
+bnz main_l45
 int 0
 return
-main_l33:
+main_l45:
 int 1
 return
-main_l34:
+main_l46:
 txn NumAppArgs
 int 8
 ==
@@ -414,9 +455,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l36
+bnz main_l48
 err
-main_l36:
+main_l48:
 int 1
 return
 """
@@ -649,47 +690,22 @@ def start_milestones(client, campaign_app_id, milestone_app_id, milestone_title,
 
 
 # end milestone
-def end_milestone(client, milestone_app_id):
-
-    print(f'Ending {milestone_app_id} milestone...')
-
-    params = client.suggested_params()
-    sender = com_func.get_address_from_application(milestone_app_id)
-
-    # 100 days after the current date
-    submission_time = com_func.Today_seconds() - 7948800
-    app_args = ['end', int(submission_time)]
-
-    txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args, note="Milestone Ended")
-
-    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
-
-    return txngrp
-
-
-# Approve Milestone and start next milestone
-def approve_milestone(client, note, check_milestone_app_id, milestone_app_id, milestone_title, milestone_number):
-    print(f"Approving {milestone_app_id} milestone...")
-
-    params = client.suggested_params()
-    sender = com_func.get_address_from_application(milestone_app_id)
-    app_args_1 = ['no_check']
-
-    txn_1 = ApplicationNoOpTxn(sender, params, check_milestone_app_id, app_args_1, note=note)
-
-    app_args_2 = ['start', bytes(milestone_title, 'utf-8'), int(milestone_number), int(com_func.Today_seconds())]
-    txn_2 = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args_2)
-
-    print("Grouping transactions...")
-    # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("...computed groupId: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
-
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)}]
-
-    return txngrp
+# def end_milestone(client, milestone_app_id):
+#
+#     print(f'Ending {milestone_app_id} milestone...')
+#
+#     params = client.suggested_params()
+#     sender = com_func.get_address_from_application(milestone_app_id)
+#
+#     # 100 days after the current date
+#     submission_time = com_func.Today_seconds() - 7948800
+#     app_args = ['end', int(submission_time)]
+#
+#     txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args, note="Milestone Ended")
+#
+#     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
+#
+#     return txngrp
 
 
 # reject milestone
@@ -840,7 +856,7 @@ def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
 
 
 # Investors participate in the campaigns and invest
-def update_call_app(client, campaignID, investment, investor_account):
+def update_call_app(client, campaignID, investment, investor_account, meta_data):
 
     print(f"Investing in {campaignID}...")
 
@@ -858,17 +874,16 @@ def update_call_app(client, campaignID, investment, investor_account):
     receiver = campaign_wallet_address
 
     # Update the investment of the campaign application: Transaction 1
-    app_args = ["update_investment", int(com_func.Today_seconds()), int(investment)]
+    app_args = ["update_investment", int(com_func.Today_seconds()), int(investment/1_000_000)]
     txn_1 = ApplicationUpdateTxn(sender, params, campaignID, approval_program, clear_program, app_args)
 
     # Transaction from Investor Account to Escrow Account: Transaction 2
     amount = investment
-    txn_2 = PaymentTxn(sender, params, receiver, amount)
+    txn_2 = PaymentTxn(sender, params, receiver, amount, note=meta_data)
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
 
@@ -903,7 +918,7 @@ def update_app(client, app_id, investment):
 
 
 # Admin Approves the Milestone and send the investment to creator
-def pull_investment(client, note, campaign_app_id, total_amount_in_campaign, admin_wallet_address, milestone_number, milestone_app_id):
+def pull_investment(client, campaign_app_id, admin_wallet_address, milestone_number, milestone_app_id=None, note=None):
 
     # create transactions
     print("Creating transactions...")
@@ -916,9 +931,11 @@ def pull_investment(client, note, campaign_app_id, total_amount_in_campaign, adm
     # Creator Account to call app.
     sender = admin_wallet_address
 
-    approve_lst = ['approve', 'APPROVE', 'Approve']
+    # get the total investment amount in campaign
+    campaign_info = transactions.indexer.campaign(campaign_app_id)
+    total_amount_in_campaign = campaign_info['Total Invested']
 
-    if note in approve_lst:
+    if note == 'approve':
         if milestone_number == 1 or milestone_number == "1":
 
             args_list = [f"Start Milestone {milestone_number}", int(com_func.Today_seconds()), int(total_amount_in_campaign/3)]

@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utilities import check, CommonFunctions
-from transactions import admin, creator_investor, indexer, create_update_account
+from transactions import admin, creator_investor, create_update_account, indexer
 import connection
 
 app = Flask(__name__)
@@ -317,41 +317,16 @@ def init_milestone():
 
 
 # end milestone
-@app.route('/end_milestone', methods=['POST'])
-def milestone_end():
-    # get the details
-    milestone_details = request.get_json()
-    milestone_app_id = milestone_details['milestone_app_id']
-
-
-    end_txn = creator_investor.end_milestone(algod_client, milestone_app_id)
-
-    return jsonify(end_txn)
-
-
-# admin verifies the milestone
-#******************************
-@app.route('/verify_milestone', methods=['POST'])
-def check_milestone():
-    # get the details
-    verification_details = request.get_json()
-    note = verification_details['note']
-    check_milestone_app_id = verification_details['check_milestone_app_id']
-
-    # second milestone
-    milestone_app_id = verification_details['milestone_app_id']
-    milestone_title = verification_details['milestone_title']
-    milestone_no = verification_details['milestone_number']
-
-    approve_lst = ['approve', 'APPROVE', 'Approve']
-
-    if note in approve_lst:
-        grp_txn = creator_investor.approve_milestone(algod_client, note, check_milestone_app_id, milestone_app_id,
-                                                     milestone_title, milestone_no)
-        return jsonify(grp_txn)
-    else:
-        txn = creator_investor.reject_milestone(algod_client, note, milestone_app_id)
-        return jsonify(txn)
+# @app.route('/end_milestone', methods=['POST'])
+# def milestone_end():
+#     # get the details
+#     milestone_details = request.get_json()
+#     milestone_app_id = milestone_details['milestone_app_id']
+#
+#
+#     end_txn = creator_investor.end_milestone(algod_client, milestone_app_id)
+#
+#     return jsonify(end_txn)
 
 
 # Group Transaction: (Call user app and mint NFT)
@@ -425,6 +400,7 @@ def mint_nft():
 
 
 # Opt-in to NFT
+# ***NO SCREEN***
 @app.route('/optin_nft', methods=["POST"])
 def asset_optin():
     # get the details for optin the NFT
@@ -536,8 +512,11 @@ def participation():
     # get the details of investor participation's
     participation_details = request.get_json()
     campaignID = participation_details['campaign_app_id']
-    investment = participation_details['amount']
+    investment = int(participation_details['amount'])
     investor_account = participation_details['investor_wallet_address']
+    meta_data = str(participation_details['metadata'])
+    print(meta_data)
+
     address = CommonFunctions.get_address_from_application(campaignID)
 
     try:
@@ -545,9 +524,10 @@ def participation():
             # pass the details to algorand to give the transaction id
             try:
                 participationID = creator_investor.update_call_app(algod_client, campaignID,
-                                                                       investment, investor_account)
+                                                                       investment, investor_account, meta_data)
                 return jsonify(participationID), 200
             except Exception as error:
+                print(error)
                 return str(error), 500
         else:
             return "To Participate in a campaign, Minimum Balance should be 3000 microAlgos", 400
@@ -561,16 +541,29 @@ def pull_investment():
     # get the details from the user
     investment_details = request.get_json()
     campaign_app_id = investment_details['campaign_app_id']
-    total_investment = investment_details['total_investment']
     milestone_no = investment_details['milestone_number']
     admin_wallet_address = investment_details['admin_wallet_address']
     milestone_app_id = investment_details['milestone_app_id']
     note = investment_details['note']
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, note, campaign_app_id, admin_wallet_address, total_investment, milestone_no, milestone_app_id)
+    txn_details = creator_investor.pull_investment(algod_client, campaign_app_id, admin_wallet_address, milestone_no, milestone_app_id, note)
     return jsonify(txn_details)
 
+
+# admin approves the milestone and investment get transfer to creator
+@app.route('/milestone_start', methods=["POST"])
+def milestone1_start():
+    # get the details from the user
+    investment_details = request.get_json()
+    campaign_app_id = investment_details['campaign_app_id']
+    milestone_no = investment_details['milestone_number']
+    admin_wallet_address = investment_details['admin_wallet_address']
+    note = 'approve'
+
+    # pass the details to the algorand to run the transaction
+    txn_details = creator_investor.pull_investment(algod_client, campaign_app_id, admin_wallet_address, milestone_no, note=note)
+    return jsonify(txn_details)
 
 # Get total NFT
 @app.route('/total_nft/<int:app_id>')
@@ -602,6 +595,14 @@ def account_information():
         return jsonify(account), 200
     except Exception as error:
         return str(error), 500
+
+
+# Get the details of the campaign
+@app.route('/campaign_details/<int:campaign_id>')
+def campaign_info(campaign_id):
+    info = indexer.campaign(campaign_id)
+    return jsonify(info)
+
 
 
 # running the API

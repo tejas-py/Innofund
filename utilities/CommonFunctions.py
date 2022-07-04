@@ -3,13 +3,13 @@
 from algosdk import mnemonic
 import base64
 import os
-import connection as algodconnection
+import connection
 import json
 import time
 
 
 # connect to indexer
-myindexer = algodconnection.connect_indexer()
+myindexer = connection.connect_indexer()
 
 
 # compile program used to compile the source code, used when new application is created
