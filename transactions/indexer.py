@@ -186,5 +186,3 @@ def transaction_search():
     print(asset_info)
 
 # 1 algo = 1_000_000 microAlgos
-
-transaction_search()
