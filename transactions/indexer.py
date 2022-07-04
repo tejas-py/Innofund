@@ -8,7 +8,7 @@ import json
 
 from algosdk import encoding
 
-import connection
+from API import connection
 import utilities.CommonFunctions
 
 # connect to the indexer API

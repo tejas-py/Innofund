@@ -3,7 +3,7 @@
 from algosdk import mnemonic
 import base64
 import os
-import connection
+from API import connection
 import json
 import time
 

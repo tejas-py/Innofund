@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer
-import connection
+from API import connection
 
 app = Flask(__name__)
 
