@@ -512,7 +512,7 @@ def participation():
     # get the details of investor participation's
     participation_details = request.get_json()
     campaignID = participation_details['campaign_app_id']
-    investment = int(participation_details['amount'])
+    investment = participation_details['amount']
     investor_account = participation_details['investor_wallet_address']
     meta_data = str(participation_details['metadata'])
     print(meta_data)
