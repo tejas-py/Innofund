@@ -76,7 +76,7 @@ def approval_program():
         InnerTxnBuilder.SetFields({
             TxnField.type_enum:TxnType.Payment,
             TxnField.sender: Global.current_application_address(),
-            TxnField.receiver: Global.creator_address(),
+            TxnField.receiver: Txn.accounts[1],
             TxnField.amount: Btoi(Txn.application_args[2]),
             TxnField.fee: Int(0)
         }),
@@ -84,21 +84,6 @@ def approval_program():
         # Submit the transaction
         InnerTxnBuilder.Submit(),
         Approve()
-    )
-
-    end_milestone_check =  Seq(
-        InnerTxnBuilder.Begin(),
-        # Transaction: NFT Transfer to creator
-        InnerTxnBuilder.SetFields({
-            TxnField.type_enum:TxnType.ApplicationCall,
-            TxnField.sender: Global.current_application_address(),
-            TxnField.application_id: Txn.applications[1],
-            TxnField.application_args: [Txn.application_args[4], Txn.application_args[1]],
-            TxnField.fee: Int(0)
-        }),
-        # Submit the transaction
-        InnerTxnBuilder.Submit(),
-        inner_txn4
     )
 
     check_campaign_end = If(
@@ -131,11 +116,6 @@ def approval_program():
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), inner_txn4, Reject())
 
-    check_campaign_milestone_end = If(
-        Or(
-            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
-            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
-        ), end_milestone_check, Reject())
 
     group_transaction = Cond(
         [And(
@@ -166,16 +146,8 @@ def approval_program():
         ), check_campaign_end_3],
         [And(
             Global.group_size() == Int(1),
-            Txn.application_args[0] == Bytes("Start Milestone 1")
-        ), check_campaign_end_4],
-        [And(
-            Global.group_size() == Int(1),
-            Txn.application_args[0] == Bytes("Start Milestone 2")
-        ), check_campaign_milestone_end],
-        [And(
-            Global.group_size() == Int(1),
-            Txn.application_args[0] == Bytes("Start Milestone 3")
-        ), check_campaign_milestone_end]
+            Txn.application_args[0] == Bytes("Milestone")
+        ), check_campaign_end_4]
     )
 
     update_investment_details = Seq(

@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
+import transactions.indexer
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer
 from API import connection
@@ -512,58 +514,71 @@ def participation():
     # get the details of investor participation's
     participation_details = request.get_json()
     campaignID = participation_details['campaign_app_id']
-    investment = participation_details['amount']
+    investment = float(participation_details['amount'])
     investor_account = participation_details['investor_wallet_address']
     meta_data = str(participation_details['metadata'])
     print(meta_data)
 
-    address = CommonFunctions.get_address_from_application(campaignID)
+    participationID=creator_investor.update_call_app(algod_client, campaignID,
+                                                      investment, investor_account, meta_data)
+    return jsonify(participationID), 200
 
-    try:
-        if CommonFunctions.check_balance(address, 3000):
-            # pass the details to algorand to give the transaction id
-            try:
-                participationID = creator_investor.update_call_app(algod_client, campaignID,
-                                                                       investment, investor_account, meta_data)
-                return jsonify(participationID), 200
-            except Exception as error:
-                print(error)
-                return str(error), 500
-        else:
-            return "To Participate in a campaign, Minimum Balance should be 3000 microAlgos", 400
-    except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
 
 
 # admin approves the milestone and investment get transfer to creator
-@app.route('/approve_reject_milestone', methods=["POST"])
-def pull_investment():
+@app.route('/approve_milestone', methods=["POST"])
+def approve_milestone():
     # get the details from the user
     investment_details = request.get_json()
     campaign_app_id = investment_details['campaign_app_id']
     milestone_no = investment_details['milestone_number']
+    admin_wallet_address = investment_details['admin_wallet_address']
+    note = investment_details['note']
+
+    # pass the details to the algorand to run the transaction
+    txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no, note)
+    return jsonify(txn_details)
+
+
+# admin approves the milestone and investment get transfer to creator
+@app.route('/reject_milestone', methods=["POST"])
+def reject_milestone():
+    # get the details from the user
+    investment_details = request.get_json()
     admin_wallet_address = investment_details['admin_wallet_address']
     milestone_app_id = investment_details['milestone_app_id']
     note = investment_details['note']
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, campaign_app_id, admin_wallet_address, milestone_no, milestone_app_id, note)
+    txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, note)
     return jsonify(txn_details)
 
 
 # admin approves the milestone and investment get transfer to creator
-@app.route('/milestone_start', methods=["POST"])
+@app.route('/claim_milestone_1', methods=["POST"])
 def milestone1_start():
     # get the details from the user
     investment_details = request.get_json()
     campaign_app_id = investment_details['campaign_app_id']
-    milestone_no = investment_details['milestone_number']
-    admin_wallet_address = investment_details['admin_wallet_address']
+    milestone_no = 1
+    creator_wallet_address = investment_details['creator_wallet_address']
     note = 'approve'
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, campaign_app_id, admin_wallet_address, milestone_no, note=note)
-    return jsonify(txn_details)
+    txn_details = creator_investor.pull_investment(algod_client, creator_wallet_address, campaign_app_id, milestone_no, note=note)
+
+    if txn_details == {"initial_payment_claimed": "TRUE"}:
+        return jsonify(txn_details), 400
+    else:
+        return jsonify(txn_details), 200
+
+# check milestone 1
+@app.route('/check_initial_payment/<int:campaign_app_id>')
+def check_milestone(campaign_app_id):
+
+    # pass the details
+    check_info = transactions.indexer.check_payment_milestone_again(campaign_app_id)
+    return check_info, 200
 
 # Get total NFT
 @app.route('/total_nft/<int:app_id>')
@@ -583,18 +598,6 @@ def asset_info(nft_id):
         return jsonify(assets), 200
     except Exception as Error:
         print(f"Check Asset ID! Error: {Error}")
-
-
-# Get the account information of particular account
-@app.route('/account_info')
-def account_information():
-    account_data = request.get_json()
-    address = account_data['wallet_address']
-    try:
-        account = indexer.account_info(address)
-        return jsonify(account), 200
-    except Exception as error:
-        return str(error), 500
 
 
 # Get the details of the campaign

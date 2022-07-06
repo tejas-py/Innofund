@@ -1,24 +1,9 @@
 import json
-from algosdk import encoding
 from API import connection
 import utilities.CommonFunctions
 
 # connect to the indexer API
 indexerConnection = connection.connect_indexer()
-
-
-# search total campaigns in the node(Application-campaign)
-def total_campaign():
-    response = indexerConnection.search_transactions(txn_type="appl")
-    campaign_info = json.dumps(response, indent=2, sort_keys=True)
-    return campaign_info
-
-
-# search total campaigns of the particular user
-def campaign_by_user(address):
-    response = indexerConnection.search_transactions_by_address(address=address, txn_type="appl")
-    user_campaign_info = json.dumps(response, indent=2, sort_keys=True)
-    return user_campaign_info
 
 
 # get total assets on the nodes
@@ -27,13 +12,6 @@ def total_assets_by_admin(admin):
     response = indexerConnection.search_assets(creator=admin)
     asset_info = json.dumps(response, indent=2, sort_keys=True)
     return asset_info
-
-
-# get account information for a particular address
-def account_info(address):
-    response = indexerConnection.account_info(address=address)
-    asset_info_by_address = json.dumps(response, indent=2, sort_keys=True)
-    return asset_info_by_address
 
 
 # get the transaction information for asset by an account
@@ -134,14 +112,15 @@ def assets_in_wallet(app_id):
 
 
 # get the details of the campaign
-def campaign(campaign_id):
+def campaign(campaign_id=98482945):
 
     # define variables
     invested_amount = "None"
     fund_limit = "None"
 
+
+    # get the information of the application
     try:
-        # get the information of the application
         campaign_info = indexerConnection.search_applications(application_id=campaign_id)
         campaign_args = campaign_info['applications'][0]['params']['global-state']
 
@@ -162,19 +141,105 @@ def campaign(campaign_id):
     except Exception as error:
         print(error)
 
-    investment_details = {"Total Invested": invested_amount, "Fund_limit": fund_limit}
+    investment_details = {"totalInvested": invested_amount, "fundLimit": fund_limit}
 
     return investment_details
 
 
-# indexer
-def transaction_search():
-    txid = "7YZUDWPCY6LNQAWJANXGYZJR35VAEV4C6DRABC5BRWWBDBD5OHHA"
-    campaign_id = 98361589
-    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
+# check milestone payment in campaign
+def check_payment_milestone(campaign_app_id):
 
-    info = indexerConnection.search_transactions(txid=txid, address=campaign_wallet_address)
-    asset_info = json.dumps(info, indent=2, sort_keys=True)
-    print(asset_info)
+    # search transactions in blockchain
+    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
+    transactions = campaign_txn_info['transactions']
 
-# 1 algo = 1_000_000 microAlgos
+    # create a blank dictionary
+    txn_notes = []
+
+    # search for the notes in the transactions
+    for one_transaction in transactions:
+        try:
+            note = one_transaction['note']
+            txn_notes.append(note)
+        except Exception as e:
+            print(e)
+
+    # check if the claim transaction exist or not
+    if "TWlsZXN0b25lIDEgbW9uZXksIGNsYWltZWQ=" in txn_notes:
+        return "True"
+    else:
+        return "False"
+
+
+# check milestone payment in campaign
+def check_payment_milestone_2(campaign_app_id):
+
+    # search transactions in blockchain
+    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
+    transactions = campaign_txn_info['transactions']
+
+    # create a blank dictionary
+    txn_notes = []
+
+    # search for the notes in the transactions
+    for one_transaction in transactions:
+        try:
+            note = one_transaction['note']
+            txn_notes.append(note)
+        except Exception as e:
+            print(e)
+
+    # check if the claim transaction exist or not
+    if "TWlsZXN0b25lIDIgbW9uZXksIGNsYWltZWQ=" in txn_notes:
+        return "True"
+    else:
+        return "False"
+
+
+# check milestone payment in campaign
+def check_payment_milestone_3(campaign_app_id):
+
+    # search transactions in blockchain
+    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
+    transactions = campaign_txn_info['transactions']
+
+    # create a blank dictionary
+    txn_notes = []
+
+    # search for the notes in the transactions
+    for one_transaction in transactions:
+        try:
+            note = one_transaction['note']
+            txn_notes.append(note)
+        except Exception as e:
+            print(e)
+
+    # check if the claim transaction exist or not
+    if "TWlsZXN0b25lIDMgbW9uZXksIGNsYWltZWQ=" in txn_notes:
+        return "True"
+    else:
+        return "False"
+
+# check milestone payment in campaign for API
+def check_payment_milestone_again(campaign_app_id):
+
+    # search transactions in blockchain
+    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
+    transactions = campaign_txn_info['transactions']
+
+    # create a blank dictionary
+    txn_notes = []
+
+    # search for the notes in the transactions
+    for one_transaction in transactions:
+        try:
+            note = one_transaction['note']
+            txn_notes.append(note)
+        except Exception as e:
+            print(e)
+
+    # check if the claim transaction exist or not
+    if "TWlsZXN0b25lIDEgbW9uZXksIGNsYWltZWQ=" in txn_notes:
+        return {"initial_payment_claimed": "TRUE"}
+    else:
+        return {"initial_payment_claimed": "FALSE"}
