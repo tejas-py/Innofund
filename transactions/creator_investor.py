@@ -15,7 +15,7 @@ approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l36
+bnz main_l40
 txn OnCompletion
 int NoOp
 ==
@@ -108,11 +108,11 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l33
+bnz main_l37
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l32
+bnz main_l36
 global GroupSize
 int 2
 ==
@@ -124,7 +124,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l29
+bnz main_l33
 global GroupSize
 int 1
 ==
@@ -132,7 +132,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Investor"
 ==
 &&
-bnz main_l26
+bnz main_l30
 global GroupSize
 int 5
 ==
@@ -144,17 +144,17 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l23
-global GroupSize
-int 1
-==
+bnz main_l27
 txna ApplicationArgs 0
 byte "Milestone"
 ==
-&&
-bnz main_l20
+bnz main_l24
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l21
 err
-main_l20:
+main_l21:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -166,10 +166,40 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l22
+bnz main_l23
 int 0
 return
-main_l22:
+main_l23:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l24:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l26
+int 0
+return
+main_l26:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -185,7 +215,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l23:
+main_l27:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -197,10 +227,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l25
+bnz main_l29
 int 0
 return
-main_l25:
+main_l29:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -215,7 +245,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l26:
+main_l30:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -227,10 +257,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l28
+bnz main_l32
 int 0
 return
-main_l28:
+main_l32:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -244,39 +274,6 @@ itxn_field XferAsset
 int 0
 itxn_field Fee
 itxn_submit
-int 1
-return
-main_l29:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l31
-int 0
-return
-main_l31:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field AssetReceiver
-int 0
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l32:
 int 1
 return
 main_l33:
@@ -295,9 +292,42 @@ bnz main_l35
 int 0
 return
 main_l35:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
 int 1
 return
 main_l36:
+int 1
+return
+main_l37:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l39
+int 0
+return
+main_l39:
+int 1
+return
+main_l40:
 txn NumAppArgs
 int 8
 ==
@@ -334,9 +364,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l38
+bnz main_l42
 err
-main_l38:
+main_l42:
 int 1
 return
 """
@@ -848,9 +878,9 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
             # define params for transactions
             account_lst = [creator_wallet_address]
-            commission_for_admin = 1_000_000
-            withdraw_amt = (total_amount_in_campaign/3) - commission_for_admin
-            args_list_3=["Milestone", int(com_func.Today_seconds()), int(withdraw_amt)]
+            # commission_for_admin = 1_000_000
+            # withdraw_amt = (total_amount_in_campaign/3) - commission_for_admin
+            args_list_3=["last_milestone", int(com_func.Today_seconds())]
 
             txn=ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, note="Milestone 3 money, claimed", accounts=account_lst)
 
