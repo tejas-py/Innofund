@@ -888,7 +888,9 @@ def reject_milestones(client, sender, milestone_app_id, note):
     # get node suggested parameters
     params= client.suggested_params()
 
-    txn=ApplicationNoOpTxn(sender, params, milestone_app_id, note=note)
+    arg = ['no_check']
+
+    txn=ApplicationNoOpTxn(sender, params, milestone_app_id, app_args=arg, note=note)
     txngrp= [{'txn':encoding.msgpack_encode(txn)}]
 
     return txngrp
