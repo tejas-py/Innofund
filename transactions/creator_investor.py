@@ -878,6 +878,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
             # get node suggested parameters
             params_txn = client.suggested_params()
+            params_txn.fee = 1000
             params_txn.flat_fee = True
 
             arg = ['no_check']
