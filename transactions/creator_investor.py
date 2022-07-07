@@ -812,7 +812,7 @@ def update_app(client, app_id, investment):
 
 
 # Admin Approves the Milestone and send the investment to creator
-def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None, note=None):
+def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None):
 
     # create transactions
     print("Creating transactions...")
@@ -842,7 +842,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             txngrp={"initial_payment_claimed":"TRUE"}
             return txngrp
 
-    if milestone_number == 2:
+    elif milestone_number == 2:
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
@@ -857,7 +857,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             txngrp = {"Milestone Status":"Milestone 1 money has not been claimed yet"}
             return txngrp
 
-    if milestone_number == 3:
+    elif milestone_number == 3:
         if transactions.indexer.check_payment_milestone_2(campaign_app_id) == "True":
             account_lst = [creator_wallet_address]
 
@@ -871,15 +871,26 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             txngrp={"Milestone Status":"Milestone 2 has not been approved yet"}
             return txngrp
 
-    else:
+    elif milestone_number == 4:
         if transactions.indexer.check_payment_milestone_3(campaign_app_id) == "True":
-            txn=ApplicationNoOpTxn(sender, params, milestone_app_id, note=note)
+
+            print(f"Calling {milestone_app_id}...")
+
+            # get node suggested parameters
+            params_txn = client.suggested_params()
+            params_txn.flat_fee = True
+
+            arg = ['no_check']
+
+            txn = ApplicationNoOpTxn(sender, params_txn, milestone_app_id, app_args=arg, note="approve")
             txngrp=[{'txn':encoding.msgpack_encode(txn)}]
             return txngrp
 
         else:
             txngrp={"Milestone Status":"Milestone 3 has not been approved yet"}
             return txngrp
+    else:
+        return {"txn": "invalid milestone app id"}
 
 
 

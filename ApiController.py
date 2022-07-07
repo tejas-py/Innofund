@@ -533,10 +533,10 @@ def approve_milestone():
     campaign_app_id = investment_details['campaign_app_id']
     milestone_no = investment_details['milestone_number']
     admin_wallet_address = investment_details['admin_wallet_address']
-    note = investment_details['note']
+    milestone_app_id = investment_details['milestone_app_id']
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no, note)
+    txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no, milestone_app_id)
     return jsonify(txn_details)
 
 
@@ -562,10 +562,9 @@ def milestone1_start():
     campaign_app_id = investment_details['campaign_app_id']
     milestone_no = 1
     creator_wallet_address = investment_details['creator_wallet_address']
-    note = 'approve'
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, creator_wallet_address, campaign_app_id, milestone_no, note=note)
+    txn_details = creator_investor.pull_investment(algod_client, creator_wallet_address, campaign_app_id, milestone_no)
 
     if txn_details == {"initial_payment_claimed": "TRUE"}:
         return jsonify(txn_details), 400
