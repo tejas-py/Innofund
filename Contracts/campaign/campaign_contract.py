@@ -86,6 +86,23 @@ def approval_program():
         Approve()
     )
 
+    inner_txn5 = Seq(
+        InnerTxnBuilder.Begin(),
+        # Transaction: last payment to creator for milestone
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum:TxnType.Payment,
+            TxnField.sender: Global.current_application_address(),
+            TxnField.receiver: Txn.accounts[1],
+            TxnField.close_remainder_to: Txn.accounts[1],
+            TxnField.amount: Btoi(Txn.application_args[2]),
+            TxnField.fee: Int(0)
+        }),
+
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
     check_campaign_end = If(
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
@@ -115,6 +132,12 @@ def approval_program():
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), inner_txn4, Reject())
+
+    check_campaign_end_5 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn5, Reject())
 
 
     group_transaction = Cond(
@@ -147,7 +170,11 @@ def approval_program():
         [And(
             Global.group_size() == Int(1),
             Txn.application_args[0] == Bytes("Milestone")
-        ), check_campaign_end_4]
+        ), check_campaign_end_4],
+        [And(
+            Global.group_size() == Int(1),
+            Txn.application_args[0] == Bytes("End Milestone")
+        ), check_campaign_end_5]
     )
 
     update_investment_details = Seq(
