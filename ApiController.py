@@ -609,4 +609,4 @@ def campaign_info(campaign_id):
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=2000)
