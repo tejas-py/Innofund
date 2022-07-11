@@ -109,11 +109,6 @@ def approval_program():
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), Approve(), Reject())
 
-    check_campaign_end_1 = If(
-        Or(
-            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
-            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
-        ), inner_txn1, Reject())
 
     check_campaign_end_2 = If(
         Or(
@@ -149,10 +144,10 @@ def approval_program():
             Txn.application_args[0] == Bytes("No Check")
         ), Approve()],
         [And(
-            Global.group_size() == Int(2),
+            Global.group_size() == Int(3),
             is_app_creator,
             Txn.application_args[0] == Bytes("Send NFT to Campaign")
-        ), check_campaign_end_1],
+        ), inner_txn1],
         [And(
             Global.group_size() == Int(1),
             Txn.application_args[0] == Bytes("Send NFT to Investor")

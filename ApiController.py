@@ -178,9 +178,9 @@ def create_campaign():
     milestone = campaign_details['milestone']
 
     # make the list from the dictionary
-    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'], milestone['milestone_title']['3'])
-    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'], milestone['milestone_number']['3'])
-    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'], milestone['end_time_milestone']['3'])
+    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'])
+    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'])
+    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
 
     try:
         if CommonFunctions.check_balance(address, 4000):
@@ -215,10 +215,10 @@ def update_campaign_details():
     milestone = campaign_details['milestone']
 
     # make the list from the dictionary
-    milestone_app_id_lst = (milestone['milestone_app_id']['1'], milestone['milestone_app_id']['2'], milestone['milestone_app_id']['3'])
-    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'], milestone['milestone_title']['3'])
-    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'], milestone['milestone_number']['3'])
-    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'], milestone['end_time_milestone']['3'])
+    milestone_app_id_lst = (milestone['milestone_app_id']['1'], milestone['milestone_app_id']['2'])
+    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'])
+    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'])
+    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
 
     try:
         if CommonFunctions.check_balance(address, 1000):
@@ -271,7 +271,7 @@ def delete_campaign():
     address = CommonFunctions.get_address_from_application(campaign_app_id)
 
     # creating the list of milestone app id
-    milestones_lst = (milestone_app_id['1'], milestone_app_id['2'], milestone_app_id['3'])
+    milestones_lst = (milestone_app_id['1'], milestone_app_id['2'])
 
     # delete the user by passing the params
     if nft_id == 0 or nft_id == 0:
@@ -472,7 +472,7 @@ def campaign_nft():
 
 
 # Transfer NFT from Campaign Creator to Investor
-@app.route('/claim_nft', methods=["POST"])
+@app.route('/investor_nft_claimed', methods=["POST"])
 def clamming_nft():
     # getting the transaction details
     transfer_details = request.get_json()
@@ -577,13 +577,34 @@ def check_milestone(campaign_app_id):
 
     # pass the details
     check_info = transactions.indexer.check_payment_milestone_again(campaign_app_id)
-    return check_info, 200
+    return jsonify(check_info), 200
+
+
+# check nft in investor wallet
+@app.route('/investor_nft_claimed/<int:nft_id>')
+def check_nft(nft_id):
+
+    # pass the details
+    check_nft_wallet = transactions.indexer.check_nft_investor(nft_id)
+    return jsonify(check_nft_wallet), 200
+
+
+# NFT in Campaign
+@app.route('/nft_in_campaign/<int:campaign_app_id>')
+def nft_in_campaign(campaign_app_id):
+
+    # pass the details
+    nft_campaign = transactions.indexer.nft_in_wallet(campaign_app_id)
+    return jsonify(nft_campaign)
+
+
 
 # Get total NFT
 @app.route('/total_nft/<int:app_id>')
 def totalNFT(app_id):
     try:
         assets = indexer.assets_in_wallet(app_id)
+
         return jsonify(assets), 200
     except Exception as Error:
         print(f"Check User App ID! Error: {Error}")

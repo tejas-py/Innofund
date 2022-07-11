@@ -169,20 +169,17 @@ def campaign_milestones(client, campaign_app_id, milestone_app_id):
     # deleting milestones
     txn_2 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
     txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])
-    txn_4 = ApplicationDeleteTxn(sender, params, milestone_app_id[2])
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
     txn_3.group = group_id
-    txn_4.group = group_id
 
     txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
               {'txn': encoding.msgpack_encode(txn_2)},
-              {'txn': encoding.msgpack_encode(txn_3)},
-              {'txn': encoding.msgpack_encode(txn_4)}]
+              {'txn': encoding.msgpack_encode(txn_3)}]
 
     return txngrp

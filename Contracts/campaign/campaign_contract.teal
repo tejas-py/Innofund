@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l40
+bnz main_l38
 txn OnCompletion
 int NoOp
 ==
@@ -95,13 +95,13 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l37
+bnz main_l35
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l36
+bnz main_l34
 global GroupSize
-int 2
+int 3
 ==
 txn Sender
 global CreatorAddress
@@ -264,21 +264,6 @@ itxn_submit
 int 1
 return
 main_l33:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l35
-int 0
-return
-main_l35:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -293,10 +278,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l36:
+main_l34:
 int 1
 return
-main_l37:
+main_l35:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -308,13 +293,13 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l39
+bnz main_l37
 int 0
 return
-main_l39:
+main_l37:
 int 1
 return
-main_l40:
+main_l38:
 txn NumAppArgs
 int 8
 ==
@@ -351,8 +336,8 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l42
+bnz main_l40
 err
-main_l42:
+main_l40:
 int 1
 return

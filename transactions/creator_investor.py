@@ -15,7 +15,7 @@ approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l40
+bnz main_l38
 txn OnCompletion
 int NoOp
 ==
@@ -108,13 +108,13 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l37
+bnz main_l35
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l36
+bnz main_l34
 global GroupSize
-int 2
+int 3
 ==
 txn Sender
 global CreatorAddress
@@ -277,21 +277,6 @@ itxn_submit
 int 1
 return
 main_l33:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l35
-int 0
-return
-main_l35:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -306,10 +291,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l36:
+main_l34:
 int 1
 return
-main_l37:
+main_l35:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -321,13 +306,13 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l39
+bnz main_l37
 int 0
 return
-main_l39:
+main_l37:
 int 1
 return
-main_l40:
+main_l38:
 txn NumAppArgs
 int 8
 ==
@@ -364,9 +349,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l42
+bnz main_l40
 err
-main_l42:
+main_l40:
 int 1
 return
 """
@@ -547,25 +532,17 @@ def create_campaign_app(client, public_address, title,
                                  global_schema=global_schema, local_schema=local_schema, app_args=milestone_args,
                                  note="milestone_2")
 
-    # create milestone 3 application
-    milestone_args = [bytes(milestone_title[2], 'utf-8'), int(milestone_number[2]), int(end_time_milestone[2])]
-
-    txn_4 = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
-                                 approval_program=approval_program_milestone, clear_program=clear_program,
-                                 global_schema=global_schema, local_schema=local_schema, app_args=milestone_args,
-                                 note="milestone_3")
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
     txn_3.group = group_id
-    txn_4.group = group_id
 
     txngrp = [{'txn': encoding.msgpack_encode(txn_1)}, {'txn': encoding.msgpack_encode(txn_2)},
-              {'txn': encoding.msgpack_encode(txn_3)}, {'txn': encoding.msgpack_encode(txn_4)}]
+              {'txn': encoding.msgpack_encode(txn_3)}]
 
     return txngrp
 
@@ -688,19 +665,20 @@ def nft_to_campaign(client, asset_id, campaign_id):
     params_txn1.fee = 1000
     params_txn1.flat_fee = True
 
-    # payment to escrow account
-    txn_1 = PaymentTxn(sender=creator_account, receiver=campaign_wallet_address, amt=100000, sp=params_txn1)
+    # payment to escrow account: Transaction 1
+    txn_1 = PaymentTxn(sender=creator_account, receiver=campaign_wallet_address, amt=200_000, sp=params_txn1)
 
-    # Campaign application call: transaction 1
+    # Campaign application call: transaction 2
     app_arg = ["Send NFT to Campaign"]
     asset_lst = [asset_id]
     txn_2 = ApplicationNoOpTxn(creator_account, params_txn1, campaign_id, app_arg, foreign_assets=asset_lst)
-    # set suggested params for transaction 1
+
+    # set suggested params for transaction 3
     params_txn2 = client.suggested_params()
     params_txn2.fee = 2000
     params_txn2.flat_fee = True
 
-    # NFT transfer to campaign wallet address: transaction 2
+    # NFT transfer to campaign wallet address: transaction 3
     txn_3 = AssetTransferTxn(
         sender=creator_account,
         sp=params_txn2,
@@ -711,7 +689,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
@@ -749,7 +727,7 @@ def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
 
     # Transaction 2: Campaign Application Call
     txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params_txn2, index=campaign_app_id,
-                               app_args=app_args_list, foreign_assets=asset_list)
+                               app_args=app_args_list, foreign_assets=asset_list, note="NFT Claimed")
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
@@ -862,7 +840,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
-            args_list_2 = ["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 3)]
+            args_list_2 = ["last_milestone", int(com_func.Today_seconds())]
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_2, accounts=account_lst, note="Milestone 2 money, claimed")
 
@@ -875,24 +853,6 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
     elif milestone_number == 3:
         if transactions.indexer.check_payment_milestone_2(campaign_app_id) == "True":
-
-            # define params for transactions
-            account_lst = [creator_wallet_address]
-            # commission_for_admin = 1_000_000
-            # withdraw_amt = (total_amount_in_campaign/3) - commission_for_admin
-            args_list_3=["last_milestone", int(com_func.Today_seconds())]
-
-            txn=ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, note="Milestone 3 money, claimed", accounts=account_lst)
-
-            txngrp=[{'txn':encoding.msgpack_encode(txn)}]
-            return txngrp
-
-        else:
-            txngrp={"Milestone Status":"Milestone 2 has not been approved yet"}
-            return txngrp
-
-    elif milestone_number == 4:
-        if transactions.indexer.check_payment_milestone_3(campaign_app_id) == "True":
 
             print(f"Calling {milestone_app_id}...")
 
@@ -908,10 +868,9 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             return txngrp
 
         else:
-            txngrp={"Milestone Status":"Milestone 3 has not been approved yet"}
+            txngrp={"Milestone Status":"Milestone 2 has not been approved yet"}
             return txngrp
-    else:
-        return {"txn": "invalid milestone app id"}
+
 
 
 
@@ -986,22 +945,18 @@ def update_campaign(client, public_address, app_id, title,
     milestone_2 = ["update_details", bytes(milestones_title[1], 'utf-8'), int(milestone_number[1]), int(milestone_end_time[1])]
     txn_3 = ApplicationUpdateTxn(sender, params, milestone_id[1], approval_program_milestone, clear_program, milestone_2)
 
-    milestone_3 = ["update_details", bytes(milestones_title[2], 'utf-8'), int(milestone_number[2]), int(milestone_end_time[2])]
-    txn_4 = ApplicationUpdateTxn(sender, params, milestone_id[2], approval_program_milestone, clear_program, milestone_3)
 
     # compute group id and put it into each transaction
     print("Grouping transactions...")
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
     txn_3.group = group_id
-    txn_4.group = group_id
 
     txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
               {'txn': encoding.msgpack_encode(txn_2)},
-              {'txn': encoding.msgpack_encode(txn_3)},
-              {'txn': encoding.msgpack_encode(txn_4)}]
+              {'txn': encoding.msgpack_encode(txn_3)}]
 
     return txngrp
 
@@ -1026,7 +981,7 @@ def block_reason(client, public_address, campaign_id, reason):
     return txngrp
 
 
-# delete campaign and unfreeze NFT
+# delete campaign and transfer nft to creator
 def nft_delete(client, campaign_id, asset_id, milestone_app_id):
 
     print(f"Deleting {campaign_id} Campaign, {milestone_app_id} milestones and transferring {asset_id} NFT....")
@@ -1055,22 +1010,19 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     # delete milestones: transaction 3,4,5
     txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
     txn_4 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])
-    txn_5 = ApplicationDeleteTxn(sender, params, milestone_app_id[2])
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4, txn_5])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
     txn_3.group = group_id
     txn_4.group = group_id
-    txn_5.group = group_id
 
     txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
               {'txn': encoding.msgpack_encode(txn_2)},
               {'txn': encoding.msgpack_encode(txn_3)},
-              {'txn': encoding.msgpack_encode(txn_4)},
-              {'txn': encoding.msgpack_encode(txn_5)}]
+              {'txn': encoding.msgpack_encode(txn_4)}]
 
     return txngrp

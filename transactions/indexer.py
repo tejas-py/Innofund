@@ -1,4 +1,7 @@
 import json
+
+from algosdk import encoding
+
 from API import connection
 import utilities.CommonFunctions
 
@@ -108,6 +111,7 @@ def assets_in_wallet(app_id):
                      }
             total_assets.append(asset)
 
+
     return total_assets
 
 
@@ -196,30 +200,6 @@ def check_payment_milestone_2(campaign_app_id):
         return "False"
 
 
-# check milestone payment in campaign
-def check_payment_milestone_3(campaign_app_id):
-
-    # search transactions in blockchain
-    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
-    transactions = campaign_txn_info['transactions']
-
-    # create a blank dictionary
-    txn_notes = []
-
-    # search for the notes in the transactions
-    for one_transaction in transactions:
-        try:
-            note = one_transaction['note']
-            txn_notes.append(note)
-        except Exception as e:
-            print(e)
-
-    # check if the claim transaction exist or not
-    if "TWlsZXN0b25lIDMgbW9uZXksIGNsYWltZWQ=" in txn_notes:
-        return "True"
-    else:
-        return "False"
-
 # check milestone payment in campaign for API
 def check_payment_milestone_again(campaign_app_id):
 
@@ -243,3 +223,39 @@ def check_payment_milestone_again(campaign_app_id):
         return {"initial_payment_claimed": "TRUE"}
     else:
         return {"initial_payment_claimed": "FALSE"}
+
+
+# check nft in investor wallet
+def check_nft_investor(nft_id):
+
+    # search nft in wallet
+    nft_search = indexerConnection.search_transactions(asset_id=nft_id, txn_type="appl")
+    transactions = nft_search['transactions']
+
+    # create a blank dictionary
+    txn_notes = []
+
+    # search for the notes in the transactions
+    for one_transaction in transactions:
+        try:
+            note = one_transaction['note']
+            txn_notes.append(note)
+        except Exception as e:
+            print(e)
+
+    # check if the claim transaction exist or not
+    if "TkZUIENsYWltZWQ=" in txn_notes:
+        return {"NFT_claimed": "TRUE"}
+    else:
+        return {"NFT_claimed": "FALSE"}
+
+
+# nft list in campaign wallet address
+def nft_in_wallet(campaign_id):
+
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
+    search_nft = indexerConnection.account_info(address=campaign_wallet_address)
+    print(json.dumps(search_nft, indent=2, sort_keys=True))
+
+    return search_nft
+
