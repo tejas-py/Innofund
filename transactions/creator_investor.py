@@ -42,7 +42,7 @@ byte "update_investment"
 &&
 bnz main_l10
 global GroupSize
-int 4
+int 3
 ==
 txna ApplicationArgs 0
 byte "update_details"
@@ -126,10 +126,10 @@ byte "Send NFT to Campaign"
 &&
 bnz main_l33
 global GroupSize
-int 1
+int 2
 ==
 txna ApplicationArgs 0
-byte "Send NFT to Investor"
+byte "Claim NFT"
 ==
 &&
 bnz main_l30
@@ -266,7 +266,7 @@ int axfer
 itxn_field TypeEnum
 txn Sender
 itxn_field AssetReceiver
-txna ApplicationArgs 1
+txna ApplicationArgs 2
 btoi
 itxn_field AssetAmount
 txna Assets 0
@@ -381,7 +381,7 @@ int 1
 return
 main_l6:
 global GroupSize
-int 4
+int 3
 ==
 txna ApplicationArgs 0
 byte "update_details"
@@ -717,7 +717,7 @@ def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
     params_txn2.flat_fee = True
 
     # define the arguments
-    app_args_list = ["Send NFT to Investor", int(asset_amount)]
+    app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]
     asset_list = [asset_id]
 
     # Transaction 1: Opting to asset
@@ -826,7 +826,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "False":
 
             account_lst = [creator_wallet_address]
-            args_list=["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 3)]
+            args_list=["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
             txn=ApplicationNoOpTxn(sender, params, campaign_app_id, args_list, note="Milestone 1 money, claimed", accounts=account_lst)
 
             txngrp=[{'txn':encoding.msgpack_encode(txn)}]
@@ -870,8 +870,8 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         else:
             txngrp={"Milestone Status":"Milestone 2 has not been approved yet"}
             return txngrp
-
-
+    else:
+        return "Wrong input"
 
 
 def reject_milestones(client, sender, milestone_app_id, note):
@@ -1007,7 +1007,7 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     # delete campaign: Transaction 2
     txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
 
-    # delete milestones: transaction 3,4,5
+    # delete milestones: transaction 3,4
     txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
     txn_4 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])
 

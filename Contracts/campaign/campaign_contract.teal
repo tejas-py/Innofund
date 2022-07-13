@@ -29,7 +29,7 @@ byte "update_investment"
 &&
 bnz main_l10
 global GroupSize
-int 4
+int 3
 ==
 txna ApplicationArgs 0
 byte "update_details"
@@ -113,10 +113,10 @@ byte "Send NFT to Campaign"
 &&
 bnz main_l33
 global GroupSize
-int 1
+int 2
 ==
 txna ApplicationArgs 0
-byte "Send NFT to Investor"
+byte "Claim NFT"
 ==
 &&
 bnz main_l30
@@ -253,7 +253,7 @@ int axfer
 itxn_field TypeEnum
 txn Sender
 itxn_field AssetReceiver
-txna ApplicationArgs 1
+txna ApplicationArgs 2
 btoi
 itxn_field AssetAmount
 txna Assets 0

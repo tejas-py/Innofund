@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import transactions.indexer
+import utilities.CommonFunctions
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer
 from API import connection
@@ -476,10 +477,12 @@ def campaign_nft():
 def clamming_nft():
     # getting the transaction details
     transfer_details = request.get_json()
-    investor_address = transfer_details['investor_wallet_address']
+    user_app_id = transfer_details['user_app_id']
     asset_id = transfer_details['NFT_asset_id']
-    asset_amount = transfer_details['asset_amount']
+    asset_amount = 1
     campaign_app_id = transfer_details['campaign_app_id']
+
+    investor_address = utilities.CommonFunctions.get_address_from_application(user_app_id)
 
     try:
         if CommonFunctions.check_balance(investor_address, 3000):
@@ -630,4 +633,4 @@ def campaign_info(campaign_id):
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=True, port=2000)
+    app.run(debug=True, port=3000)

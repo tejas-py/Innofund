@@ -46,7 +46,7 @@ def approval_program():
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.AssetTransfer,
             TxnField.asset_receiver: Txn.sender(),
-            TxnField.asset_amount: Btoi(Txn.application_args[1]),
+            TxnField.asset_amount: Btoi(Txn.application_args[2]),
             TxnField.xfer_asset: Txn.assets[0],
             TxnField.fee: Int(0)
         }),
@@ -136,28 +136,40 @@ def approval_program():
 
 
     group_transaction = Cond(
+
+        # Condition 1
         [And(
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("Check if the campaign has ended.")
         ), check_campaign_end],
-        [And(
-            Txn.application_args[0] == Bytes("No Check")
-        ), Approve()],
+
+        # Condition 2
+        [Txn.application_args[0] == Bytes("No Check"), Approve()],
+
+        # Condition 3
         [And(
             Global.group_size() == Int(3),
             is_app_creator,
             Txn.application_args[0] == Bytes("Send NFT to Campaign")
         ), inner_txn1],
+
+        # Condition 4
         [And(
-            Global.group_size() == Int(1),
-            Txn.application_args[0] == Bytes("Send NFT to Investor")
+            Global.group_size() == Int(2),
+            Txn.application_args[0] == Bytes("Claim NFT")
         ), check_campaign_end_2],
+
+        # Condition 5
         [And(
             Global.group_size() == Int(5),
             is_app_creator,
             Txn.application_args[0] == Bytes("Transfer NFT to Creator")
         ), check_campaign_end_3],
+
+        # Condition 6
         [Txn.application_args[0] == Bytes("Milestone"), check_campaign_end_4],
+
+        # Condition 7
         [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end_5]
     )
 
@@ -193,7 +205,7 @@ def approval_program():
             Txn.application_args[0] == Bytes("update_investment")
         ), check_investment_details],
         [And(
-            Global.group_size() == Int(4),
+            Global.group_size() == Int(3),
             Txn.application_args[0] == Bytes("update_details")
         ), update_campaign_details]
     )

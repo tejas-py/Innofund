@@ -21,7 +21,7 @@ int 1
 return
 main_l6:
 global GroupSize
-int 4
+int 3
 ==
 txna ApplicationArgs 0
 byte "update_details"

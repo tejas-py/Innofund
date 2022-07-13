@@ -50,7 +50,7 @@ def approval_program():
 
     check_txn_size = Cond(
         [And(
-            Global.group_size() == Int(4),
+            Global.group_size() == Int(3),
             Txn.application_args[0] == Bytes("update_details")
         ), update_milestone]
     )
