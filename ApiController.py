@@ -1,7 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import transactions.indexer
-import utilities.CommonFunctions
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer
 from API import connection
@@ -478,16 +476,16 @@ def clamming_nft():
     transfer_details = request.get_json()
     user_app_id = transfer_details['user_app_id']
     asset_id = transfer_details['NFT_asset_id']
-    asset_amount = 1
+    asset_amount = 0.1
     campaign_app_id = transfer_details['campaign_app_id']
 
-    investor_address = utilities.CommonFunctions.get_address_from_application(user_app_id)
+    investor_address = CommonFunctions.get_address_from_application(user_app_id)
 
     try:
         if CommonFunctions.check_balance(investor_address, 3000):
             try:
                 # send the details for transaction to occur
-                txn_details = creator_investor.claim_nft(algod_client, investor_address,
+                txn_details = creator_investor.claim_nft(algod_client, user_app_id,
                                                                     asset_id, asset_amount, campaign_app_id)
                 return jsonify(txn_details), 200
             except Exception as error:
@@ -578,17 +576,28 @@ def milestone1_start():
 def check_milestone(campaign_app_id):
 
     # pass the details
-    check_info = transactions.indexer.check_payment_milestone_again(campaign_app_id)
+    check_info = indexer.check_payment_milestone_again(campaign_app_id)
     return jsonify(check_info), 200
 
 
-# check nft in investor wallet
-@app.route('/investor_nft_claimed/<int:nft_id>')
-def check_nft(nft_id):
+# get the list of the total investors in campaign
+@app.route('/investors_list_campaign/<int:campaign_id>')
+def investors_list_in_campaign(campaign_id):
 
     # pass the details
-    check_nft_wallet = transactions.indexer.check_nft_investor(nft_id)
-    return jsonify(check_nft_wallet), 200
+    try:
+        check_nft_wallet = indexer.list_investors(campaign_id)
+        return jsonify(check_nft_wallet), 200
+    except Exception as error:
+        return str(error), 400
+
+
+# check if the user has claimed the NFT
+@app.route('/investor_nft_claimed/<int:user_app_id>/<int:campaign_app_id>')
+def check_nft(user_app_id, campaign_app_id):
+    result = indexer.check_claim_nft(user_app_id, campaign_app_id)
+    return jsonify(result), 200
+
 
 
 # NFT in Campaign
@@ -596,7 +605,7 @@ def check_nft(nft_id):
 def nft_in_campaign(campaign_app_id):
 
     # pass the details
-    nft_campaign = transactions.indexer.nft_in_wallet(campaign_app_id)
+    nft_campaign = indexer.nft_in_wallet(campaign_app_id)
     return jsonify(nft_campaign)
 
 

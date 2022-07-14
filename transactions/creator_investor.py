@@ -703,44 +703,54 @@ def nft_to_campaign(client, asset_id, campaign_id):
 
 
 # Claiming NFT by Investor (the one who call this receives the NFT.)
-def claim_nft(client, wallet_address, asset_id, asset_amount, campaign_app_id):
+def claim_nft(client, user_app_id, asset_id, asset_amount, campaign_app_id):
 
-    print(f"Claiming {asset_id} NFT by {wallet_address}")
+    # top 10 investors in the campaign
+    top_investors = transactions.indexer.list_investors(campaign_app_id)[:10]
 
-    # get node suggested parameters
-    params_txn1 = client.suggested_params()
-    params_txn1.fee = 1000
-    params_txn1.flat_fee = True
+    if user_app_id in top_investors:
 
-    params_txn2 = client.suggested_params()
-    params_txn2.fee = 2000
-    params_txn2.flat_fee = True
+        # get node suggested parameters
+        params_txn1 = client.suggested_params()
+        params_txn1.fee = 1000
+        params_txn1.flat_fee = True
 
-    # define the arguments
-    app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]
-    asset_list = [asset_id]
+        params_txn2 = client.suggested_params()
+        params_txn2.fee = 2000
+        params_txn2.flat_fee = True
 
-    # Transaction 1: Opting to asset
-    txn_1 = AssetTransferTxn(sender=wallet_address, receiver=wallet_address,
-                             sp=params_txn1, amt=0, index=asset_id)
+        # get the wallet address of the user
+        wallet_address = com_func.get_address_from_application(user_app_id)
 
 
-    # Transaction 2: Campaign Application Call
-    txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params_txn2, index=campaign_app_id,
-                               app_args=app_args_list, foreign_assets=asset_list, note="NFT Claimed")
+        # define the arguments
+        app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]
+        asset_list = [asset_id]
 
-    print("Grouping transactions...")
-    # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
-    print("...computed groupId: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
+        # Transaction 1: Opting to asset
+        txn_1 = AssetTransferTxn(sender=wallet_address, receiver=wallet_address,
+                                 sp=params_txn1, amt=0, index=asset_id)
 
 
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
-              {'txn': encoding.msgpack_encode(txn_2)}]
+        # Transaction 2: Campaign Application Call
+        txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params_txn2, index=campaign_app_id,
+                                   app_args=app_args_list, foreign_assets=asset_list, note="NFT Claimed")
 
-    return txngrp
+        print("Grouping transactions...")
+        # compute group id and put it into each transaction
+        group_id = transaction.calculate_group_id([txn_1, txn_2])
+        print("...computed groupId: ", group_id)
+        txn_1.group = group_id
+        txn_2.group = group_id
+
+
+        txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+                  {'txn': encoding.msgpack_encode(txn_2)}]
+
+        return txngrp
+
+    else:
+        "User is not the top 10 investor in the campaign."
 
 
 # Investors participate in the campaigns and invest
