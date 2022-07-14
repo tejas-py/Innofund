@@ -59,6 +59,21 @@ def get_minted_asset_transaction(address):
     return total_assets
 
 
+# get the name of the user
+def name_by_user_id(user_app_id=98895033):
+
+    # search transaction
+    app_args = indexerConnection.search_applications(application_id=user_app_id)['applications'][0]['params']['global-state']
+
+    # get the username
+    for one_app_args in app_args:
+        if one_app_args['key'] == "bmFtZQ==":
+            encoded_user_name = one_app_args['value']['bytes']
+            user_name = str(base64.b64decode(encoded_user_name)).split('b')[1].replace('\'', "")
+
+            return user_name
+
+
 # get asset details
 def asset_details(asset_id):
 
@@ -250,7 +265,7 @@ def list_investors(campaign_id):
             user_app_id = int(re.search(r'\d+', bytes_user_app_id).group())
 
             # append the information to the dictionary
-            one_investment = {'invested': investment_by_address, "user_app_id": user_app_id}
+            one_investment = {'invested': investment_by_address, "user_app_id": user_app_id, "user_name": name_by_user_id(user_app_id)}
 
             if len(investors_in_campaign) > 0:
                 for one_info in investors_in_campaign:
@@ -283,11 +298,11 @@ def check_claim_nft(user_app_id, campaign_app_id):
     # get the top 10 investors list
     top_investors = list_investors(campaign_app_id)[:10]
     list_len = len(top_investors)
-    print(top_investors[:abs(list_len-10)])
 
     # create blank dictionary
     nft_user_details = []
 
+    # check if the user has invested in the campaign
     for one_investment_info in top_investors:
         if user_app_id == one_investment_info['user_app_id']:
             result = {"can user claim NFT": "True"}
@@ -297,7 +312,7 @@ def check_claim_nft(user_app_id, campaign_app_id):
             result = {"can user claim NFT": "False"}
             nft_user_details.append(result)
 
-
+    # find how many times user can claim the nft and how many times user has claimed the nft
     if nft_user_details[0]['can user claim NFT'] == "True":
         # get the address of the campaign
         campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
@@ -305,6 +320,7 @@ def check_claim_nft(user_app_id, campaign_app_id):
         # search transactions
         txns = indexerConnection.search_transactions(address=campaign_wallet_address)['transactions']
 
+        # transaction for claimed NFT
         for one_txn in txns:
             time_nft_claimed = 0
             try:
@@ -313,7 +329,9 @@ def check_claim_nft(user_app_id, campaign_app_id):
                     result = {"times user claimed NFT": time_nft_claimed}
                     nft_user_details.append(result)
                 else:
-                    pass
+                    result = {"times user claimed NFT": time_nft_claimed}
+                    nft_user_details.append(result)
+                    break
             except Exception as er:
                 print(er)
 

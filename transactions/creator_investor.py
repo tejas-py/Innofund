@@ -750,7 +750,7 @@ def claim_nft(client, user_app_id, asset_id, asset_amount, campaign_app_id):
         return txngrp
 
     else:
-        "User is not the top 10 investor in the campaign."
+        "User is not the top 10 investor of the campaign."
 
 
 # Investors participate in the campaigns and invest
