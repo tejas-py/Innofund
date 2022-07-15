@@ -357,7 +357,7 @@ def check_claim_nft(user_app_id, campaign_app_id):
 
             # for top investors' length to 10
             if list_len == 10:
-                result1 = {'times user can claim NFT': 1}
+                result1 = {'NFT amount user can claim': 1}
                 nft_user_details.append(result1)
 
             # for top investors' length between 5 and 9

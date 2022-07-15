@@ -172,7 +172,7 @@ def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, image_u
 
     # creating asset: transaction 2
     txn_2 = transaction.AssetConfigTxn(sender=sender, sp=params, total=1, default_frozen=False,
-                                       unit_name=unit_name, asset_name=asset_name, decimals=0, url=image_url,
+                                       unit_name=unit_name, asset_name=asset_name, decimals=10, url=image_url,
                                        manager=creator_account, freeze=creator_account, reserve=creator_account,
                                        clawback=creator_account)
     print("Grouping transactions...")
