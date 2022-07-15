@@ -708,59 +708,62 @@ def claim_nft(client, user_app_id, asset_id, campaign_app_id):
     # top 10 investors in the campaign
     top_investors = transactions.indexer.list_investors(campaign_app_id)[:10]
 
-    if user_app_id in top_investors:
+    # check if the user has invested in the campaign
+    for one_investor in top_investors:
+        if one_investor['user_app_id'] == user_app_id:
 
-        # get node suggested parameters
-        params_txn1 = client.suggested_params()
-        params_txn1.fee = 1000
-        params_txn1.flat_fee = True
+            # get node suggested parameters
+            params_txn1 = client.suggested_params()
+            params_txn1.fee = 1000
+            params_txn1.flat_fee = True
 
-        params_txn2 = client.suggested_params()
-        params_txn2.fee = 2000
-        params_txn2.flat_fee = True
+            params_txn2 = client.suggested_params()
+            params_txn2.fee = 2000
+            params_txn2.flat_fee = True
 
-        # get the wallet address of the user
-        wallet_address = com_func.get_address_from_application(user_app_id)
+            # get the wallet address of the user
+            wallet_address = com_func.get_address_from_application(user_app_id)
 
-        # check if the user has claimed the nft
-        asset_claim_info = transactions.indexer.check_claim_nft(user_app_id, campaign_app_id)
-
-        if asset_claim_info[0] == "True" and asset_claim_info[1] == "False":
+            # check if the user has claimed the nft
             asset_claim_info = transactions.indexer.check_claim_nft(user_app_id, campaign_app_id)
-            asset_amount = (asset_claim_info[2]['NFT amount user can claim'])/10
+
+            if asset_claim_info[0]['can_claim_NFT'] == "True" and asset_claim_info[1]['claimed_nft'] == "False":
+
+                # get the asset amount to be claimed
+                asset_claim_info = transactions.indexer.check_claim_nft(user_app_id, campaign_app_id)
+                asset_amount = (asset_claim_info[2]['NFT amount user can claim'])/10
+
+                # define the arguments
+                app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]
+                asset_list = [asset_id]
+
+                # Transaction 1: Opting to asset
+                txn_1 = AssetTransferTxn(sender=wallet_address, receiver=wallet_address,
+                                         sp=params_txn1, amt=0, index=asset_id)
 
 
-            # define the arguments
-            app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]
-            asset_list = [asset_id]
+                # Transaction 2: Campaign Application Call
+                txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params_txn2, index=campaign_app_id,
+                                           app_args=app_args_list, foreign_assets=asset_list, note="NFT Claimed")
 
-            # Transaction 1: Opting to asset
-            txn_1 = AssetTransferTxn(sender=wallet_address, receiver=wallet_address,
-                                     sp=params_txn1, amt=0, index=asset_id)
-
-
-            # Transaction 2: Campaign Application Call
-            txn_2 = ApplicationNoOpTxn(sender=wallet_address, sp=params_txn2, index=campaign_app_id,
-                                       app_args=app_args_list, foreign_assets=asset_list, note="NFT Claimed")
-
-            print("Grouping transactions...")
-            # compute group id and put it into each transaction
-            group_id = transaction.calculate_group_id([txn_1, txn_2])
-            print("...computed groupId: ", group_id)
-            txn_1.group = group_id
-            txn_2.group = group_id
+                print("Grouping transactions...")
+                # compute group id and put it into each transaction
+                group_id = transaction.calculate_group_id([txn_1, txn_2])
+                print("...computed groupId: ", group_id)
+                txn_1.group = group_id
+                txn_2.group = group_id
 
 
-            txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
-                      {'txn': encoding.msgpack_encode(txn_2)}]
+                txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+                          {'txn': encoding.msgpack_encode(txn_2)}]
 
-            return txngrp
+                return txngrp
+
+            else:
+                "User has claimed the NFT"
 
         else:
-            "User has claimed the NFT"
-
-    else:
-        "User is not the top 10 investor of the campaign."
+            "User is not the top 10 investor of the campaign."
 
 
 # Investors participate in the campaigns and invest

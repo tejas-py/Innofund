@@ -597,7 +597,12 @@ def check_nft(campaign_app_id, user_app_id):
 
     # pass the details
     result = indexer.check_claim_nft(user_app_id, campaign_app_id)
-    claim_info = [result[0], result[1]]
+
+    if len(result) == 1:
+        claim_info = [result[0]]
+    else:
+        claim_info = [result[0], result[1]]
+
     return jsonify(claim_info), 200
 
 
