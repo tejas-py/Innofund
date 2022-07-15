@@ -314,26 +314,36 @@ def check_claim_nft(user_app_id, campaign_app_id):
 
     # find how many times user can claim the nft and how many times user has claimed the nft
     if nft_user_details[0]['can user claim NFT'] == "True":
-        # get the address of the campaign
-        campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
+
+        # get the address of the user and the nft of the campaign
+        user_wallet_address = utilities.CommonFunctions.get_address_from_application(user_app_id)
+        nft_asset_id = nft_in_campaign(campaign_app_id)
 
         # search transactions
-        txns = indexerConnection.search_transactions(address=campaign_wallet_address)['transactions']
+        try:
+            print("search txn...")
+            txns = indexerConnection.search_transactions(address=user_wallet_address, address_role='receiver', asset_id=nft_asset_id)['transactions']
 
-        # transaction for claimed NFT
-        for one_txn in txns:
-            time_nft_claimed = 0
-            try:
-                if one_txn['note'] == "TkZUIENsYWltZWQ=":
-                    time_nft_claimed += 1
-                    result = {"times user claimed NFT": time_nft_claimed}
-                    nft_user_details.append(result)
-                else:
-                    result = {"times user claimed NFT": time_nft_claimed}
-                    nft_user_details.append(result)
-                    break
-            except Exception as er:
-                print(er)
+            # transaction for claimed NFT
+            if len(txns) > 0:
+                for one_txn in txns:
+                    print('search notes...')
+                    try:
+                        if one_txn['note'] == "TkZUIENsYWltZWQ=":
+                            result = {"Claimed NFT": "True"}
+                            nft_user_details.append(result)
+                            break
+                        else:
+                            result = {"Claimed NFT": "False"}
+                            nft_user_details.append(result)
+                            break
+                    except Exception as er:
+                        print(er)
+            else:
+                final_result = {"Claimed NFT": "False"}
+                nft_user_details.append(final_result)
+        except Exception as error:
+            print(error)
 
         # for top investors' length to 10
         if list_len == 10:
@@ -345,10 +355,10 @@ def check_claim_nft(user_app_id, campaign_app_id):
             top_users = top_investors[:abs(list_len-10)]
             for one_user in top_users:
                 if one_user['user_app_id'] == user_app_id:
-                    result = {'times user can claim NFT': 2}
+                    result = {'NFT amount user can claim': 2}
                     nft_user_details.append(result)
                 else:
-                    result = {'times user can claim NFT': 1}
+                    result = {'NFT amount user can claim': 1}
                     nft_user_details.append(result)
 
         # for top investors' length equal to 4
@@ -356,10 +366,10 @@ def check_claim_nft(user_app_id, campaign_app_id):
             top_participants = top_investors[:2]
             for one_user in top_participants:
                 if one_user['user_app_id'] == user_app_id:
-                    result = {'times user can claim NFT': 3}
+                    result = {'NFT amount user can claim': 3}
                     nft_user_details.append(result)
                 else:
-                    result = {'times user can claim NFT': 2}
+                    result = {'NFT amount user can claim': 2}
                     nft_user_details.append(result)
 
         # for top investors' length equal to 3
@@ -367,20 +377,34 @@ def check_claim_nft(user_app_id, campaign_app_id):
             top_participants = top_investors[:1]
             for one_user in top_participants:
                 if one_user['user_app_id'] == user_app_id:
-                    result = {'times user can claim NFT': 4}
+                    result = {'NFT amount user can claim': 4}
                     nft_user_details.append(result)
                 else:
-                    result = {'times user can claim NFT': 3}
+                    result = {'NFT amount user can claim': 3}
                     nft_user_details.append(result)
 
         # for top investors' length equal to 2
         if list_len == 2:
-            result = {'times user can claim NFT': 5}
+            result = {'NFT amount user can claim': 5}
             nft_user_details.append(result)
 
         # for top investors' length equal to 2
         if list_len == 1:
-            result = {'times user can claim NFT': 10}
+            result = {'NFT amount user can claim': 10}
             nft_user_details.append(result)
 
     return nft_user_details
+
+
+# get nft in the campaign
+def nft_in_campaign(campaign_app_id):
+
+    # get the address of the campaign
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
+
+    # search the wallet information
+    asset_id = indexerConnection.account_info(address=campaign_wallet_address)['account']['assets'][0]['asset-id']
+
+    return asset_id
+
+

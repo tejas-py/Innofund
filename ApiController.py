@@ -475,8 +475,7 @@ def clamming_nft():
     # getting the transaction details
     transfer_details = request.get_json()
     user_app_id = transfer_details['user_app_id']
-    asset_id = transfer_details['NFT_asset_id']
-    asset_amount = 0.1
+    asset_id = transfer_details['nft_asset_id']
     campaign_app_id = transfer_details['campaign_app_id']
 
     investor_address = CommonFunctions.get_address_from_application(user_app_id)
@@ -486,7 +485,7 @@ def clamming_nft():
             try:
                 # send the details for transaction to occur
                 txn_details = creator_investor.claim_nft(algod_client, user_app_id,
-                                                                    asset_id, asset_amount, campaign_app_id)
+                                                                    asset_id, campaign_app_id)
                 return jsonify(txn_details), 200
             except Exception as error:
                 return str(error), 500
@@ -593,10 +592,13 @@ def investors_list_in_campaign(campaign_id):
 
 
 # check if the user has claimed the NFT
-@app.route('/investor_nft_claimed/<int:user_app_id>/<int:campaign_app_id>')
-def check_nft(user_app_id, campaign_app_id):
+@app.route('/investor_nft_claimed/<int:campaign_app_id>/<int:user_app_id>')
+def check_nft(campaign_app_id, user_app_id):
+
+    # pass the details
     result = indexer.check_claim_nft(user_app_id, campaign_app_id)
-    return jsonify(result), 200
+    claim_info = [result[0], result[1]]
+    return jsonify(claim_info), 200
 
 
 
