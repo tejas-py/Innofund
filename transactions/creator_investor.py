@@ -863,7 +863,8 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
-            args_list_2 = ["last_milestone", int(com_func.Today_seconds())]
+
+            args_list_2=["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_2, accounts=account_lst, note="Milestone 2 money, claimed")
 
