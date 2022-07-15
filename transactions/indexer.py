@@ -250,6 +250,7 @@ def list_investors(campaign_id):
     # search investment done in campaign
     nft_search = indexerConnection.search_transactions(address=campaign_wallet_address, txn_type="pay")
     transactions = nft_search['transactions']
+    print(transactions)
 
     # create a blank dictionary for loops
     investors_in_campaign = []
@@ -257,24 +258,26 @@ def list_investors(campaign_id):
     # search for the notes in the transactions
     for one_transaction in transactions:
         if 'note' in one_transaction:
+            try:
+                # get the address, user app id and the investment amount
+                investment_by_address = one_transaction['payment-transaction']['amount']
+                txn_note = one_transaction['note']
+                bytes_user_app_id = str(base64.b64decode(txn_note)).split(":")[1]
+                user_app_id = int(re.search(r'\d+', bytes_user_app_id).group())
 
-            # get the address, user app id and the investment amount
-            investment_by_address = one_transaction['payment-transaction']['amount']
-            txn_note = one_transaction['note']
-            bytes_user_app_id = str(base64.b64decode(txn_note)).split(":")[1]
-            user_app_id = int(re.search(r'\d+', bytes_user_app_id).group())
+                # append the information to the dictionary
+                one_investment = {'invested': investment_by_address, "user_app_id": user_app_id, "user_name": name_by_user_id(user_app_id)}
 
-            # append the information to the dictionary
-            one_investment = {'invested': investment_by_address, "user_app_id": user_app_id, "user_name": name_by_user_id(user_app_id)}
-
-            if len(investors_in_campaign) > 0:
-                for one_info in investors_in_campaign:
-                    if one_investment['user_app_id'] == one_info['user_app_id']:
-                        one_info['invested'] = one_investment['invested'] + one_info['invested']
-                    else:
-                        pass
-            else:
-                investors_in_campaign.append(one_investment)
+                if len(investors_in_campaign) > 0:
+                    for one_info in investors_in_campaign:
+                        if one_investment['user_app_id'] == one_info['user_app_id']:
+                            one_info['invested'] = one_investment['invested'] + one_info['invested']
+                        else:
+                            pass
+                else:
+                    investors_in_campaign.append(one_investment)
+            except Exception as error:
+                print(error)
 
     # get the top investment done in the campaign
     top_investors = sorted(investors_in_campaign, key=operator.itemgetter("invested"))
