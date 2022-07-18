@@ -60,7 +60,7 @@ def get_minted_asset_transaction(address):
 
 
 # get the name of the user
-def name_by_user_id(user_app_id=98895033):
+def name_by_user_id(user_app_id):
 
     # search transaction
     app_args = indexerConnection.search_applications(application_id=user_app_id)['applications'][0]['params']['global-state']
@@ -132,7 +132,7 @@ def assets_in_wallet(app_id):
 
 
 # get the details of the campaign
-def campaign(campaign_id=98482945):
+def campaign(campaign_id):
 
     # define variables
     invested_amount = "None"
@@ -214,6 +214,31 @@ def check_payment_milestone_2(campaign_app_id):
         return "True"
     else:
         return "False"
+
+
+# check milestone payment in campaign for API
+def check_payment_milestone_again(campaign_app_id):
+
+    # search transactions in blockchain
+    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
+    transactions = campaign_txn_info['transactions']
+
+    # create a blank dictionary
+    txn_notes = []
+
+    # search for the notes in the transactions
+    for one_transaction in transactions:
+        try:
+            note = one_transaction['note']
+            txn_notes.append(note)
+        except Exception as e:
+            print(e)
+
+    # check if the claim transaction exist or not
+    if "TWlsZXN0b25lIDEgbW9uZXksIGNsYWltZWQ=" in txn_notes:
+        return {"initial_payment_claimed": "TRUE"}
+    else:
+        return {"initial_payment_claimed": "FALSE"}
 
 
 # check nft in investor wallet
@@ -413,5 +438,12 @@ def check_nft_in_campaign(campaign_app_id):
         return "False"
 
 
+# check the campaign type
+def campaign_type(campaign_id=98482945):
 
+    # get the details of the campaign
+    campaign_info = indexerConnection.search_applications(application_id=campaign_id)
+    campaign_args = campaign_info['applications'][0]['params']['global-state']
+    print(campaign_args)
 
+campaign_type()

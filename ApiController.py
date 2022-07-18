@@ -603,7 +603,7 @@ def check_nft(campaign_app_id, user_app_id):
     else:
         claim_info = [result[0], result[1]]
 
-    return jsonify(claim_info), 200
+    return jsonify(result), 200
 
 
 
