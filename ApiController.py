@@ -316,19 +316,6 @@ def init_milestone():
     return jsonify(milestone_txn)
 
 
-# end milestone
-# @app.route('/end_milestone', methods=['POST'])
-# def milestone_end():
-#     # get the details
-#     milestone_details = request.get_json()
-#     milestone_app_id = milestone_details['milestone_app_id']
-#
-#
-#     end_txn = creator_investor.end_milestone(algod_client, milestone_app_id)
-#
-#     return jsonify(end_txn)
-
-
 # Group Transaction: (Call user app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
@@ -360,43 +347,6 @@ def mint_nft():
             return f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos", 400
     except Exception as wallet_error:
         return f"Check Wallet Address, Error: {wallet_error}", 400
-#     # get the details of the campaign to mint asset
-#     mint_asset = request.get_json()
-#     app_id = mint_asset['app_id']
-#     user_name = mint_asset['name']
-#     usertype = mint_asset['user_type']
-#     unit_name = mint_asset['unit_name']
-#     asset_name = mint_asset['asset_name']
-#     total_amount = mint_asset['amount']
-#     picture = mint_asset['image_hash']
-#     meta_data = mint_asset['meta_data']
-#
-#     # get the wallet address from the user application id
-#     address = CommonFunctions.get_address_from_application(app_id)
-#
-#     # create a blank array for the transactions
-#     asset_create_txn = []
-#
-#     if len(unit_name) == total_amount and len(asset_name) == total_amount \
-#             and len(picture) == total_amount and len(meta_data) == total_amount:
-#         for unit, name, image, meta in zip(unit_name, asset_name, picture, meta_data):
-#             print(unit_name[unit], asset_name[name], picture[image])
-#             try:
-#                 if CommonFunctions.check_balance(address, 1000):
-#                     try:
-#                         # pass the details to algorand to mint asset
-#                         asset_txn = admin.admin_asset(algod_client, user_name, usertype, app_id, unit_name[unit],
-#                                                       asset_name[name], picture[image], meta_data[meta])
-#                         asset_create_txn.append(asset_txn)
-#                     except Exception as error:
-#                         return str(error), 500
-#                 else:
-#                     return f"To Mint NFT, Minimum Balance should be 1000 microAlgos", 400
-#             except Exception as wallet_error:
-#                 return f"Check Wallet Address, Error: {wallet_error}", 400
-#         return jsonify(asset_create_txn), 200
-#     else:
-#         return "Please check the total amount of NFT and other fields.", 400
 
 
 # Opt-in to NFT
