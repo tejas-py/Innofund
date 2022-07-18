@@ -439,11 +439,19 @@ def check_nft_in_campaign(campaign_app_id):
 
 
 # check the campaign type
-def campaign_type(campaign_id=98482945):
+def campaign_type(campaign_id):
 
     # get the details of the campaign
     campaign_info = indexerConnection.search_applications(application_id=campaign_id)
     campaign_args = campaign_info['applications'][0]['params']['global-state']
-    print(campaign_args)
 
-campaign_type()
+    # find the total invested amount in the campaign
+    for one_arg in campaign_args:
+        key = one_arg['key']
+        if "ZnVuZGluZ19jYXRlZ29yeQ==" == key:
+            value = one_arg['value']['bytes']
+            fund_category = str(base64.b64decode(value)).replace('b\'', "").replace('\'', "")
+            if fund_category == "6231d702b971347ba6dec133":
+                return "Donation"
+            elif fund_category == "6225a3097cd8ef00a1fa0d8b":
+                return "Reward"

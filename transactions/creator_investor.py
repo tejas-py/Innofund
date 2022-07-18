@@ -861,13 +861,30 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             return txngrp
 
 
-    # submitting the milestone 1 report
-    elif transactions.indexer.check_nft_in_campaign(campaign_app_id) == "False" and  milestone_number == 2:
+    # submitting the milestone 1 report for Reward Campaign
+    elif transactions.indexer.campaign_type(campaign_app_id) == "Reward" and  milestone_number == 2:
 
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
             args_list_3 = ["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
+
+            txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
+
+            txngrp = [{'txn':encoding.msgpack_encode(txn)}]
+            return txngrp
+
+        else:
+            txngrp = {"Milestone Status":"Milestone 1 money has not been claimed yet"}
+            return txngrp
+
+    # submitting the milestone 1 report for Donation campaign
+    elif transactions.indexer.campaign_type(campaign_app_id) == "Donation" and  milestone_number == 2:
+
+        if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
+
+            account_lst = [creator_wallet_address]
+            args_list_3 = ["last_milestone", int(com_func.Today_seconds())]
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
 
