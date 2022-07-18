@@ -731,7 +731,7 @@ def claim_nft(client, user_app_id, asset_id, campaign_app_id):
 
                 # get the asset amount to be claimed
                 asset_claim_info = transactions.indexer.check_claim_nft(user_app_id, campaign_app_id)
-                asset_amount = (asset_claim_info[2]['NFT amount user can claim'])
+                asset_amount = asset_claim_info[2]['NFT amount user can claim']
 
                 # define the arguments
                 app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]

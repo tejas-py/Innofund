@@ -284,7 +284,7 @@ def list_investors(campaign_id):
                 print(error)
 
     # get the top investment done in the campaign
-    top_investors = sorted(investors_in_campaign, key=operator.itemgetter("invested"))
+    top_investors = sorted(investors_in_campaign, key=operator.itemgetter("invested")).reverse
 
     return top_investors
 
@@ -445,7 +445,7 @@ def campaign_type(campaign_id):
     campaign_info = indexerConnection.search_applications(application_id=campaign_id)
     campaign_args = campaign_info['applications'][0]['params']['global-state']
 
-    # find the total invested amount in the campaign
+    # find the fund category of the campaign
     for one_arg in campaign_args:
         key = one_arg['key']
         if "ZnVuZGluZ19jYXRlZ29yeQ==" == key:
