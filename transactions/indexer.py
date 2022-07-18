@@ -216,31 +216,6 @@ def check_payment_milestone_2(campaign_app_id):
         return "False"
 
 
-# check milestone payment in campaign for API
-def check_payment_milestone_again(campaign_app_id):
-
-    # search transactions in blockchain
-    campaign_txn_info = indexerConnection.search_transactions(application_id=campaign_app_id, txn_type="appl")
-    transactions = campaign_txn_info['transactions']
-
-    # create a blank dictionary
-    txn_notes = []
-
-    # search for the notes in the transactions
-    for one_transaction in transactions:
-        try:
-            note = one_transaction['note']
-            txn_notes.append(note)
-        except Exception as e:
-            print(e)
-
-    # check if the claim transaction exist or not
-    if "TWlsZXN0b25lIDEgbW9uZXksIGNsYWltZWQ=" in txn_notes:
-        return {"initial_payment_claimed": "TRUE"}
-    else:
-        return {"initial_payment_claimed": "FALSE"}
-
-
 # check nft in investor wallet
 def list_investors(campaign_id):
 
