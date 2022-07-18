@@ -286,7 +286,7 @@ def list_investors(campaign_id):
     # get the top investment done in the campaign
     top_investors = sorted(investors_in_campaign, key=operator.itemgetter("invested"))
 
-    return top_investors
+    return top_investors[::-1]
 
 
 # nft list in campaign wallet address
