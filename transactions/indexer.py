@@ -284,7 +284,7 @@ def list_investors(campaign_id):
                 print(error)
 
     # get the top investment done in the campaign
-    top_investors = sorted(investors_in_campaign, key=operator.itemgetter("invested")).reverse
+    top_investors = sorted(investors_in_campaign, key=operator.itemgetter("invested"))
 
     return top_investors
 
