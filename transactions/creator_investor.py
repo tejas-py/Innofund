@@ -683,7 +683,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
         sender=creator_account,
         sp=params_txn2,
         receiver= campaign_wallet_address,
-        amt=1,
+        amt=10,
         index=asset_id
     )
 
