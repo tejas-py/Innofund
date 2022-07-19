@@ -134,7 +134,7 @@ byte "Claim NFT"
 &&
 bnz main_l30
 global GroupSize
-int 5
+int 4
 ==
 txn Sender
 global CreatorAddress

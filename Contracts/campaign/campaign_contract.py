@@ -161,7 +161,7 @@ def approval_program():
 
         # Condition 5
         [And(
-            Global.group_size() == Int(5),
+            Global.group_size() == Int(4),
             is_app_creator,
             Txn.application_args[0] == Bytes("Transfer NFT to Creator")
         ), check_campaign_end_3],
