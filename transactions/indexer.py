@@ -362,38 +362,33 @@ def check_claim_nft(user_app_id, campaign_app_id):
 
             # for top investors' length between 5 and 9
             if 5 <= list_len <= 9:
-                top_users = top_investors[:abs(list_len-10)]
-                for one_user in top_users:
-                    if one_user['user_app_id'] == top_users[0]['user_app_id'] or top_users[1]['user_app_id'] or top_users[2]['user_app_id'] or top_users[3]['user_app_id'] or top_users[4]['user_app_id'] or top_users[5]['user_app_id']:
-                        result2 = {'NFT amount user can claim': 2}
-                        nft_user_details.append(result2)
-                    else:
-                        result2 = {'NFT amount user can claim': 1}
-                        nft_user_details.append(result2)
+                if user_app_id == top_investors[0]['user_app_id'] or user_app_id == top_investors[1]['user_app_id'] or \
+                        user_app_id == top_investors[2]['user_app_id'] or user_app_id == top_investors[3]['user_app_id']\
+                        or user_app_id == top_investors[4]['user_app_id'] or user_app_id == top_investors[5]['user_app_id']:
+                    result2={'NFT amount user can claim':2}
+                    nft_user_details.append (result2)
+                else:
+                    result2={'NFT amount user can claim':1}
+                    nft_user_details.append (result2)
 
             # for top investors' length equal to 4
             if list_len == 4:
-                top_participants = top_investors[:2]
-                for one_user in top_participants:
-                    if one_user['user_app_id'] == top_participants[0]['user_app_id'] or top_participants[1]['user_app_id']:
-                        result3 = {'NFT amount user can claim': 3}
-                        nft_user_details.append(result3)
-                        break
-                    else:
-                        result3 = {'NFT amount user can claim': 2}
-                        nft_user_details.append(result3)
-                        break
+                if user_app_id == top_investors[0]['user_app_id'] or user_app_id == top_investors[1]['user_app_id']:
+                    result3={'NFT amount user can claim':3}
+                    nft_user_details.append (result3)
+                else:
+                    result3={'NFT amount user can claim':2}
+                    nft_user_details.append (result3)
+
 
             # for top investors' length equal to 3
             if list_len == 3:
-                top_participants = top_investors[:1]
-                for one_user in top_participants:
-                    if one_user['user_app_id'] == top_participants[0]['user_app_id']:
-                        result4 = {'NFT amount user can claim': 4}
-                        nft_user_details.append(result4)
-                    else:
-                        result4 = {'NFT amount user can claim': 3}
-                        nft_user_details.append(result4)
+                if user_app_id == top_investors[0]['user_app_id']:
+                    result4={'NFT amount user can claim':4}
+                    nft_user_details.append (result4)
+                else:
+                    result4={'NFT amount user can claim':3}
+                    nft_user_details.append (result4)
 
             # for top investors' length equal to 2
             if list_len == 2:

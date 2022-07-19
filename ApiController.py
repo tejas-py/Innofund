@@ -547,6 +547,7 @@ def check_nft(campaign_app_id, user_app_id):
 
     # pass the details
     result = indexer.check_claim_nft(user_app_id, campaign_app_id)
+    print(result)
 
     if len(result) == 1:
         claim_info = [result[0]]
