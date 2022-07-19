@@ -306,10 +306,10 @@ def check_claim_nft(user_app_id, campaign_app_id):
     top_investors = list_investors(campaign_app_id)[:10]
     list_len = len(top_investors)
 
-
     # create blank dictionary
     nft_user_details = []
 
+    # check if the user can claim nft
     if list_len > 0:
         # check if the user has invested in the campaign
         for one_investment_info in top_investors:
@@ -329,15 +329,12 @@ def check_claim_nft(user_app_id, campaign_app_id):
             user_wallet_address = utilities.CommonFunctions.get_address_from_application(user_app_id)
             nft_asset_id = nft_in_campaign(campaign_app_id)
 
-            # search transactions
+            # has the user claim the nft
             try:
-                print("search txn...")
                 txns = indexerConnection.search_transactions(address=user_wallet_address, address_role='receiver', asset_id=nft_asset_id)['transactions']
-
                 # transaction for claimed NFT
                 if len(txns) > 0:
                     for one_txn in txns:
-                        print('search notes...')
                         try:
                             if one_txn['note'] == "TkZUIENsYWltZWQ=":
                                 result = {"claimed_nft": "True"}
@@ -379,7 +376,6 @@ def check_claim_nft(user_app_id, campaign_app_id):
                 else:
                     result3={'NFT amount user can claim':2}
                     nft_user_details.append (result3)
-
 
             # for top investors' length equal to 3
             if list_len == 3:
