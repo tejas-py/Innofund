@@ -451,6 +451,3 @@ def campaign_type(campaign_id):
                 return "Donation"
             elif fund_category == reward[0] or fund_category == reward[1]:
                 return "Reward"
-
-
-print(campaign_type())
