@@ -436,13 +436,21 @@ def campaign_type(campaign_id):
     campaign_info = indexerConnection.search_applications(application_id=campaign_id)
     campaign_args = campaign_info['applications'][0]['params']['global-state']
 
+    # fund category ids
+    donation = ['6231d702b971347ba6dec133', '623d564ce1b5659d7e3de3f0']
+    reward = ['623d5641e1b5659d7e3de3ea', '6225a3097cd8ef00a1fa0d8b']
+
     # find the fund category of the campaign
     for one_arg in campaign_args:
         key = one_arg['key']
         if "ZnVuZGluZ19jYXRlZ29yeQ==" == key:
             value = one_arg['value']['bytes']
             fund_category = str(base64.b64decode(value)).replace('b\'', "").replace('\'', "")
-            if fund_category == "6231d702b971347ba6dec133":
+
+            if fund_category == donation[0] or fund_category == donation[1]:
                 return "Donation"
-            elif fund_category == "6225a3097cd8ef00a1fa0d8b":
+            elif fund_category == reward[0] or fund_category == reward[1]:
                 return "Reward"
+
+
+print(campaign_type())
