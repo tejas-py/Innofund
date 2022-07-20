@@ -273,7 +273,7 @@ def reject_campaign():
 def delete_campaign():
     # Get the user Details
     user_delete = request.get_json()
-    campaign_app_id = user_delete['campaign_app_id']
+    campaign_app_id = int(user_delete['campaign_app_id'])
     nft_id = int(user_delete['nft_id'])
     milestone_app_id = user_delete['milestone_app_id']
     address = CommonFunctions.get_address_from_application(campaign_app_id)
