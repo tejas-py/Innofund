@@ -113,6 +113,10 @@ txna ApplicationArgs 0
 byte "No Check"
 ==
 bnz main_l34
+txna ApplicationArgs 0
+byte "Reject Reward Campaign"
+==
+bnz main_l33
 global GroupSize
 int 3
 ==
@@ -124,7 +128,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l33
+bnz main_l32
 global GroupSize
 int 2
 ==
@@ -132,7 +136,7 @@ txna ApplicationArgs 0
 byte "Claim NFT"
 ==
 &&
-bnz main_l30
+bnz main_l29
 global GroupSize
 int 4
 ==
@@ -144,17 +148,17 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l27
+bnz main_l28
 txna ApplicationArgs 0
 byte "Milestone"
 ==
-bnz main_l24
+bnz main_l25
 txna ApplicationArgs 0
 byte "last_milestone"
 ==
-bnz main_l21
+bnz main_l22
 err
-main_l21:
+main_l22:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -166,10 +170,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l23
+bnz main_l24
 int 0
 return
-main_l23:
+main_l24:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -184,7 +188,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l24:
+main_l25:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -196,10 +200,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l26
+bnz main_l27
 int 0
 return
-main_l26:
+main_l27:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -215,22 +219,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l27:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l29
-int 0
-return
-main_l29:
+main_l28:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -245,7 +234,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l30:
+main_l29:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -257,10 +246,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l32
+bnz main_l31
 int 0
 return
-main_l32:
+main_l31:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -276,13 +265,28 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l33:
+main_l32:
 itxn_begin
 int axfer
 itxn_field TypeEnum
 global CurrentApplicationAddress
 itxn_field AssetReceiver
 int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l33:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 1
 itxn_field AssetAmount
 txna Assets 0
 itxn_field XferAsset
@@ -1006,8 +1010,8 @@ def update_campaign(client, public_address, app_id, title,
     return txngrp
 
 
-# Reason for blocking/rejecting Campaign
-def block_reason(client, public_address, campaign_id, reason):
+# Reason for approving/rejecting Campaign
+def approve_reject_campaign(client, public_address, campaign_id, reason):
 
     print(f"Blocking/rejecting {campaign_id} campaign....")
     # declaring the sender
@@ -1020,6 +1024,36 @@ def block_reason(client, public_address, campaign_id, reason):
 
     # create unsigned transaction
     txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=reason)
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
+
+    return txngrp
+
+
+# Reason for rejecting reward Campaign
+def reject_reward_campaign(client, public_address, campaign_id, reason):
+
+    print(f"Blocking/rejecting {campaign_id} campaign....")
+
+    # declaring the addresses
+    sender = public_address
+    campaign_creator_address = com_func.get_address_from_application(campaign_id)
+
+    # get node suggested parameters
+    params = client.suggested_params()
+    params.fee = 2000
+    params.flat_fee = True
+
+    # find the asset in the campaign
+    asset_in_campaign = transactions.indexer.nft_in_campaign(campaign_id)
+
+    # define the arguments to be passed
+    app_args = ["Reject Reward Campaign"]
+    accounts_list = [campaign_creator_address]
+    asset_list = [asset_in_campaign]
+
+    # create unsigned transaction
+    txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=reason, accounts=accounts_list, foreign_assets=asset_list)
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
