@@ -173,31 +173,37 @@ def approval_program():
 
         # Condition 4
         [And(
+            Global.group_size() == Int(4),
+            Txn.application_args[0] == Bytes('delete campaign')
+        ), Approve()],
+
+        # Condition 5
+        [And(
             Global.group_size() == Int(3),
             is_app_creator,
             Txn.application_args[0] == Bytes("Send NFT to Campaign")
         ), inner_txn1],
 
-        # Condition 5
+        # Condition 6
         [And(
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("Claim NFT")
         ), check_campaign_end_2],
 
-        # Condition 6
+        # Condition 7
         [And(
             Global.group_size() == Int(4),
             is_app_creator,
             Txn.application_args[0] == Bytes("Transfer NFT to Creator")
         ), inner_txn3],
 
-        # Condition 7
+        # Condition 8
         [Txn.application_args[0] == Bytes("Milestone"), check_campaign_end_3],
 
-        # Condition 8
+        # Condition 9
         [Txn.application_args[0] == Bytes("End Reward Milestone"), check_campaign_end_4],
 
-        # Condition 9
+        # Condition 10
         [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end_5]
     )
 

@@ -15,7 +15,7 @@ approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l42
+bnz main_l44
 txn OnCompletion
 int NoOp
 ==
@@ -108,15 +108,23 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l39
+bnz main_l41
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l38
+bnz main_l40
 txna ApplicationArgs 0
 byte "Reject Reward Campaign"
 ==
-bnz main_l37
+bnz main_l39
+global GroupSize
+int 4
+==
+txna ApplicationArgs 0
+byte "delete campaign"
+==
+&&
+bnz main_l38
 global GroupSize
 int 3
 ==
@@ -128,7 +136,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l36
+bnz main_l37
 global GroupSize
 int 2
 ==
@@ -136,7 +144,7 @@ txna ApplicationArgs 0
 byte "Claim NFT"
 ==
 &&
-bnz main_l33
+bnz main_l34
 global GroupSize
 int 4
 ==
@@ -148,21 +156,21 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l32
+bnz main_l33
 txna ApplicationArgs 0
 byte "Milestone"
 ==
-bnz main_l29
+bnz main_l30
 txna ApplicationArgs 0
 byte "End Reward Milestone"
 ==
-bnz main_l26
+bnz main_l27
 txna ApplicationArgs 0
 byte "last_milestone"
 ==
-bnz main_l23
+bnz main_l24
 err
-main_l23:
+main_l24:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -174,10 +182,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l25
+bnz main_l26
 int 0
 return
-main_l25:
+main_l26:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -192,7 +200,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l26:
+main_l27:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -204,10 +212,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l28
+bnz main_l29
 int 0
 return
-main_l28:
+main_l29:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -236,7 +244,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l29:
+main_l30:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -248,10 +256,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l31
+bnz main_l32
 int 0
 return
-main_l31:
+main_l32:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -267,7 +275,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l32:
+main_l33:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -282,7 +290,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l33:
+main_l34:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -294,10 +302,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l35
+bnz main_l36
 int 0
 return
-main_l35:
+main_l36:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -313,7 +321,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l36:
+main_l37:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -328,7 +336,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l37:
+main_l38:
+int 1
+return
+main_l39:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -343,10 +354,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l38:
+main_l40:
 int 1
 return
-main_l39:
+main_l41:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -358,13 +369,13 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l41
+bnz main_l43
 int 0
 return
-main_l41:
+main_l43:
 int 1
 return
-main_l42:
+main_l44:
 txn NumAppArgs
 int 8
 ==
@@ -401,9 +412,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l44
+bnz main_l46
 err
-main_l44:
+main_l46:
 int 1
 return
 """
@@ -1146,10 +1157,10 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
         params_txn1.fee = 1000
         params_txn1.flat_fee = True
 
+        args_list = ['delete campaign']
+
         # define txn
-        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id)
-
-
+        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list)
 
     # delete campaign: Transaction 2
     txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
