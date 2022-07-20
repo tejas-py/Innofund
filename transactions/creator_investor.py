@@ -1139,22 +1139,16 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
         txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list)
 
     # if the campaign is ended and nfts are claimed by the investors
-    elif transactions.indexer.nft_info_in_campaign(campaign_id) == 0 and transactions.indexer.campaign_end(campaign_id) == 'ended':
+    else:
 
         # set params for transaction 1
         params_txn1 = client.suggested_params()
         params_txn1.fee = 1000
         params_txn1.flat_fee = True
 
-        # define arguments
-        asset_list = [asset_id]
-
         # define txn
-        txn_1 = ApplicationNoOpTxn(
-            sender=sender, sp=params_txn1, index=campaign_id, foreign_assets=asset_list
-        )
-    else:
-        txn_1 = 'error'
+        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id)
+
 
 
     # delete campaign: Transaction 2
