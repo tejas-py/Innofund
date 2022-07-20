@@ -167,8 +167,8 @@ def campaign_milestones(client, campaign_app_id, milestone_app_id):
     txn_1 = ApplicationDeleteTxn(sender, params, campaign_app_id)
 
     # deleting milestones
-    txn_2 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
-    txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])
+    txn_2 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
+    txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction

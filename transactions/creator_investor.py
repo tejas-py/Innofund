@@ -1166,8 +1166,8 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
 
     # delete milestones: transaction 3,4
-    txn_3 = ApplicationDeleteTxn(sender, params, milestone_app_id[0])
-    txn_4 = ApplicationDeleteTxn(sender, params, milestone_app_id[1])
+    txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
+    txn_4 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
