@@ -536,8 +536,8 @@ def create_campaign_app(client, public_address, title,
                                  global_schema=global_schema, local_schema=local_schema, app_args=milestone_args,
                                  note="milestone_2")
 
-
     print("Grouping transactions...")
+
     # compute group id and put it into each transaction
     group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
@@ -864,14 +864,17 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             txngrp={"initial_payment_claimed":"TRUE"}
             return txngrp
 
-
     # submitting the milestone 1 report for Reward Campaign
-    elif transactions.indexer.campaign_type(campaign_app_id) == "Reward" and  milestone_number == 2:
+    elif transactions.indexer.campaign_type(campaign_app_id) == "Reward" and milestone_number == 2:
 
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
-            args_list_3 = ["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
+            args_list_3 = ["End Reward Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
+
+            params_txn = client.suggested_params
+            params_txn.fee = 3000
+            params_txn.flat_fee = True
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
 
@@ -883,7 +886,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             return txngrp
 
     # submitting the milestone 1 report for Donation campaign
-    elif transactions.indexer.campaign_type(campaign_app_id) == "Donation" and  milestone_number == 2:
+    elif transactions.indexer.campaign_type(campaign_app_id) == "Donation" and milestone_number == 2:
 
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 

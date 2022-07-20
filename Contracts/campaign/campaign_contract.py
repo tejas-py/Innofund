@@ -86,11 +86,12 @@ def approval_program():
         Approve()
     )
 
-    inner_txn5 = Seq(
+
+    inner_txn6 = Seq(
         InnerTxnBuilder.Begin(),
         # Transaction: payment to creator for milestone
         InnerTxnBuilder.SetFields({
-            TxnField.type_enum:TxnType.Payment,
+            TxnField.type_enum: TxnType.Payment,
             TxnField.sender: Global.current_application_address(),
             TxnField.receiver: Txn.accounts[1],
             TxnField.close_remainder_to: Txn.accounts[1],
@@ -102,6 +103,21 @@ def approval_program():
         Approve()
     )
 
+    inner_txn5 = Seq(
+        InnerTxnBuilder.Begin(),
+        # Transaction: close out asset in the smart contract
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.Payment,
+            TxnField.sender: Global.current_application_address(),
+            TxnField.receiver: Txn.accounts[1],
+            TxnField.asset_close_to: Txn.accounts[1],
+            TxnField.fee: Int(0)
+        }),
+
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        inner_txn6
+    )
 
     check_campaign_end = If(
         Or(
@@ -122,18 +138,23 @@ def approval_program():
     #         App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
     #     ), inner_txn3, Reject())
 
-    check_campaign_end_4 = If(
+    check_campaign_end_3 = If(
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), inner_txn4, Reject())
 
-    check_campaign_end_5 = If(
+    check_campaign_end_4 = If(
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), inner_txn5, Reject())
 
+    check_campaign_end_5 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn6, Reject())
 
     group_transaction = Cond(
 
@@ -170,15 +191,18 @@ def approval_program():
         ), inner_txn3],
 
         # Condition 7
-        [Txn.application_args[0] == Bytes("Milestone"), check_campaign_end_4],
+        [Txn.application_args[0] == Bytes("Milestone"), check_campaign_end_3],
 
         # Condition 8
+        [Txn.application_args[0] == Bytes("End Reward Milestone"), check_campaign_end_4],
+
+        # Condition 9
         [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end_5]
     )
 
     update_investment_details = Seq(
-        App.globalPut(Bytes("total_investment"),
-            App.globalGet(Bytes("total_investment")) + Btoi(Txn.application_args[2])
+        App.globalPut(
+            Bytes("total_investment"), App.globalGet(Bytes("total_investment")) + Btoi(Txn.application_args[2])
         ),
         Approve()
     )

@@ -299,9 +299,9 @@ def delete_campaign():
         try:
             if CommonFunctions.check_balance(address, 5000):
                 try:
-                    deleted_campaignID_txn = creator_investor.nft_delete(algod_client, campaign_app_id, nft_id,
-                                                                         milestones_lst)
-                    return jsonify(deleted_campaignID_txn), 200
+                    deleted_campaign_id_txn = creator_investor.nft_delete(algod_client, campaign_app_id, nft_id,
+                                                                          milestones_lst)
+                    return jsonify(deleted_campaign_id_txn), 200
                 except Exception as error:
                     return str(error), 500
             else:
@@ -445,7 +445,7 @@ def clamming_nft():
             try:
                 # send the details for transaction to occur
                 txn_details = creator_investor.claim_nft(algod_client, user_app_id,
-                                                                    asset_id, campaign_app_id)
+                                                         asset_id, campaign_app_id)
                 return jsonify(txn_details), 200
             except Exception as error:
                 return str(error), 500
@@ -483,7 +483,6 @@ def participation():
     return jsonify(participationID), 200
 
 
-
 # admin approves the milestone and investment get transfer to creator
 @app.route('/approve_milestone', methods=["POST"])
 def approve_milestone():
@@ -495,7 +494,8 @@ def approve_milestone():
     milestone_app_id = investment_details['milestone_app_id']
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no, milestone_app_id)
+    txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no,
+                                                   milestone_app_id)
     return jsonify(txn_details)
 
 
@@ -530,10 +530,10 @@ def milestone1_start():
     else:
         return jsonify(txn_details), 200
 
+
 # check milestone 1
 @app.route('/check_initial_payment/<int:campaign_app_id>')
 def check_milestone(campaign_app_id):
-
     # pass the details
     check_info = indexer.check_payment_milestone_again(campaign_app_id)
     return jsonify(check_info), 200
@@ -567,7 +567,6 @@ def check_nft(campaign_app_id, user_app_id):
     return jsonify(claim_info), 200
 
 
-
 # NFT in Campaign
 @app.route('/nft_in_campaign/<int:campaign_app_id>')
 def nft_in_campaign(campaign_app_id):
@@ -575,7 +574,6 @@ def nft_in_campaign(campaign_app_id):
     # pass the details
     nft_campaign = indexer.nft_in_wallet(campaign_app_id)
     return jsonify(nft_campaign)
-
 
 
 # Get total NFT
@@ -604,7 +602,6 @@ def asset_info(nft_id):
 def campaign_info(campaign_id):
     info = indexer.campaign(campaign_id)
     return jsonify(info)
-
 
 
 # running the API
