@@ -476,10 +476,9 @@ def participation():
     investment = float(participation_details['amount'])
     investor_account = participation_details['investor_wallet_address']
     meta_data = str(participation_details['metadata'])
-    print(meta_data)
 
     participationID=creator_investor.update_call_app(algod_client, campaignID,
-                                                      investment, investor_account, meta_data)
+                                                     investment, investor_account, meta_data)
     return jsonify(participationID), 200
 
 

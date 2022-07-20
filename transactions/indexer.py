@@ -98,7 +98,6 @@ def asset_details(asset_id):
     return asset
 
 
-
 # check if the milestone start transaction exist or not
 def assets_in_wallet(app_id):
 
@@ -415,6 +414,19 @@ def nft_in_campaign(campaign_app_id):
 
 
 # get nft in the campaign
+def nft_info_in_campaign(campaign_app_id):
+
+    # get the address of the campaign
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
+
+    # search the wallet information
+    asset_info = indexerConnection.account_info(address=campaign_wallet_address)['account']['assets'][0]
+    asset_amount = asset_info['amount']
+
+    return asset_amount
+
+
+# get nft in the campaign
 def check_nft_in_campaign(campaign_app_id):
 
     # get the address of the campaign
@@ -451,3 +463,33 @@ def campaign_type(campaign_id):
                 return "Donation"
             elif fund_category == reward[0] or fund_category == reward[1]:
                 return "Reward"
+
+
+# check if the campaign has ended
+def campaign_end(campaign_app_id):
+
+    # get the investment of the campaign
+    campaign_investment = campaign(campaign_app_id)
+
+    # get the details of the campaign
+    campaign_info = indexerConnection.search_applications(application_id=campaign_app_id)
+    campaign_args = campaign_info['applications'][0]['params']['global-state']
+
+    # get the variable
+    end_time = []
+
+    # get the end time value
+    for one_arg in campaign_args:
+        key = one_arg['key']
+        if "ZW5kX3RpbWU=" == key:
+            value = one_arg['value']['uint']
+            end_time.append(value)
+
+
+    # get realtime second
+    current_time = utilities.CommonFunctions.Today_seconds()
+
+    if campaign_investment['fundLimit'] == campaign_investment['totalInvested'] or current_time > end_time[0]:
+        return "ended"
+    else:
+        return "not ended"

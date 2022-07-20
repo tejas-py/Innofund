@@ -15,7 +15,7 @@ approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l38
+bnz main_l42
 txn OnCompletion
 int NoOp
 ==
@@ -108,15 +108,15 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l35
+bnz main_l39
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l34
+bnz main_l38
 txna ApplicationArgs 0
 byte "Reject Reward Campaign"
 ==
-bnz main_l33
+bnz main_l37
 global GroupSize
 int 3
 ==
@@ -128,7 +128,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l32
+bnz main_l36
 global GroupSize
 int 2
 ==
@@ -136,7 +136,7 @@ txna ApplicationArgs 0
 byte "Claim NFT"
 ==
 &&
-bnz main_l29
+bnz main_l33
 global GroupSize
 int 4
 ==
@@ -148,17 +148,21 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l28
+bnz main_l32
 txna ApplicationArgs 0
 byte "Milestone"
 ==
-bnz main_l25
+bnz main_l29
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l26
 txna ApplicationArgs 0
 byte "last_milestone"
 ==
-bnz main_l22
+bnz main_l23
 err
-main_l22:
+main_l23:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -170,10 +174,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l24
+bnz main_l25
 int 0
 return
-main_l24:
+main_l25:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -188,7 +192,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l25:
+main_l26:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -200,10 +204,24 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l27
+bnz main_l28
 int 0
 return
-main_l27:
+main_l28:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+txna Accounts 1
+itxn_field AssetCloseTo
+int 1
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -211,24 +229,8 @@ global CurrentApplicationAddress
 itxn_field Sender
 txna Accounts 1
 itxn_field Receiver
-txna ApplicationArgs 2
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l28:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 0
-itxn_field AssetReceiver
-int 1
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
+txna Accounts 1
+itxn_field CloseRemainderTo
 int 0
 itxn_field Fee
 itxn_submit
@@ -251,36 +253,21 @@ int 0
 return
 main_l31:
 itxn_begin
-int axfer
+int pay
 itxn_field TypeEnum
-txn Sender
-itxn_field AssetReceiver
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
 txna ApplicationArgs 2
 btoi
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
+itxn_field Amount
 int 0
 itxn_field Fee
 itxn_submit
 int 1
 return
 main_l32:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field AssetReceiver
-int 0
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l33:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -295,10 +282,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l34:
-int 1
-return
-main_l35:
+main_l33:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -310,13 +294,77 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l37
+bnz main_l35
 int 0
 return
+main_l35:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 2
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l36:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
 main_l37:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 1
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
 int 1
 return
 main_l38:
+int 1
+return
+main_l39:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l41
+int 0
+return
+main_l41:
+int 1
+return
+main_l42:
 txn NumAppArgs
 int 8
 ==
@@ -353,9 +401,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l40
+bnz main_l44
 err
-main_l40:
+main_l44:
 int 1
 return
 """
@@ -870,13 +918,14 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         if transactions.indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
-            args_list_3 = ["End Reward Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
+            args_list_3 = ["End Reward Milestone", int(com_func.Today_seconds())]
+            asset_list = [transactions.indexer.nft_in_campaign(campaign_app_id)]
 
             params_txn = client.suggested_params
             params_txn.fee = 3000
             params_txn.flat_fee = True
 
-            txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
+            txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed", foreign_assets=asset_list)
 
             txngrp = [{'txn':encoding.msgpack_encode(txn)}]
             return txngrp
@@ -1074,17 +1123,39 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     # set suggested params
     params = client.suggested_params()
 
-    # set params for transaction 1
-    params_txn1 = client.suggested_params()
-    params_txn1.fee = 2000
-    params_txn1.flat_fee = True
+    # if campaign is not yet approved by the admin
+    if transactions.indexer.nft_info_in_campaign(campaign_id) > 0 and transactions.indexer.campaign_end(campaign_id) == 'not ended':
 
-    # transfer nft back to creator: Transaction 1
-    args_list = ["Transfer NFT to Creator"]
-    asset_list = [asset_id]
-    txn_1 = ApplicationNoOpTxn(
-        sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list
-    )
+        # set params for transaction 1
+        params_txn1 = client.suggested_params()
+        params_txn1.fee = 2000
+        params_txn1.flat_fee = True
+
+        # define arguments
+        args_list = ["Transfer NFT to Creator"]
+        asset_list = [asset_id]
+
+        # define txn
+        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list)
+
+    # if the campaign is ended and nfts are claimed by the investors
+    elif transactions.indexer.nft_info_in_campaign(campaign_id) == 0 and transactions.indexer.campaign_end(campaign_id) == 'ended':
+
+        # set params for transaction 1
+        params_txn1 = client.suggested_params()
+        params_txn1.fee = 1000
+        params_txn1.flat_fee = True
+
+        # define arguments
+        asset_list = [asset_id]
+
+        # define txn
+        txn_1 = ApplicationNoOpTxn(
+            sender=sender, sp=params_txn1, index=campaign_id, foreign_assets=asset_list
+        )
+    else:
+        txn_1 = 'error'
+
 
     # delete campaign: Transaction 2
     txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
