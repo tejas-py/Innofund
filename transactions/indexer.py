@@ -406,9 +406,13 @@ def nft_in_campaign(campaign_app_id):
 
     # get the address of the campaign
     campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
+    asset_id = 0
 
-    # search the wallet information
-    asset_id = indexerConnection.account_info(address=campaign_wallet_address)['account']['assets'][0]['asset-id']
+    try:
+        # search the wallet information
+        asset_id = indexerConnection.account_info(address=campaign_wallet_address)['account']['assets'][0]['asset-id']
+    except Exception as Error:
+        print(Error)
 
     return asset_id
 
