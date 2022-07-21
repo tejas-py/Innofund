@@ -703,10 +703,10 @@ def admin_creator(client, asset_id, amount, admin_account, creator_address):
 
     # Transferring NFT from admin to campaign creator
     txn = AssetTransferTxn(sender=admin_account,
-                             sp=params,
-                             receiver=creator_address,
-                             amt=amount,
-                             index=asset_id)
+                           sp=params,
+                           receiver=creator_address,
+                           amt=amount,
+                           index=asset_id)
 
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
@@ -720,7 +720,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
     print(f"Assigning {asset_id} NFT to {campaign_id} Campaign...")
     # define address from private key of creator
     creator_account = com_func.get_address_from_application(campaign_id)
-    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
+    campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaign_id.to_bytes(8, 'big')))
     print("campaign wallet:", campaign_wallet_address)
 
     # set suggested params for transaction 1
@@ -745,7 +745,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
     txn_3 = AssetTransferTxn(
         sender=creator_account,
         sp=params_txn2,
-        receiver= campaign_wallet_address,
+        receiver=campaign_wallet_address,
         amt=10,
         index=asset_id
     )
@@ -834,7 +834,7 @@ def update_call_app(client, campaignID, investment, investor_account, meta_data)
 
     print(f"Investing in {campaignID}...")
 
-    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaignID.to_bytes (8, 'big')))
+    campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaignID.to_bytes(8, 'big')))
 
     # state the smart contract
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -932,7 +932,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             args_list_3 = ["End Reward Milestone", int(com_func.Today_seconds())]
             asset_list = [transactions.indexer.nft_in_campaign(campaign_app_id)]
 
-            params_txn = client.suggested_params
+            params_txn = client.suggested_params()
             params_txn.fee = 3000
             params_txn.flat_fee = True
 
@@ -969,13 +969,13 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             print(f"Calling {milestone_app_id}...")
 
             # get node suggested parameters
-            params_txn = client.suggested_params()
-            params_txn.fee = 1000
-            params_txn.flat_fee = True
+            params_txn_1 = client.suggested_params()
+            params_txn_1.fee = 1000
+            params_txn_1.flat_fee = True
 
             arg = ['no_check']
 
-            txn = ApplicationNoOpTxn(sender, params_txn, milestone_app_id, app_args=arg, note="approve")
+            txn = ApplicationNoOpTxn(sender, params_txn_1, milestone_app_id, app_args=arg, note="approve")
             txngrp=[{'txn':encoding.msgpack_encode(txn)}]
             return txngrp
 
