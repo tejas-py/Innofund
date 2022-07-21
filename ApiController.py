@@ -487,10 +487,10 @@ def participation():
 def approve_milestone():
     # get the details from the user
     investment_details = request.get_json()
-    campaign_app_id = investment_details['campaign_app_id']
+    campaign_app_id = int(investment_details['campaign_app_id'])
     milestone_no = investment_details['milestone_number']
     admin_wallet_address = investment_details['admin_wallet_address']
-    milestone_app_id = investment_details['milestone_app_id']
+    milestone_app_id = int(investment_details['milestone_app_id'])
 
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 2000):
