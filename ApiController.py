@@ -492,10 +492,19 @@ def approve_milestone():
     admin_wallet_address = investment_details['admin_wallet_address']
     milestone_app_id = investment_details['milestone_app_id']
 
-    # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no,
-                                                   milestone_app_id)
-    return jsonify(txn_details)
+    try:
+        if CommonFunctions.check_balance(admin_wallet_address, 2000):
+            try:
+                # pass the details to the algorand to run the transaction
+                txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no,
+                                                               milestone_app_id)
+                return jsonify(txn_details)
+            except Exception as error:
+                return str(error), 500
+        else:
+            return "Minimum Balance should be 2000 microAlgos", 400
+    except Exception as wallet_error:
+        return f"Check Wallet Address, Error: {wallet_error}", 400
 
 
 # admin approves the milestone and investment get transfer to creator
