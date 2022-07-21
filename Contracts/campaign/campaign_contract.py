@@ -110,7 +110,7 @@ def approval_program():
             TxnField.type_enum: TxnType.AssetTransfer,
             TxnField.asset_receiver: Txn.accounts[1],
             TxnField.asset_close_to: Txn.accounts[1],
-            TxnField.asset_amount: Int(1),
+            TxnField.asset_amount: Int(0),
             TxnField.xfer_asset: Txn.assets[0],
             TxnField.fee: Int(0)
         }),

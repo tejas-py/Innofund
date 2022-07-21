@@ -210,7 +210,7 @@ txna Accounts 1
 itxn_field AssetReceiver
 txna Accounts 1
 itxn_field AssetCloseTo
-int 1
+int 0
 itxn_field AssetAmount
 txna Assets 0
 itxn_field XferAsset
