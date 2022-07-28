@@ -1052,11 +1052,10 @@ def update_campaign(client, public_address, app_id, title,
 
     # update milestones transactions
     milestone_1 = ["update_details", bytes(milestones_title[0], 'utf-8'), int(milestone_number[0]), int(milestone_end_time[0])]
-    txn_2 = ApplicationUpdateTxn(sender, params, milestone_id[0], approval_program_milestone, clear_program, milestone_1)
+    txn_2 = ApplicationUpdateTxn(sender, params, int(milestone_id[0]), approval_program_milestone, clear_program, milestone_1)
 
     milestone_2 = ["update_details", bytes(milestones_title[1], 'utf-8'), int(milestone_number[1]), int(milestone_end_time[1])]
-    txn_3 = ApplicationUpdateTxn(sender, params, milestone_id[1], approval_program_milestone, clear_program, milestone_2)
-
+    txn_3 = ApplicationUpdateTxn(sender, params, int(milestone_id[1]), approval_program_milestone, clear_program, milestone_2)
 
     # compute group id and put it into each transaction
     print("Grouping transactions...")

@@ -80,7 +80,7 @@ def create_admin_account():
 def update_user():
     # Get details of the user
     user_details = request.get_json()
-    user_id = user_details['user_app_id']
+    user_id = int(user_details['user_app_id'])
     name = user_details['name']
 
     # check details of the user
@@ -144,7 +144,7 @@ def update_admin():
 def delete_user():
     # Get the user Details
     user_delete = request.get_json()
-    user_id = user_delete['user_app_id']
+    user_id = int(user_delete['user_app_id'])
     address = CommonFunctions.get_address_from_application(user_id)
     try:
         if CommonFunctions.check_balance(address, 1000):
@@ -205,12 +205,12 @@ def update_campaign_details():
     # get details of the campaign to update
     campaign_details = request.get_json()
     address = campaign_details['creator_wallet_address']
-    campaignID = campaign_details['campaign_app_id']
+    campaignID = int(campaign_details['campaign_app_id'])
     title = campaign_details['title']
     category = campaign_details['category']
     end_time = campaign_details['end_time']
     fund_category = campaign_details['fund_category']
-    fund_limit = campaign_details['fund_limit']
+    fund_limit = int(campaign_details['fund_limit'])
     country = campaign_details['country']
     milestone = campaign_details['milestone']
 
