@@ -94,9 +94,15 @@ def create_admin_account(client, usertype):
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
                                            global_schema, local_schema, args_list)
-    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
 
-    return txngrp
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
+    client.send_transactions([signed_txn])
+    com_func.wait_for_confirmation(client, tx_id)
+    transaction_response = client.pending_transaction_info(tx_id)
+    app_id = transaction_response['application-index']
+
+    return app_id
 
 
 # update admin details on blockchain

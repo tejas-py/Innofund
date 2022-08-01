@@ -58,8 +58,8 @@ def create_admin_account():
     user_type = check.check_admin(usertype)
     if user_type == "Approved":
         # give the admin id for the admin
-        admintxn = admin.create_admin_account(algod_client, usertype)
-        return jsonify(admintxn)
+        admin_user_id = admin.create_admin_account(algod_client, usertype)
+        return jsonify(admin_user_id)
     else:
         lst_error = {"User Type": user_type}
         return jsonify(lst_error)
