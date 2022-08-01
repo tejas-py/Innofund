@@ -4,10 +4,10 @@ from algosdk import account, mnemonic, encoding
 
 
 # Declare application state storage (immutable)
-local_ints = 1
-local_bytes = 1
-global_ints = 10
-global_bytes = 10
+local_ints = 0
+local_bytes = 0
+global_ints = 1
+global_bytes = 1
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
@@ -16,36 +16,20 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l12
+bnz main_l10
 txn OnCompletion
 int NoOp
 ==
-bnz main_l7
-txn OnCompletion
-int UpdateApplication
-==
-bnz main_l6
+bnz main_l5
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l5
+bnz main_l4
 err
+main_l4:
+int 1
+return
 main_l5:
-int 1
-return
-main_l6:
-byte "name"
-txna ApplicationArgs 0
-app_global_put
-byte "usertype"
-txna ApplicationArgs 1
-app_global_put
-byte "email"
-txna ApplicationArgs 2
-app_global_put
-int 1
-return
-main_l7:
 global GroupSize
 int 2
 ==
@@ -53,36 +37,25 @@ txna ApplicationArgs 0
 byte "check_user"
 ==
 &&
+bnz main_l7
+err
+main_l7:
+txna ApplicationArgs 1
+byte "usertype"
+app_global_get
+==
 bnz main_l9
 err
 main_l9:
-txna ApplicationArgs 1
-byte "name"
-app_global_get
-==
-txna ApplicationArgs 2
-byte "usertype"
-app_global_get
-==
-&&
-bnz main_l11
-err
-main_l11:
 int 1
 return
-main_l12:
+main_l10:
 txn NumAppArgs
-int 3
+int 1
 ==
 assert
-byte "name"
-txna ApplicationArgs 0
-app_global_put
 byte "usertype"
-txna ApplicationArgs 1
-app_global_put
-byte "email"
-txna ApplicationArgs 2
+txna ApplicationArgs 0
 app_global_put
 int 1
 return
@@ -96,7 +69,7 @@ int 1
 
 
 # Generate a new admin account as well as new user id for each user that registers
-def create_admin_account(client, name, usertype, email):
+def create_admin_account(client, usertype):
     print("Creating admin application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -116,7 +89,7 @@ def create_admin_account(client, name, usertype, email):
 
     params = client.suggested_params()
 
-    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
+    args_list = [bytes(usertype, 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,
@@ -150,7 +123,7 @@ def update_admin(client, public_address, admin_id, name, usertype, email):
 
 
 # call user app and create asset
-def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, image_url, amt):
+def admin_asset(client, usertype, admin_id, unit_name, asset_name, image_url, amt):
 
     # define address from private key of creator
     creator_account = com_func.get_address_from_application(admin_id)
@@ -158,7 +131,7 @@ def admin_asset(client, name, usertype, admin_id, unit_name, asset_name, image_u
     # set suggested params
     params = client.suggested_params()
 
-    args = ["check_user", bytes(name, 'utf-8'), bytes(usertype, 'utf-8')]
+    args = ["check_user", bytes(usertype, 'utf-8')]
 
     print("Calling user Application...")
 

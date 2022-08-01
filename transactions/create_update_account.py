@@ -3,10 +3,10 @@ import utilities.CommonFunctions as com_func
 from algosdk import encoding
 
 # Declare application state storage (immutable)
-local_ints = 5
-local_bytes = 5
-global_ints = 5
-global_bytes = 5
+local_ints = 0
+local_bytes = 0
+global_ints = 1
+global_bytes = 1
 global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
@@ -15,30 +15,20 @@ approval_program_source_initial = b"""#pragma version 5
 txn ApplicationID
 int 0
 ==
-bnz main_l12
+bnz main_l10
 txn OnCompletion
 int NoOp
 ==
-bnz main_l7
-txn OnCompletion
-int UpdateApplication
-==
-bnz main_l6
+bnz main_l5
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l5
+bnz main_l4
 err
+main_l4:
+int 1
+return
 main_l5:
-int 1
-return
-main_l6:
-byte "name"
-txna ApplicationArgs 0
-app_global_put
-int 1
-return
-main_l7:
 global GroupSize
 int 2
 ==
@@ -46,36 +36,25 @@ txna ApplicationArgs 0
 byte "check_user"
 ==
 &&
+bnz main_l7
+err
+main_l7:
+txna ApplicationArgs 1
+byte "usertype"
+app_global_get
+==
 bnz main_l9
 err
 main_l9:
-txna ApplicationArgs 1
-byte "name"
-app_global_get
-==
-txna ApplicationArgs 2
-byte "usertype"
-app_global_get
-==
-&&
-bnz main_l11
-err
-main_l11:
 int 1
 return
-main_l12:
+main_l10:
 txn NumAppArgs
-int 3
+int 1
 ==
 assert
-byte "name"
-txna ApplicationArgs 0
-app_global_put
 byte "usertype"
-txna ApplicationArgs 1
-app_global_put
-byte "email"
-txna ApplicationArgs 2
+txna ApplicationArgs 0
 app_global_put
 int 1
 return
@@ -88,7 +67,7 @@ int 1
 
 
 # Generate a new account as well as new user id for each user that registers
-def create_app(client, sender, name, usertype, email):
+def create_app(client, sender, usertype):
     print("Creating user application...")
 
     approval_program = com_func.compile_program(client, approval_program_source_initial)
@@ -98,7 +77,7 @@ def create_app(client, sender, name, usertype, email):
 
     params = client.suggested_params()
 
-    args_list = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
+    args_list = [bytes(usertype, 'utf8')]
 
     txn = ApplicationCreateTxn(sender, params, on_complete,
                                approval_program, clear_program,

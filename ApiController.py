@@ -25,20 +25,16 @@ def create_account():
     # Get details of the user
     user_details = request.get_json()
     address = user_details['wallet_address']
-    name = user_details['name']
     usertype = user_details['user_type']
-    email = user_details['email']
 
     # check details of the user
-    username = check.check_name(name)
     user_type = check.check_user(usertype)
-    email_id = check.check_email(email)
-    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
+    if user_type == "Approved":
         try:
             if CommonFunctions.check_balance(address, 1000):
                 # give the user id for the user
                 try:
-                    usertxn = create_update_account.create_app(algod_client, address, name, usertype, email)
+                    usertxn = create_update_account.create_app(algod_client, address, usertype)
                     return jsonify(usertxn), 200
                 except Exception as error:
                     return str(error), 500
@@ -47,7 +43,7 @@ def create_account():
         except Exception as wallet_error:
             return f"Check Wallet Address, Error: {wallet_error}", 400
     else:
-        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
+        lst_error = {"User Type": user_type}
         return jsonify(lst_error), 400
 
 
@@ -56,87 +52,17 @@ def create_account():
 def create_admin_account():
     # Get details of the admin
     user_details = request.get_json()
-    name = user_details['name']
     usertype = user_details['user_type']
-    email = user_details['email']
 
     # check details of the admin
-    username = check.check_name(name)
     user_type = check.check_admin(usertype)
-    email_id = check.check_email(email)
-    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
+    if user_type == "Approved":
         # give the admin id for the admin
-        admintxn = admin.create_admin_account(algod_client, name, usertype, email)
+        admintxn = admin.create_admin_account(algod_client, usertype)
         return jsonify(admintxn)
     else:
-        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
+        lst_error = {"User Type": user_type}
         return jsonify(lst_error)
-
-
-# Jwt: authentic tokens
-
-# Updating user details
-@app.route('/update_account', methods=['POST'])
-def update_user():
-    # Get details of the user
-    user_details = request.get_json()
-    user_id = int(user_details['user_app_id'])
-    name = user_details['name']
-
-    # check details of the user
-    username = check.check_name(name)
-    address = CommonFunctions.get_address_from_application(user_id)
-    if username == "Approved":
-        try:
-            if CommonFunctions.check_balance(address, 1000):
-                try:
-                    # give the user id for the user
-                    update_user_txn = create_update_account.update_user(algod_client, user_id,
-                                                                        name)
-                    return jsonify(update_user_txn), 200
-                except Exception as error:
-                    return str(error), 500
-            else:
-                return "For updating account information, Minimum Balance should be 1000 microAlgos", 400
-        except Exception as wallet_error:
-            return f"Check Wallet Address, Error: {wallet_error}", 400
-    else:
-        lst_error = {"Name": username}
-        return jsonify(lst_error), 400
-
-
-# updating admin
-@app.route('/update_admin', methods=['POST'])
-def update_admin():
-    # Get details of the admin
-    user_details = request.get_json()
-    address = user_details['admin_wallet_address']
-    admin_id = user_details['admin_app_id']
-    name = user_details['name']
-    usertype = user_details['user_type']
-    email = user_details['email']
-
-    # check details of the user
-    username = check.check_username(name)
-    user_type = check.check_admin(usertype)
-    email_id = check.check_email(email)
-    if username == "Approved" and user_type == "Approved" and email_id == "Approved":
-        try:
-            if CommonFunctions.check_balance(address, 1000):
-                try:
-                    # give the admin id for the user
-                    update_admin_txn = admin.update_admin(algod_client, address, admin_id,
-                                                          name, usertype, email)
-                    return jsonify(update_admin_txn), 200
-                except Exception as error:
-                    return str(error), 500
-            else:
-                return "For updating account information, Minimum Balance should be 1000 microAlgos"
-        except Exception as wallet_error:
-            return f"Check Wallet Address, Error: {wallet_error}", 400
-    else:
-        lst_error = {"Name": username, "User Type": user_type, "Email": email_id}
-        return jsonify(lst_error), 400
 
 
 # delete account
@@ -332,7 +258,6 @@ def mint_nft():
     # get the details of the campaign to mint asset
     mint_asset = request.get_json()
     app_id = mint_asset['app_id']
-    name = mint_asset['user_name']
     usertype = mint_asset['user_type']
     unit_name = mint_asset['unit_name']
     asset_name = mint_asset['asset_name']
@@ -347,7 +272,7 @@ def mint_nft():
         if CommonFunctions.check_balance(address, 1000+NFT_price):
             try:
                 # pass the details to algorand to mint asset
-                asset_txn = admin.admin_asset(algod_client, name, usertype, app_id,
+                asset_txn = admin.admin_asset(algod_client, usertype, app_id,
                                               unit_name, asset_name, meta_hash, NFT_price)
 
                 return jsonify(asset_txn), 200
