@@ -265,7 +265,7 @@ def list_investors(campaign_id):
                 user_app_id = int(re.search(r'\d+', bytes_user_app_id).group())
 
                 # append the information to the dictionary
-                one_investment = {'invested': investment_by_address, "user_app_id": user_app_id, "user_name": name_by_user_id(user_app_id)}
+                one_investment = {'invested': investment_by_address, "user_app_id": user_app_id}
 
                 if len(investors_in_campaign) > 0:
                     for one_info in investors_in_campaign:
