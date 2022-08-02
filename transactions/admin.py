@@ -44,6 +44,10 @@ txna ApplicationArgs 1
 byte "usertype"
 app_global_get
 ==
+txna ApplicationArgs 1
+byte "investor"
+!=
+&&
 bnz main_l9
 err
 main_l9:

@@ -13,7 +13,8 @@ def approval_program():
 
     check_user = Cond(
         [And(
-            Txn.application_args[1] == App.globalGet(Bytes("usertype"))
+            Txn.application_args[1] == App.globalGet(Bytes("usertype")),
+            Txn.application_args[1] != Bytes('investor')
         ), Approve()]
     )
 
