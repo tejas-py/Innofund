@@ -86,7 +86,6 @@ def approval_program():
         Approve()
     )
 
-
     inner_txn6 = Seq(
         InnerTxnBuilder.Begin(),
         # Transaction: payment to creator for milestone

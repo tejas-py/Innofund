@@ -1,7 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-import transactions.indexer
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer
 from API import connection
@@ -177,12 +175,12 @@ def reject_campaign():
             try:
 
                 # transaction for approving donation/reward campaign and rejecting donation campaign
-                if transactions.indexer.campaign_type(campaignID) == "Donation" or reason == 'approve':
+                if indexer.campaign_type(campaignID) == "Donation" or reason == 'approve':
                     reject_campaign_id_txn = creator_investor.approve_reject_campaign(algod_client, address, campaignID, reason)
                     return jsonify(reject_campaign_id_txn), 200
 
                 # transaction for rejecting reward campaign
-                if transactions.indexer.campaign_type(campaignID) == "Reward" and reason != 'approve':
+                if indexer.campaign_type(campaignID) == "Reward" and reason != 'approve':
                     reject_campaign_id_txn = creator_investor.reject_reward_campaign(algod_client, address, campaignID, reason)
                     return jsonify(reject_campaign_id_txn), 200
 
