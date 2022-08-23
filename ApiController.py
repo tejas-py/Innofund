@@ -4,13 +4,10 @@ from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer
 from API import connection
 
+# defining the flask app and setting up cors
 app = Flask(__name__)
-
-CORS(app)
 cors = CORS(app, resources={
-    r"/*": {
-        "origin": "*"
-    }
+    r"/*": {"origin": "*"}
 })
 
 # Setting up connection with algorand client

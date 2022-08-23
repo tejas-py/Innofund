@@ -3,10 +3,10 @@ import utilities.CommonFunctions as com_func
 import transactions.indexer
 
 # Declare application state storage (immutable)
-local_ints = 5
-local_bytes = 5
-global_ints = 20
-global_bytes = 20
+local_ints = 0
+local_bytes = 0
+global_ints = 10
+global_bytes = 15
 global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
