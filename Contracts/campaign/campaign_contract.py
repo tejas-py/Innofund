@@ -3,16 +3,22 @@ from pyteal import *
 
 def approval_program():
 
+    # Define Variables
+    account_number = ScratchVar(TealType.uint64)
+    repayment_number = ScratchVar(TealType.uint64)
+
     # Checks that the sender is the app creator
     is_app_creator = Txn.sender() == Global.creator_address()
 
     time_check = Cond(
+        # Condition 1
         [App.globalGet(Bytes("end_time")) > App.globalGet(Bytes("start_time")), Approve()]
     )
 
+    # Constructor
     on_creation = Seq(
         [
-            Assert(Txn.application_args.length() == Int(8)),
+            Assert(Txn.application_args.length() == Int(9)),
             App.globalPut(Bytes("title"), Txn.application_args[0]),
             App.globalPut(Bytes("category"), Txn.application_args[1]),
             App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[2])),
@@ -21,6 +27,7 @@ def approval_program():
             App.globalPut(Bytes("reward_type"), Txn.application_args[5]),
             App.globalPut(Bytes("country"), Txn.application_args[6]),
             App.globalPut(Bytes("total_investment"), Btoi(Txn.application_args[7])),
+            App.globalPut(Bytes("ESG"), Btoi(Txn.application_args[8])),
             time_check
         ]
     )
@@ -74,7 +81,7 @@ def approval_program():
         InnerTxnBuilder.Begin(),
         # Transaction: payment to creator for milestone
         InnerTxnBuilder.SetFields({
-            TxnField.type_enum:TxnType.Payment,
+            TxnField.type_enum: TxnType.Payment,
             TxnField.sender: Global.current_application_address(),
             TxnField.receiver: Txn.accounts[1],
             TxnField.amount: Btoi(Txn.application_args[2]),
@@ -119,24 +126,40 @@ def approval_program():
         inner_txn6
     )
 
+    # multiple repayment to investors when milestone gets rejected
+    inner_txn7 = Seq([
+
+        account_number.store(Int(1)),
+
+        For(repayment_number.store(Int(3)), repayment_number.load() < Btoi(Txn.application_args[2]), repayment_number.store(repayment_number.load() + Int(1))).Do(
+            InnerTxnBuilder.Begin(),
+            # Transaction: payment to creator for milestone
+            InnerTxnBuilder.SetFields({
+                TxnField.type_enum: TxnType.Payment,
+                TxnField.sender: Global.current_application_address(),
+                TxnField.receiver: Txn.accounts[account_number.load()],
+                TxnField.amount: Btoi(Txn.application_args[repayment_number.load()]),
+                TxnField.fee: Int(0)
+            }),
+            # Submit the transaction
+            InnerTxnBuilder.Submit(),
+            # Increment Account number
+            account_number.store(account_number.load() + Int(1))
+        ),
+        Approve()
+    ])
+
     check_campaign_end = If(
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), Approve(), Reject())
 
-
     check_campaign_end_2 = If(
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), inner_txn2, Reject())
-
-    # check_campaign_end_3 = If(
-    #     Or(
-    #         Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
-    #         App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
-    #     ), inner_txn3, Reject())
 
     check_campaign_end_3 = If(
         Or(
@@ -156,8 +179,13 @@ def approval_program():
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
         ), inner_txn6, Reject())
 
-    group_transaction = Cond(
+    check_campaign_end_6 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn7, Reject())
 
+    group_transaction = Cond(
         # Condition 1
         [And(
             Global.group_size() == Int(2),
@@ -203,7 +231,10 @@ def approval_program():
         [Txn.application_args[0] == Bytes("End Reward Milestone"), check_campaign_end_4],
 
         # Condition 10
-        [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end_5]
+        [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end_5],
+
+        # Condition 11
+        [Txn.application_args[0] == Bytes("return payment to investors, milestone rejected"), check_campaign_end_6]
     )
 
     update_investment_details = Seq(
@@ -216,6 +247,7 @@ def approval_program():
     investment_done_realtime = App.globalGet(Bytes("fund_limit")) - App.globalGet(Bytes("total_investment"))
 
     check_investment_details = Cond(
+        # Condition 1
         [And(
             Btoi(Txn.application_args[2]) <= investment_done_realtime,
             App.globalGet(Bytes("end_time")) > Btoi(Txn.application_args[1])
@@ -223,30 +255,50 @@ def approval_program():
     )
 
     update_campaign_details = Seq(
-        App.globalPut(Bytes("title"), Txn.application_args[1]),
-        App.globalPut(Bytes("category"), Txn.application_args[2]),
-        App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[3])),
-        App.globalPut(Bytes("funding_category"), Txn.application_args[4]),
-        App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[5])),
-        App.globalPut(Bytes("country"), Txn.application_args[6]),
+        [
+            App.globalPut(Bytes("title"), Txn.application_args[1]),
+            App.globalPut(Bytes("category"), Txn.application_args[2]),
+            App.globalPut(Bytes("end_time"), Btoi(Txn.application_args[3])),
+            App.globalPut(Bytes("funding_category"), Txn.application_args[4]),
+            App.globalPut(Bytes("fund_limit"), Btoi(Txn.application_args[5])),
+            App.globalPut(Bytes("country"), Txn.application_args[6]),
+            Approve()
+        ]
+    )
+
+    update_esg = Seq(
+        App.globalPut(Bytes("ESG"), Txn.application_args[1]),
         Approve()
     )
 
     update_campaign = Cond(
+        # Condition 1
         [And(
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("update_investment")
         ), check_investment_details],
+
+        # Condition 2
         [And(
             Global.group_size() == Int(3),
             Txn.application_args[0] == Bytes("update_details")
-        ), update_campaign_details]
+        ), update_campaign_details],
+
+        # Condition 3
+        [Txn.application_args[0] == Bytes("update_ESG"), update_esg]
     )
 
     program = Cond(
+        # Condition 1
         [Txn.application_id() == Int(0), on_creation],
+
+        # Condition 2
         [Txn.on_completion() == OnComplete.NoOp, group_transaction],
+
+        # Condition 3
         [Txn.on_completion() == OnComplete.UpdateApplication, update_campaign],
+
+        # Condition 4
         [Txn.on_completion() == OnComplete.DeleteApplication, Approve()]
     )
 

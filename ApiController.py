@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utilities import check, CommonFunctions
-from transactions import admin, creator_investor, create_update_account, indexer
+from transactions import admin, creator_investor, create_update_account, indexer, institutional_donor
 from API import connection
 
 # defining the flask app and setting up cors
@@ -43,21 +43,13 @@ def create_account():
 
 
 # create unique id for admin user
-@app.route('/create_admin_account', methods=['POST'])
+@app.route('/create_admin_account')
 def create_admin_account():
-    # Get details of the admin
-    user_details = request.get_json()
-    usertype = user_details['user_type']
 
-    # check details of the admin
-    user_type = check.check_admin(usertype)
-    if user_type == "Approved":
-        # give the admin id for the admin
-        admin_user_id = admin.create_admin_account(algod_client, usertype)
-        return jsonify(admin_user_id)
-    else:
-        lst_error = {"User Type": user_type}
-        return jsonify(lst_error)
+    # give the admin id for the admin
+    admin_user_id = admin.create_admin_account(algod_client, "admin")
+    json_return = {"Admin App Id": admin_user_id}
+    return jsonify(json_return)
 
 
 # delete account
@@ -96,6 +88,7 @@ def create_campaign():
     fund_limit = campaign_details['fund_limit']
     reward_type = campaign_details['reward_type']
     country = campaign_details['country']
+    ESG = campaign_details['ESG']
     milestone = campaign_details['milestone']
 
     # make the list from the dictionary
@@ -109,7 +102,7 @@ def create_campaign():
                 # pass the campaign details to the algorand
                 campaignID_txn = creator_investor.create_campaign_app(algod_client, address, title,
                                                                       category, end_time, fund_category, fund_limit,
-                                                                      reward_type, country, milestone_title_lst,
+                                                                      reward_type, country, ESG, milestone_title_lst,
                                                                       milestone_list, end_time_lst)
                 return jsonify(campaignID_txn), 200
             except Exception as error:
@@ -166,6 +159,7 @@ def reject_campaign():
     address = reject_campaign_details['admin_wallet_address']
     campaignID = reject_campaign_details['campaign_app_id']
     reason = reject_campaign_details['note']
+    ESG = reject_campaign_details['ESG']
 
     try:
         if CommonFunctions.check_balance(address, 1000):
@@ -173,7 +167,7 @@ def reject_campaign():
 
                 # transaction for approving donation/reward campaign and rejecting donation campaign
                 if indexer.campaign_type(campaignID) == "Donation" or reason == 'approve':
-                    reject_campaign_id_txn = creator_investor.approve_reject_campaign(algod_client, address, campaignID, reason)
+                    reject_campaign_id_txn = creator_investor.approve_reject_campaign(algod_client, address, campaignID, reason, ESG)
                     return jsonify(reject_campaign_id_txn), 200
 
                 # transaction for rejecting reward campaign
@@ -389,7 +383,7 @@ def burnAsset():
 
 # Investor Participating in Campaign by investing.
 @app.route('/participating', methods=["POST"])
-def participation():
+def investing():
     # get the details of investor participation's
     participation_details = request.get_json()
     campaignID = participation_details['campaign_app_id']
@@ -397,9 +391,44 @@ def participation():
     investor_account = participation_details['investor_wallet_address']
     meta_data = str(participation_details['metadata'])
 
-    participationID=creator_investor.update_call_app(algod_client, campaignID,
-                                                     investment, investor_account, meta_data)
+    participationID = creator_investor.update_call_app(algod_client, campaignID,
+                                                       investment, investor_account, meta_data)
     return jsonify(participationID), 200
+
+
+# Investment by Institutional Donors
+@app.route('/multiple_investments', methods=['POST'])
+def multi_investing():
+
+    # get the details
+    investment_details = request.get_json()
+    # test_dict = {'investments': {123:123, 345:123}, 'fees': 123}
+    campaign_investment = investment_details['investments_details']
+    address = investment_details['investor_wallet_address']
+    note = investment_details['meta_data']
+
+    # txn to sub-escrow account
+    txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
+
+    return jsonify(txn), 200
+
+
+# Transaction from sub-escrow account to campaign account
+@app.route('/transfer_to_campaign', methods=['POST'])
+def sub_escrow_to_campaign():
+
+    # get the details
+    transaction_details = request.get_json()
+    campaign_investment = transaction_details['investments_details']
+    note = transaction_details['meta_data']
+
+    # txn from sub-escrow account to escrow account
+    txn_ids = []
+    for campaign_app_id, one_investment in campaign_investment['investments']:
+        txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), one_investment, note)
+        txn_ids.append(txn_id)
+
+    return jsonify(txn_ids), 200
 
 
 # admin approves the milestone and investment get transfer to creator
@@ -433,12 +462,14 @@ def reject_milestone():
     # get the details from the user
     investment_details = request.get_json()
     admin_wallet_address = investment_details['admin_wallet_address']
+    campaign_app_id = investment_details['campaign_app_id']
     milestone_app_id = investment_details['milestone_app_id']
+    milestone_number = investment_details['milestone_number']
     note = investment_details['note']
 
     # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, note)
-    return jsonify(txn_details)
+    txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, milestone_number, campaign_app_id, note)
+    return jsonify(txn_details), 200
 
 
 # admin approves the milestone and investment get transfer to creator

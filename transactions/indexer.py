@@ -244,7 +244,7 @@ def check_payment_milestone_again(campaign_app_id):
 def list_investors(campaign_id):
 
     # get the wallet address of the campaign
-    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_id.to_bytes (8, 'big')))
+    campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaign_id.to_bytes(8, 'big')))
 
     # search investment done in campaign
     nft_search = indexerConnection.search_transactions(address=campaign_wallet_address, txn_type="pay")
@@ -492,7 +492,6 @@ def campaign_end(campaign_app_id):
         if "ZW5kX3RpbWU=" == key:
             value = one_arg['value']['uint']
             end_time.append(value)
-
 
     # get realtime second
     current_time = utilities.CommonFunctions.Today_seconds()
