@@ -371,7 +371,7 @@ def clamming_nft():
 
 # destroy asset, Group transaction: (campaign call app and destroy asset)
 @app.route('/burn_asset', methods=["POST"])
-def burnAsset():
+def burn_asset():
     asset_details = request.get_json()
     asset_id = asset_details['NFT_asset_id']
     campaignID = asset_details['campaign_app_id']
@@ -537,7 +537,7 @@ def nft_in_campaign(campaign_app_id):
 
 # Get total NFT
 @app.route('/total_nft/<int:app_id>')
-def totalNFT(app_id):
+def total_nft(app_id):
     try:
         assets = indexer.assets_in_wallet(app_id)
 
