@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l53
+bnz main_l63
 txn OnCompletion
 int NoOp
 ==
@@ -105,15 +105,15 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l50
+bnz main_l60
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l49
+bnz main_l59
 txna ApplicationArgs 0
 byte "Reject Reward Campaign"
 ==
-bnz main_l48
+bnz main_l58
 global GroupSize
 int 4
 ==
@@ -121,7 +121,7 @@ txna ApplicationArgs 0
 byte "delete campaign"
 ==
 &&
-bnz main_l47
+bnz main_l57
 global GroupSize
 int 3
 ==
@@ -133,7 +133,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l46
+bnz main_l56
 global GroupSize
 int 2
 ==
@@ -141,7 +141,7 @@ txna ApplicationArgs 0
 byte "Claim NFT"
 ==
 &&
-bnz main_l43
+bnz main_l53
 global GroupSize
 int 4
 ==
@@ -153,47 +153,40 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l42
+bnz main_l52
 txna ApplicationArgs 0
 byte "Milestone"
 ==
-bnz main_l39
+bnz main_l49
 txna ApplicationArgs 0
 byte "End Reward Milestone"
 ==
-bnz main_l36
+bnz main_l46
 txna ApplicationArgs 0
 byte "last_milestone"
 ==
-bnz main_l33
+bnz main_l43
 txna ApplicationArgs 0
 byte "return payment to investors, milestone rejected"
 ==
-bnz main_l27
-err
-main_l27:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
+bnz main_l37
+txna ApplicationArgs 0
+byte "Block Reward Campaign"
 ==
-||
+bnz main_l33
+txna ApplicationArgs 0
+byte "Block Campaign"
+==
 bnz main_l29
-int 0
-return
+err
 main_l29:
 int 1
 store 0
-int 3
+int 2
 store 1
 main_l30:
 load 1
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 <
 bnz main_l32
@@ -225,6 +218,56 @@ int 1
 store 1
 b main_l30
 main_l33:
+int 1
+store 0
+int 2
+store 1
+main_l34:
+load 1
+txna ApplicationArgs 1
+btoi
+<
+bnz main_l36
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 1
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l36:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l34
+main_l37:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -236,10 +279,63 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l35
+bnz main_l39
 int 0
 return
-main_l35:
+main_l39:
+int 1
+store 0
+int 3
+store 1
+main_l40:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l42
+int 1
+return
+main_l42:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l40
+main_l43:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l45
+int 0
+return
+main_l45:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -254,7 +350,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l36:
+main_l46:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -266,10 +362,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l38
+bnz main_l48
 int 0
 return
-main_l38:
+main_l48:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -298,7 +394,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l39:
+main_l49:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -310,10 +406,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l41
+bnz main_l51
 int 0
 return
-main_l41:
+main_l51:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -329,7 +425,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l42:
+main_l52:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -344,7 +440,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l43:
+main_l53:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -356,10 +452,10 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l45
+bnz main_l55
 int 0
 return
-main_l45:
+main_l55:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -375,7 +471,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l46:
+main_l56:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -390,10 +486,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l47:
+main_l57:
 int 1
 return
-main_l48:
+main_l58:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -408,10 +504,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l49:
+main_l59:
 int 1
 return
-main_l50:
+main_l60:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -423,13 +519,13 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l52
+bnz main_l62
 int 0
 return
-main_l52:
+main_l62:
 int 1
 return
-main_l53:
+main_l63:
 txn NumAppArgs
 int 9
 ==
@@ -470,8 +566,8 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l55
+bnz main_l65
 err
-main_l55:
+main_l65:
 int 1
 return

@@ -11,11 +11,11 @@ global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
 # Declare approval program source
-approval_program_source_initial = b"""#pragma version 5
+approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l10
+bnz main_l6
 txn OnCompletion
 int NoOp
 ==
@@ -29,30 +29,9 @@ main_l4:
 int 1
 return
 main_l5:
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
-byte "check_user"
-==
-&&
-bnz main_l7
-err
-main_l7:
-txna ApplicationArgs 1
-byte "usertype"
-app_global_get
-==
-txna ApplicationArgs 1
-byte "investor"
-!=
-&&
-bnz main_l9
-err
-main_l9:
 int 1
 return
-main_l10:
+main_l6:
 txn NumAppArgs
 int 1
 ==

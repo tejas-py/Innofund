@@ -963,7 +963,7 @@ def update_app(client, app_id, investment):
 
 
 # Admin Approves the Milestone and send the investment to creator
-def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None):
+def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None, approve_milestone_again=None):
 
     # create transactions
     print("Creating transactions...")
@@ -1007,13 +1007,32 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             params_txn.fee = 3000
             params_txn.flat_fee = True
 
-            txn = ApplicationNoOpTxn(sender, params_txn, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed", foreign_assets=asset_list)
+            # if the admin hit to approve milestone for the first time
+            if approve_milestone_again == 0:
 
-            txngrp = [{'txn':encoding.msgpack_encode(txn)}]
-            return txngrp
+                # check the nft amount remaining in the campaign
+                nft_amt_remaining = transactions.indexer.nft_amt_in_campaign(campaign_app_id)
+
+            # if the admin approves the milestone even if NFT is left in the campaign
+            else:
+
+                # hard code the nft amount remaining to zero to proceed with the transaction
+                nft_amt_remaining = 0
+
+            # If there is no nft in the campaign then admin will get the transaction
+            if nft_amt_remaining == 0:
+
+                # transaction object to return
+                txn = ApplicationNoOpTxn(sender, params_txn, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed", foreign_assets=asset_list)
+                txngrp = [{'txn': encoding.msgpack_encode(txn)}]
+                return txngrp
+
+            # if there is still an NFT in the campaign admin will not get the transaction
+            elif nft_amt_remaining > 0:
+                return {'message': f"NFT has not been claimed yet by the investors, NFT amount remaining to claim: {nft_amt_remaining}"}
 
         else:
-            txngrp = {"Milestone Status":"Milestone 1 money has not been claimed yet"}
+            txngrp = {"Milestone Status": "Milestone 1 money has not been claimed yet"}
             return txngrp
 
     # submitting the milestone 1 report for Donation campaign
@@ -1092,7 +1111,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
             arg.append(int(investment/2))
 
         # create the transaction object
-        txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
+        txn = ApplicationNoOpTxn(sender, params, campaign_app_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
         txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     else:
@@ -1193,6 +1212,90 @@ def approve_reject_campaign(client, public_address, campaign_id, reason, ESG):
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
+    return txngrp
+
+
+# block running campaign
+def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
+    print(f"Blocking {campaign_id} campaign....")
+
+    # declaring the addresses
+    sender = wallet_address
+    nft_in_campaign = transactions.indexer.nft_in_campaign(campaign_id)
+
+    if nft_in_campaign > 0:
+
+        # get the list of the investors and the number of investors
+        investors_list = transactions.indexer.list_investors(campaign_id)
+        total_investors = len(investors_list)
+
+        # get node parameters
+        params = client.suggested_params()
+        params.fee = int((1000 * total_investors) + 1000)
+        params.flat_fee = True
+
+        # get the campaign creator address
+        campaign_creator_address = com_func.get_address_from_application(campaign_id)
+
+        # define the arguments to be passed
+        app_args = ["Block Reward Campaign", int(total_investors)]
+        account_list = [campaign_creator_address]
+        asset_list = [nft_in_campaign]
+
+        # get the wallet address and the invested amount from the list
+        # investments are in microAlgo format
+        for investor, investment in investors_list:
+            investor_wallet_address = com_func.get_address_from_application(investor)
+            account_list.append(investor_wallet_address)
+            app_args.append(int(investment))
+
+        # create unsigned transaction
+        txn_1 = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=note, accounts=account_list, foreign_assets=asset_list)
+
+    else:
+
+        # get the list of the investors and the number of investors
+        investors_list = transactions.indexer.list_investors(campaign_id)
+        total_investors = len(investors_list)
+
+        # define the arguments for the transactions
+        arg = ['Block Campaign', int(total_investors)]
+        investors_wallet_address_list = []
+
+        # get node parameters
+        params = client.suggested_params()
+        params.fee = int(1000 * total_investors)
+
+        # get the wallet address and the invested amount from the list
+        # investments are in microAlgo format
+        for investor, investment in investors_list:
+            investor_wallet_address = com_func.get_address_from_application(investor)
+            investors_wallet_address_list.append(investor_wallet_address)
+            arg.append(int(investment))
+
+        # create the transaction object
+        txn_1 = ApplicationNoOpTxn(sender, params, campaign_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
+
+    # delete campaign: Transaction 2
+    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
+
+    # delete milestones: transaction 3,4
+    txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
+    txn_4 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+    txn_3.group = group_id
+    txn_4.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)},
+              {'txn': encoding.msgpack_encode(txn_4)}]
     return txngrp
 
 

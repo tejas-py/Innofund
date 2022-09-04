@@ -126,7 +126,6 @@ def assets_in_wallet(app_id):
                      }
             total_assets.append(asset)
 
-
     return total_assets
 
 
@@ -136,7 +135,6 @@ def campaign(campaign_id):
     # define variables
     invested_amount = "None"
     fund_limit = "None"
-
 
     # get the information of the application
     try:
@@ -415,6 +413,22 @@ def nft_in_campaign(campaign_app_id):
         print(Error)
 
     return asset_id
+
+
+# get the nft amount left in campaign
+def nft_amt_in_campaign(campaign_app_id=100315866):
+
+    # get the address of the campaign
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
+    asset_amount = 0
+
+    try:
+        # search the wallet information
+        asset_amount = indexerConnection.account_info(address=campaign_wallet_address)['account']['assets'][0]['amount']
+    except Exception as Error:
+        print(Error)
+
+    return asset_amount
 
 
 # get nft in the campaign

@@ -133,37 +133,28 @@ def update_admin(client, public_address, admin_id, name, usertype, email):
 
 
 # call user app and create asset
-def admin_asset(client, usertype, admin_id, unit_name, asset_name, image_url, amt):
+def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url, amt):
 
     # define address from private key of creator
-    creator_account = com_func.get_address_from_application(admin_id)
+    creator_account = com_func.get_address_from_application(user_app_id)
 
-    # set suggested params
-    params = client.suggested_params()
+    if usertype == 'creator' or usertype == 'admin':
+        # set suggested params
+        params = client.suggested_params()
+        params.fee = amt
+        params.flat_fee = True
 
-    args = ["check_user", bytes(usertype, 'utf-8')]
+        print("Minting NFT...")
 
-    print("Calling user Application...")
+        # creating asset: transaction 2
+        txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=10, default_frozen=False,
+                                         unit_name=unit_name, asset_name=asset_name, decimals=1, url=image_url,
+                                         manager=creator_account, freeze=creator_account, reserve=creator_account,
+                                         clawback=creator_account)
 
-    # admin to call app(admin): transaction 1
-    sender = creator_account
-    txn_1 = transaction.ApplicationNoOpTxn(sender, params, admin_id, args)
-    params.fee = amt
-    params.flat_fee = True
+        result = [{'txn': encoding.msgpack_encode(txn)}]
 
-    print("Minting NFT...")
+    else:
+        result = {'message': 'only creators and admin can mint the nft'}
 
-    # creating asset: transaction 2
-    txn_2 = transaction.AssetConfigTxn(sender=sender, sp=params, total=10, default_frozen=False,
-                                       unit_name=unit_name, asset_name=asset_name, decimals=1, url=image_url,
-                                       manager=creator_account, freeze=creator_account, reserve=creator_account,
-                                       clawback=creator_account)
-    print("Grouping transactions...")
-    # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
-    txn_1.group = group_id
-    txn_2.group = group_id
-
-    txngrp = [{'txn':encoding.msgpack_encode (txn_1)}, {'txn':encoding.msgpack_encode (txn_2)}]
-
-    return txngrp
+    return result

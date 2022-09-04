@@ -32,14 +32,16 @@ def create_account():
                     usertxn = create_update_account.create_app(algod_client, address, usertype)
                     return jsonify(usertxn), 200
                 except Exception as error:
-                    return str(error), 500
+                    return jsonify({"message": str(error)}), 500
             else:
-                return "For Account Creation, Minimum Balance should be 1000 microAlgos", 400
+                error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+                return jsonify(error_msg), 400
         except Exception as wallet_error:
-            return f"Check Wallet Address, Error: {wallet_error}", 400
+            error_msg = {"message": wallet_error}
+            return jsonify(error_msg), 400
     else:
-        lst_error = {"User Type": user_type}
-        return jsonify(lst_error), 400
+        error_msg = {"message": "wrong user type"}
+        return jsonify(error_msg), 400
 
 
 # create unique id for admin user
@@ -66,11 +68,11 @@ def delete_user():
                 deleted_id_txn = create_update_account.delete_user(algod_client, user_id)
                 return jsonify(deleted_id_txn), 200
             except Exception as error:
-                return str(error), 500
+                return jsonify({"message": str(error)}), 500
         else:
-            return "To delete account, Minimum Balance should be 1000 microAlgos", 400
+            return jsonify({"message": "To delete account, Minimum Balance should be 1000 microAlgos"}), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        return jsonify({"message": f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # Creating a Campaign id for each campaign created by accounts.
@@ -97,7 +99,7 @@ def create_campaign():
     end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
 
     try:
-        if CommonFunctions.check_balance(address, 4000):
+        if CommonFunctions.check_balance(address, 3000):
             try:
                 # pass the campaign details to the algorand
                 campaignID_txn = creator_investor.create_campaign_app(algod_client, address, title,
@@ -106,11 +108,14 @@ def create_campaign():
                                                                       milestone_list, end_time_lst)
                 return jsonify(campaignID_txn), 200
             except Exception as error:
-                return str(error), 500
+                error_msg = {"message": error}
+                return jsonify(error_msg), 500
         else:
-            return "To create campaign, Minimum Balance should be 4000 microAlgos", 400
+            error_msg = {"message": "To create campaign, Minimum Balance should be 3000 microAlgos"}
+            return jsonify(error_msg), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        error_msg = {"message": wallet_error}
+        return jsonify(error_msg), 400
 
 
 # update the existing campaign
@@ -135,7 +140,7 @@ def update_campaign_details():
     end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
 
     try:
-        if CommonFunctions.check_balance(address, 1000):
+        if CommonFunctions.check_balance(address, 3000):
             try:
                 # pass the campaign details to the algorand
                 update_campaign_txn = creator_investor.update_campaign(algod_client, address, campaignID, title,
@@ -144,11 +149,13 @@ def update_campaign_details():
                                                                        milestone_list, end_time_lst)
                 return jsonify(update_campaign_txn), 200
             except Exception as error:
-                return str(error), 500
+                error_msg = {"message": error}
+                return jsonify(error_msg), 500
         else:
-            return "To update campaign, Minimum Balance should be 1000 microAlgos", 400
+            error_msg = {"message": "To update campaign, Minimum Balance should be 3000 microAlgos"}
+            return jsonify(error_msg), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        return jsonify({"message": f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # Block/Reject/Approve Campaign
@@ -176,11 +183,36 @@ def reject_campaign():
                     return jsonify(reject_campaign_id_txn), 200
 
             except Exception as error:
-                return str(error), 500
+                return jsonify({'message': str(error)}), 500
         else:
-            return "To Approve campaign, Minimum Balance should be 1000 microAlgos", 400
-    except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+            return jsonify({'message': "To Approve campaign, Minimum Balance should be 1000 microAlgos"}), 400
+    except Exception as error:
+        return jsonify({'message': str(error)}), 400
+
+
+# Block the running campaign
+@app.route('/block_campaign', methods=["POST"])
+def block_campaign():
+    # get the details
+    user_block = request.get_json()
+    campaign_app_id = int(user_block['campaign_app_id'])
+    milestone_app_id = int(user_block['milestone_app_id'])
+    wallet_address = user_block['admin_wallet_address']
+    note = user_block['meta_data']
+
+    try:
+        if CommonFunctions.check_balance(wallet_address, 4000):
+            try:
+                # create the transaction object
+                txn = creator_investor.block_campaign(algod_client, wallet_address, campaign_app_id, milestone_app_id, note)
+                return jsonify(txn), 200
+            except Exception as error:
+                return jsonify({'message': str(error)})
+        else:
+            return jsonify({'message': "To Block campaign, Minimum Balance should be 4000 microAlgos"}), 400
+
+    except Exception as error:
+        jsonify({'message': str(error)}), 400
 
 
 # delete campaign and unfreeze nft linked with the campaign
@@ -205,11 +237,11 @@ def delete_campaign():
                                                                                     milestones_lst)
                     return jsonify(delete_campaign_txn), 200
                 except Exception as error:
-                    return str(error), 500
+                    return jsonify({"message": str(error)}), 500
             else:
-                return "To delete the campaign, Minimum Balance should be 4000 microAlgos", 400
+                return jsonify({"message": "To delete the campaign, Minimum Balance should be 4000 microAlgos"}), 400
         except Exception as wallet_error:
-            return f"Check Wallet Address, Error: {wallet_error}", 400
+            return jsonify({"message": f"Check Wallet Address, Error: {wallet_error}"}), 400
     else:
         try:
             if CommonFunctions.check_balance(address, 5000):
@@ -218,12 +250,11 @@ def delete_campaign():
                                                                           milestones_lst)
                     return jsonify(deleted_campaign_id_txn), 200
                 except Exception as error:
-                    return str(error), 500
+                    return jsonify({"message": str(error)}), 500
             else:
-                return f"To delete the campaign, milestones and unfreeze {nft_id} NFT," \
-                       "Minimum Balance should be 5000 microAlgos", 400
+                return jsonify({"message": f"To delete the campaign, milestones and unfreeze {nft_id} NFT, Minimum Balance should be 5000 microAlgos"}), 400
         except Exception as wallet_error:
-            return f"Check Wallet Address, Error: {wallet_error}", 400
+            return jsonify({"message": f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # start the milestone
@@ -266,11 +297,11 @@ def mint_nft():
 
                 return jsonify(asset_txn), 200
             except Exception as error:
-                return str(error), 500
+                return jsonify({'message': error}), 500
         else:
-            return f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos", 400
+            return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos"}), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # Opt-in to NFT
@@ -441,12 +472,18 @@ def approve_milestone():
     admin_wallet_address = investment_details['admin_wallet_address']
     milestone_app_id = int(investment_details['milestone_app_id'])
 
+    """approve_milestone_again = 0 if admin confirms the milestone and checks the NFT amount in the campaign is zero. 
+    approve_milestone_again = 1 if the admin confirms to approve the milestone even if there is an NFT in 
+    the campaign remaining i.e., the investor didn't claim the nft in time"""
+
+    approve_milestone_again = int(investment_details['transfer_nft_to_creator'])
+
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 2000):
             try:
                 # pass the details to the algorand to run the transaction
                 txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no,
-                                                               milestone_app_id)
+                                                               milestone_app_id, approve_milestone_again)
                 return jsonify(txn_details)
             except Exception as error:
                 return str(error), 500
@@ -474,7 +511,7 @@ def reject_milestone():
 
 # admin approves the milestone and investment get transfer to creator
 @app.route('/claim_milestone_1', methods=["POST"])
-def milestone1_start():
+def milestone1_claim():
     # get the details from the user
     investment_details = request.get_json()
     campaign_app_id = investment_details['campaign_app_id']
@@ -565,4 +602,4 @@ def campaign_info(campaign_id):
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=False, port=3000)
+    app.run(debug=True, port=3000)
