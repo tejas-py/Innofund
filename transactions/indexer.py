@@ -98,7 +98,7 @@ def asset_details(asset_id):
     return asset
 
 
-# check if the milestone start transaction exist or not
+# get the assets inside the application
 def assets_in_wallet(app_id):
 
     # get address from app id

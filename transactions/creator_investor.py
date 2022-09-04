@@ -15,7 +15,7 @@ approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
-bnz main_l53
+bnz main_l158
 txn OnCompletion
 int NoOp
 ==
@@ -118,15 +118,15 @@ txna ApplicationArgs 0
 byte "Check if the campaign has ended."
 ==
 &&
-bnz main_l50
+bnz main_l140
 txna ApplicationArgs 0
 byte "No Check"
 ==
-bnz main_l49
+bnz main_l139
 txna ApplicationArgs 0
 byte "Reject Reward Campaign"
 ==
-bnz main_l48
+bnz main_l138
 global GroupSize
 int 4
 ==
@@ -134,7 +134,7 @@ txna ApplicationArgs 0
 byte "delete campaign"
 ==
 &&
-bnz main_l47
+bnz main_l137
 global GroupSize
 int 3
 ==
@@ -146,7 +146,7 @@ txna ApplicationArgs 0
 byte "Send NFT to Campaign"
 ==
 &&
-bnz main_l46
+bnz main_l136
 global GroupSize
 int 2
 ==
@@ -154,7 +154,7 @@ txna ApplicationArgs 0
 byte "Claim NFT"
 ==
 &&
-bnz main_l43
+bnz main_l118
 global GroupSize
 int 4
 ==
@@ -166,53 +166,71 @@ txna ApplicationArgs 0
 byte "Transfer NFT to Creator"
 ==
 &&
-bnz main_l42
+bnz main_l117
 txna ApplicationArgs 0
 byte "Milestone"
 ==
-bnz main_l39
+bnz main_l99
 txna ApplicationArgs 0
 byte "End Reward Milestone"
 ==
-bnz main_l36
+bnz main_l81
 txna ApplicationArgs 0
 byte "last_milestone"
 ==
-bnz main_l33
+bnz main_l63
 txna ApplicationArgs 0
 byte "return payment to investors, milestone rejected"
 ==
-bnz main_l27
-err
-main_l27:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
+bnz main_l45
+txna ApplicationArgs 0
+byte "Block Reward Campaign"
 ==
-||
+bnz main_l37
+txna ApplicationArgs 0
+byte "Block Campaign"
+==
 bnz main_l29
-int 0
-return
+err
 main_l29:
 int 1
 store 0
-int 3
+int 2
 store 1
 main_l30:
 load 1
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 <
-bnz main_l32
+bnz main_l36
+txna ApplicationArgs 0
+byte "Block Reward Campaign"
+==
+bnz main_l35
+txna ApplicationArgs 0
+byte "Block Campaign"
+==
+bnz main_l34
+err
+main_l34:
 int 1
 return
-main_l32:
+main_l35:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l36:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -237,7 +255,70 @@ int 1
 +
 store 1
 b main_l30
-main_l33:
+main_l37:
+int 1
+store 0
+int 2
+store 1
+main_l38:
+load 1
+txna ApplicationArgs 1
+btoi
+<
+bnz main_l44
+txna ApplicationArgs 0
+byte "Block Reward Campaign"
+==
+bnz main_l43
+txna ApplicationArgs 0
+byte "Block Campaign"
+==
+bnz main_l42
+err
+main_l42:
+int 1
+return
+main_l43:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l44:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l38
+main_l45:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -249,10 +330,74 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l35
+bnz main_l47
 int 0
 return
-main_l35:
+main_l47:
+txna ApplicationArgs 0
+byte "Check if the campaign has ended."
+==
+bnz main_l62
+txna ApplicationArgs 0
+byte "Claim NFT"
+==
+bnz main_l61
+txna ApplicationArgs 0
+byte "Milestone"
+==
+bnz main_l60
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l59
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l58
+txna ApplicationArgs 0
+byte "return payment to investors, milestone rejected"
+==
+bnz main_l54
+err
+main_l54:
+int 1
+store 0
+int 3
+store 1
+main_l55:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l57
+int 1
+return
+main_l57:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l55
+main_l58:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -267,22 +412,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l36:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l38
-int 0
-return
-main_l38:
+main_l59:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -311,22 +441,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l39:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l41
-int 0
-return
-main_l41:
+main_l60:
 itxn_begin
 int pay
 itxn_field TypeEnum
@@ -342,37 +457,7 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l42:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 0
-itxn_field AssetReceiver
-int 1
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l43:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l45
-int 0
-return
-main_l45:
+main_l61:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -388,7 +473,657 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l46:
+main_l62:
+int 1
+return
+main_l63:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l65
+int 0
+return
+main_l65:
+txna ApplicationArgs 0
+byte "Check if the campaign has ended."
+==
+bnz main_l80
+txna ApplicationArgs 0
+byte "Claim NFT"
+==
+bnz main_l79
+txna ApplicationArgs 0
+byte "Milestone"
+==
+bnz main_l78
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l77
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l76
+txna ApplicationArgs 0
+byte "return payment to investors, milestone rejected"
+==
+bnz main_l72
+err
+main_l72:
+int 1
+store 0
+int 3
+store 1
+main_l73:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l75
+int 1
+return
+main_l75:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l73
+main_l76:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l77:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+txna Accounts 1
+itxn_field AssetCloseTo
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l78:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l79:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 2
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l80:
+int 1
+return
+main_l81:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l83
+int 0
+return
+main_l83:
+txna ApplicationArgs 0
+byte "Check if the campaign has ended."
+==
+bnz main_l98
+txna ApplicationArgs 0
+byte "Claim NFT"
+==
+bnz main_l97
+txna ApplicationArgs 0
+byte "Milestone"
+==
+bnz main_l96
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l95
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l94
+txna ApplicationArgs 0
+byte "return payment to investors, milestone rejected"
+==
+bnz main_l90
+err
+main_l90:
+int 1
+store 0
+int 3
+store 1
+main_l91:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l93
+int 1
+return
+main_l93:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l91
+main_l94:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l95:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+txna Accounts 1
+itxn_field AssetCloseTo
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l96:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l97:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 2
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l98:
+int 1
+return
+main_l99:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l101
+int 0
+return
+main_l101:
+txna ApplicationArgs 0
+byte "Check if the campaign has ended."
+==
+bnz main_l116
+txna ApplicationArgs 0
+byte "Claim NFT"
+==
+bnz main_l115
+txna ApplicationArgs 0
+byte "Milestone"
+==
+bnz main_l114
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l113
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l112
+txna ApplicationArgs 0
+byte "return payment to investors, milestone rejected"
+==
+bnz main_l108
+err
+main_l108:
+int 1
+store 0
+int 3
+store 1
+main_l109:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l111
+int 1
+return
+main_l111:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l109
+main_l112:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l113:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+txna Accounts 1
+itxn_field AssetCloseTo
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l114:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l115:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 2
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l116:
+int 1
+return
+main_l117:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l118:
+txna ApplicationArgs 1
+btoi
+byte "end_time"
+app_global_get
+>
+byte "fund_limit"
+app_global_get
+byte "total_investment"
+app_global_get
+==
+||
+bnz main_l120
+int 0
+return
+main_l120:
+txna ApplicationArgs 0
+byte "Check if the campaign has ended."
+==
+bnz main_l135
+txna ApplicationArgs 0
+byte "Claim NFT"
+==
+bnz main_l134
+txna ApplicationArgs 0
+byte "Milestone"
+==
+bnz main_l133
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l132
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l131
+txna ApplicationArgs 0
+byte "return payment to investors, milestone rejected"
+==
+bnz main_l127
+err
+main_l127:
+int 1
+store 0
+int 3
+store 1
+main_l128:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l130
+int 1
+return
+main_l130:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l128
+main_l131:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l132:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+txna Accounts 1
+itxn_field AssetCloseTo
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l133:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l134:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 2
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l135:
+int 1
+return
+main_l136:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -403,16 +1138,16 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l47:
+main_l137:
 int 1
 return
-main_l48:
+main_l138:
 itxn_begin
 int axfer
 itxn_field TypeEnum
 txna Accounts 0
 itxn_field AssetReceiver
-int 1
+int 10
 itxn_field AssetAmount
 txna Assets 0
 itxn_field XferAsset
@@ -421,10 +1156,10 @@ itxn_field Fee
 itxn_submit
 int 1
 return
-main_l49:
+main_l139:
 int 1
 return
-main_l50:
+main_l140:
 txna ApplicationArgs 1
 btoi
 byte "end_time"
@@ -436,13 +1171,153 @@ byte "total_investment"
 app_global_get
 ==
 ||
-bnz main_l52
+bnz main_l142
 int 0
 return
-main_l52:
+main_l142:
+txna ApplicationArgs 0
+byte "Check if the campaign has ended."
+==
+bnz main_l157
+txna ApplicationArgs 0
+byte "Claim NFT"
+==
+bnz main_l156
+txna ApplicationArgs 0
+byte "Milestone"
+==
+bnz main_l155
+txna ApplicationArgs 0
+byte "End Reward Milestone"
+==
+bnz main_l154
+txna ApplicationArgs 0
+byte "last_milestone"
+==
+bnz main_l153
+txna ApplicationArgs 0
+byte "return payment to investors, milestone rejected"
+==
+bnz main_l149
+err
+main_l149:
+int 1
+store 0
+int 3
+store 1
+main_l150:
+load 1
+txna ApplicationArgs 2
+btoi
+<
+bnz main_l152
 int 1
 return
-main_l53:
+main_l152:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+load 0
+txnas Accounts
+itxn_field Receiver
+load 1
+txnas ApplicationArgs
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+load 0
+int 1
++
+store 0
+load 1
+int 1
++
+store 1
+b main_l150
+main_l153:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l154:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+txna Accounts 1
+itxn_field AssetCloseTo
+int 0
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna Accounts 1
+itxn_field CloseRemainderTo
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l155:
+itxn_begin
+int pay
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field Sender
+txna Accounts 1
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l156:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+txna ApplicationArgs 2
+btoi
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l157:
+int 1
+return
+main_l158:
 txn NumAppArgs
 int 9
 ==
@@ -483,9 +1358,9 @@ app_global_get
 byte "start_time"
 app_global_get
 >
-bnz main_l55
+bnz main_l160
 err
-main_l55:
+main_l160:
 int 1
 return
 """
@@ -778,7 +1653,6 @@ def admin_creator(client, asset_id, amount, admin_account, creator_address):
                            receiver=creator_address,
                            amt=amount,
                            index=asset_id)
-
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 

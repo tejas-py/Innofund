@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
+import transactions.indexer
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer, institutional_donor
 from API import connection
@@ -302,6 +304,89 @@ def mint_nft():
             return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos"}), 400
     except Exception as wallet_error:
         return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
+
+
+# Transfer nft to the marketplace
+@app.route('/nft_marketplace/transfer_nft_to_marketplace', methods=['POST'])
+def transfer_nft_to_marketplace():
+    # get the details
+    transaction_details = request.get_json()
+    asset_id = transaction_details['nft_id']
+    admin_application_id = 107294801
+    wallet_address = transaction_details['admin_wallet_address']
+
+    try:
+        if CommonFunctions.check_balance(wallet_address, 2000):
+            # send the details to create transactions
+            txn = transactions.admin.transfer_nft_to_application(algod_client, asset_id, admin_application_id, wallet_address)
+            return jsonify(txn), 200
+        else:
+            return jsonify({'message': "Check the wallet Balance"}), 500
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
+
+
+# Withdraw nft from marketplace
+@app.route('/nft_marketplace/withdraw_nft', methods=['POST'])
+def withdraw_nft():
+    # get the details
+    transaction_details = request.get_json()
+    asset_id = transaction_details['nft_id']
+    admin_application_id = 107294801
+    wallet_address = CommonFunctions.get_address_from_application(admin_application_id)
+
+    try:
+        if CommonFunctions.check_balance(wallet_address, 1000):
+            # send the details to create transactions
+            txn = transactions.admin.withdraw_nft_from_marketplace(algod_client, asset_id, admin_application_id, wallet_address)
+            return jsonify(txn), 200
+        else:
+            return jsonify({'message': "Check the wallet Balance"}), 500
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
+
+
+# Buy NFT for creator from marketplace
+@app.route('/nft_marketplace/buy_nft', methods=['POST'])
+def buy_nft():
+    # get the details
+    transaction_detail = request.get_json()
+    asset_id = transaction_detail['nft_id']
+    user_app_id = transaction_detail['user_app_id']
+    nft_price = transaction_detail['nft_price']
+    wallet_address = CommonFunctions.get_address_from_application(user_app_id)
+
+    try:
+        if CommonFunctions.check_balance(wallet_address, 3000):
+            txn = transactions.admin.buy_nft(algod_client, asset_id, user_app_id, nft_price)
+            return jsonify(txn), 200
+        else:
+            return jsonify({'message': 'Check Wallet balance'}), 500
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
+
+
+# List of NFT marketplace for creators
+@app.route('/nft_marketplace', methods=['GET'])
+def nft_marketplace():
+
+    admin_application_id = 107294801
+
+    try:
+        nft_list = transactions.indexer.assets_in_wallet(admin_application_id)
+        return jsonify(nft_list), 200
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
+
+
+# Single NFT information for marketplace
+@app.route('/nft_marketplace/nft_info/<int:asset_id>', methods=['GET'])
+def nft_info(asset_id):
+    try:
+        nft_description = transactions.indexer.asset_details(asset_id)
+        return jsonify(nft_description), 200
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
 
 
 # Opt-in to NFT

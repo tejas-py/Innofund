@@ -1,0 +1,75 @@
+#pragma version 6
+txn ApplicationID
+int 0
+==
+bnz main_l10
+txn OnCompletion
+int NoOp
+==
+bnz main_l5
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l4
+err
+main_l4:
+int 1
+return
+main_l5:
+txna ApplicationArgs 0
+byte "Withdraw NFT"
+==
+bnz main_l9
+global GroupSize
+int 3
+==
+txna ApplicationArgs 0
+byte "Buy NFT"
+==
+&&
+bnz main_l8
+err
+main_l8:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+byte "NFT bought from Cashdillo Market-Place"
+itxn_field Note
+itxn_submit
+int 1
+return
+main_l9:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+byte "NFT withdraw from Cashdillo Market-Place"
+itxn_field Note
+itxn_submit
+int 1
+return
+main_l10:
+txn NumAppArgs
+int 1
+==
+assert
+byte "usertype"
+txna ApplicationArgs 0
+app_global_put
+int 1
+return

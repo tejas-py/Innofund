@@ -12,7 +12,7 @@ global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
 # Declare approval program source
-approval_program_source_initial = b"""#pragma version 5
+approval_program_source_initial = b"""#pragma version 6
 txn ApplicationID
 int 0
 ==
@@ -30,27 +30,51 @@ main_l4:
 int 1
 return
 main_l5:
+txna ApplicationArgs 0
+byte "Withdraw NFT"
+==
+bnz main_l9
 global GroupSize
-int 2
+int 3
 ==
 txna ApplicationArgs 0
-byte "check_user"
+byte "Buy NFT"
 ==
 &&
-bnz main_l7
+bnz main_l8
 err
-main_l7:
-txna ApplicationArgs 1
-byte "usertype"
-app_global_get
-==
-txna ApplicationArgs 1
-byte "investor"
-!=
-&&
-bnz main_l9
-err
+main_l8:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 1
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+byte "NFT bought from Cashdillo Market-Place"
+itxn_field Note
+itxn_submit
+int 1
+return
 main_l9:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Accounts 0
+itxn_field AssetReceiver
+int 10
+itxn_field AssetAmount
+txna Assets 0
+itxn_field XferAsset
+int 0
+itxn_field Fee
+byte "NFT withdraw from Cashdillo Market-Place"
+itxn_field Note
+itxn_submit
 int 1
 return
 main_l10:
@@ -158,3 +182,125 @@ def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url,
         result = {'message': 'only creators and admin can mint the nft'}
 
     return result
+
+
+# transfer nft to admin application for marketplace
+def transfer_nft_to_application(client, asset_id, admin_app_id, wallet_address):
+
+    # get the wallet address of the admin application
+    marketplace_address = encoding.encode_address(encoding.checksum(b'appID' + admin_app_id.to_bytes(8, 'big')))
+
+    print(f"Opt-in {asset_id} Asset...")
+    # set suggested params
+    params = client.suggested_params()
+
+    # Use the AssetTransferTxn opt-in
+    txn_1 = transaction.AssetTransferTxn(
+        sender=wallet_address,
+        sp=params,
+        receiver=marketplace_address,
+        amt=0,
+        index=asset_id)
+
+    # Use the AssetTransferTxn class to transfer assets
+    txn_2 = transaction.AssetTransferTxn(
+        sender=wallet_address,
+        sp=params,
+        receiver=marketplace_address,
+        amt=10,
+        index=asset_id)
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)}]
+
+    return txngrp
+
+
+# withdraw nft from the marketplace
+def withdraw_nft_from_marketplace(client, asset_id, admin_app_id, wallet_address):
+
+    # set suggested params
+    params = client.suggested_params()
+    params.fee = 2000
+    params.flat_fee = True
+
+    # application call to transfer nft from admin app to admin wallet address
+    args = ['Withdraw NFT']
+    asset_list = [asset_id]
+    txn = transaction.ApplicationNoOpTxn(wallet_address, params, admin_app_id, args, foreign_assets=asset_list)
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn)}]
+
+    return txngrp
+
+
+# buy nft from admin
+def buy_nft(client, asset_id, user_app_id, nft_price):
+
+    # set suggested params
+    params = client.suggested_params()
+
+    # get the wallet address
+    admin_app_id = 107294801
+    creator_address = com_func.get_address_from_application(user_app_id)
+    admin_wallet_address = com_func.get_address_from_application(admin_app_id)
+
+    # Optin NFT
+    txn_1 = transaction.AssetTransferTxn(
+        sender=creator_address,
+        sp=params,
+        receiver=creator_address,
+        amt=0,
+        index=asset_id)
+
+    # Payment to admin for NFT
+    txn_2 = transaction.PaymentTxn(
+        sender=creator_address,
+        sp=params,
+        receiver=admin_wallet_address,
+        amt=nft_price,
+        note=f"Payment of NFT from {creator_address} for NFT: {asset_id}"
+    )
+
+    # Application call to receive nft
+    # parameters
+    params_txn3 = client.suggested_params
+    params_txn3.fee = 2000
+    params_txn3.flat_fee = True
+
+    # arguments
+    args = ['Buy NFT']
+    asset_list = [asset_id]
+    account_list = [creator_address]
+
+    txn_3 = transaction.ApplicationNoOpTxn(
+        sender=creator_address,
+        index=admin_app_id,
+        sp=params_txn3,
+        app_args=args,
+        foreign_assets=asset_list,
+        accounts=account_list,
+        note='NFT bought from Cashdillo Market-Place'
+    )
+
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+    print("...computed groupId: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
+    txn_3.group = group_id
+
+    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+              {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)}]
+
+    return txngrp
+

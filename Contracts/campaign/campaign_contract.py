@@ -68,7 +68,7 @@ def approval_program():
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.AssetTransfer,
             TxnField.asset_receiver: Txn.accounts[0],
-            TxnField.asset_amount: Int(1),
+            TxnField.asset_amount: Int(10),
             TxnField.xfer_asset: Txn.assets[0],
             TxnField.fee: Int(0)
         }),
