@@ -1,7 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-import transactions.indexer
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, indexer, institutional_donor
 from API import connection
@@ -318,7 +316,7 @@ def transfer_nft_to_marketplace():
     try:
         if CommonFunctions.check_balance(wallet_address, 2000):
             # send the details to create transactions
-            txn = transactions.admin.transfer_nft_to_application(algod_client, asset_id, admin_application_id, wallet_address)
+            txn = admin.transfer_nft_to_application(algod_client, asset_id, admin_application_id, wallet_address)
             return jsonify(txn), 200
         else:
             return jsonify({'message': "Check the wallet Balance"}), 500
@@ -338,7 +336,7 @@ def withdraw_nft():
     try:
         if CommonFunctions.check_balance(wallet_address, 1000):
             # send the details to create transactions
-            txn = transactions.admin.withdraw_nft_from_marketplace(algod_client, asset_id, admin_application_id, wallet_address)
+            txn = admin.withdraw_nft_from_marketplace(algod_client, asset_id, admin_application_id, wallet_address)
             return jsonify(txn), 200
         else:
             return jsonify({'message': "Check the wallet Balance"}), 500
@@ -358,7 +356,7 @@ def buy_nft():
 
     try:
         if CommonFunctions.check_balance(wallet_address, 3000):
-            txn = transactions.admin.buy_nft(algod_client, asset_id, user_app_id, nft_price)
+            txn = admin.buy_nft(algod_client, asset_id, user_app_id, nft_price)
             return jsonify(txn), 200
         else:
             return jsonify({'message': 'Check Wallet balance'}), 500
@@ -373,7 +371,7 @@ def nft_marketplace():
     admin_application_id = 107294801
 
     try:
-        nft_list = transactions.indexer.assets_in_wallet(admin_application_id)
+        nft_list = indexer.assets_in_wallet(admin_application_id)
         return jsonify(nft_list), 200
     except Exception as error:
         return jsonify({'message': str(error)}), 500
@@ -383,7 +381,7 @@ def nft_marketplace():
 @app.route('/nft_marketplace/nft_info/<int:asset_id>', methods=['GET'])
 def nft_info(asset_id):
     try:
-        nft_description = transactions.indexer.asset_details(asset_id)
+        nft_description = indexer.asset_details(asset_id)
         return jsonify(nft_description), 200
     except Exception as error:
         return jsonify({'message': str(error)}), 500
