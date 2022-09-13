@@ -172,9 +172,9 @@ def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url,
 
         # creating asset: transaction 2
         txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=10, default_frozen=False,
-                                         unit_name=unit_name, asset_name=asset_name, decimals=1, url=image_url,
-                                         manager=creator_account, freeze=creator_account, reserve=creator_account,
-                                         clawback=creator_account)
+                                         unit_name=unit_name, asset_name=asset_name, decimals=1, url=f'{image_url}#i',
+                                         manager=creator_account, freeze="", reserve=creator_account,
+                                         clawback="")
 
         result = [{'txn': encoding.msgpack_encode(txn)}]
 

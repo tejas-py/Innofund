@@ -45,7 +45,7 @@ def create_account():
 
 
 # create unique id for admin user
-@app.route('/create_admin_account')
+@app.route('/create_admin_account', methods=['POST'])
 def create_admin_account():
 
     # give the admin id for the admin
@@ -160,26 +160,26 @@ def update_campaign_details():
 
 # Block/Reject/Approve Campaign
 @app.route('/reject_approve_campaign', methods=["POST"])
-def reject_campaign():
+def reject_approve_campaign():
     # Get Details
     reject_campaign_details = request.get_json()
     address = reject_campaign_details['admin_wallet_address']
     campaignID = reject_campaign_details['campaign_app_id']
-    reason = reject_campaign_details['note']
-    ESG = reject_campaign_details['ESG']
+    status = int(reject_campaign_details['note']) # value = 0 if rejected, value = 1 if approved
+    ESG = int(reject_campaign_details['ESG'])
 
     try:
         if CommonFunctions.check_balance(address, 1000):
             try:
 
                 # transaction for approving donation/reward campaign and rejecting donation campaign
-                if indexer.campaign_type(campaignID) == "Donation" or reason == 'approve':
-                    reject_campaign_id_txn = creator_investor.approve_reject_campaign(algod_client, address, campaignID, reason, ESG)
+                if indexer.campaign_type(campaignID) == "Donation" or status == 1:
+                    reject_campaign_id_txn = creator_investor.approve_reject_campaign(algod_client, address, campaignID, status, ESG)
                     return jsonify(reject_campaign_id_txn), 200
 
                 # transaction for rejecting reward campaign
-                if indexer.campaign_type(campaignID) == "Reward" and reason != 'approve':
-                    reject_campaign_id_txn = creator_investor.reject_reward_campaign(algod_client, address, campaignID, reason)
+                if indexer.campaign_type(campaignID) == "Reward" and status != 1:
+                    reject_campaign_id_txn = creator_investor.reject_reward_campaign(algod_client, address, campaignID, status)
                     return jsonify(reject_campaign_id_txn), 200
 
             except Exception as error:

@@ -126,7 +126,7 @@ def campaign_milestones(client, campaign_app_id, milestone_app_id):
 
     print("Doing Transaction...")
     # deleting campaign 
-    txn_1 = ApplicationDeleteTxn(sender, params, campaign_app_id)
+    txn_1 = ApplicationDeleteTxn(sender, params, campaign_app_id, app_args=['Delete Campaign', int(com_func.Today_seconds())])
 
     # deleting milestones
     txn_2 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
