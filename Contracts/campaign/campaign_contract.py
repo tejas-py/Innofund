@@ -211,7 +211,43 @@ def approval_program():
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
-        ), multiple_conditions, Reject())
+        ), Approve(), Reject())
+
+    check_campaign_end_2 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn2, Reject())
+
+    check_campaign_end_3 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn4, Reject())
+
+    check_campaign_end_4 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn5, Reject())
+
+    check_campaign_end_5 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn6, Reject())
+
+    check_campaign_end_6 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), inner_txn7, Reject())
+
+    check_campaign_end_7 = If(
+        Or(
+            Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
+            App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
+        ), campaign_ends, Reject())
 
     call_transactions = Cond(
         # Condition 1
@@ -238,7 +274,7 @@ def approval_program():
         [And(
             Global.group_size() == Int(2),
             Txn.application_args[0] == Bytes("Claim NFT")
-        ), check_campaign_end],
+        ), check_campaign_end_2],
         # Condition 7
         [And(
             Global.group_size() == Int(4),
@@ -246,19 +282,19 @@ def approval_program():
             Txn.application_args[0] == Bytes("Transfer NFT to Creator")
         ), inner_txn3],
         # Condition 8
-        [Txn.application_args[0] == Bytes("Milestone"), check_campaign_end],
+        [Txn.application_args[0] == Bytes("Milestone"), check_campaign_end_3],
         # Condition 9
-        [Txn.application_args[0] == Bytes("End Reward Milestone"), check_campaign_end],
+        [Txn.application_args[0] == Bytes("End Reward Milestone"), check_campaign_end_4],
         # Condition 10
-        [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end],
+        [Txn.application_args[0] == Bytes("last_milestone"), check_campaign_end_5],
         # Condition 11
-        [Txn.application_args[0] == Bytes("return payment to investors, milestone rejected"), check_campaign_end],
+        [Txn.application_args[0] == Bytes("return payment to investors, milestone rejected"), check_campaign_end_6],
         # Condition 12
         [Txn.application_args[0] == Bytes("Block Reward Campaign"), inner_txn3],
         #  Condition 13
         [Txn.application_args[0] == Bytes("Block Campaign"), inner_txn8],
         #  Condition 14
-        [Txn.application_args[0] == Bytes("3rd Milestone"), check_campaign_end]
+        [Txn.application_args[0] == Bytes("3rd Milestone"), check_campaign_end_7]
     )
 
     update_investment_details = Seq(

@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utilities import check, CommonFunctions
-from transactions import admin, creator_investor, create_update_account, indexer, institutional_donor
+from transactions import admin, creator_investor, create_update_account, institutional_donor
+import transactions.indexer as index
 from API import connection
 
 # defining the flask app and setting up cors
@@ -108,7 +109,7 @@ def create_campaign():
                                                                       milestone_list, end_time_lst)
                 return jsonify(campaignID_txn), 200
             except Exception as error:
-                error_msg = {"message": error}
+                error_msg = {"message": str(error)}
                 return jsonify(error_msg), 500
         else:
             error_msg = {"message": "To create campaign, Minimum Balance should be 3000 microAlgos"}
@@ -173,12 +174,12 @@ def reject_approve_campaign():
             try:
 
                 # transaction for approving donation/reward campaign and rejecting donation campaign
-                if indexer.campaign_type(campaignID) == "Donation" or status == 1:
+                if index.campaign_type(campaignID) == "Donation" or status == 1:
                     reject_campaign_id_txn = creator_investor.approve_reject_campaign(algod_client, address, campaignID, status, ESG)
                     return jsonify(reject_campaign_id_txn), 200
 
                 # transaction for rejecting reward campaign
-                if indexer.campaign_type(campaignID) == "Reward" and status != 1:
+                if index.campaign_type(campaignID) == "Reward" and status != 1:
                     reject_campaign_id_txn = creator_investor.reject_reward_campaign(algod_client, address, campaignID, status)
                     return jsonify(reject_campaign_id_txn), 200
 
@@ -371,7 +372,7 @@ def nft_marketplace():
     admin_application_id = 107294801
 
     try:
-        nft_list = indexer.assets_in_wallet(admin_application_id)
+        nft_list = index.assets_in_wallet(admin_application_id)
         return jsonify(nft_list), 200
     except Exception as error:
         return jsonify({'message': str(error)}), 500
@@ -381,7 +382,7 @@ def nft_marketplace():
 @app.route('/nft_marketplace/nft_info/<int:asset_id>', methods=['GET'])
 def nft_info(asset_id):
     try:
-        nft_description = indexer.asset_details(asset_id)
+        nft_description = index.asset_details(asset_id)
         return jsonify(nft_description), 200
     except Exception as error:
         return jsonify({'message': str(error)}), 500
@@ -614,7 +615,7 @@ def milestone1_claim():
 @app.route('/check_initial_payment/<int:campaign_app_id>')
 def check_milestone(campaign_app_id):
     # pass the details
-    check_info = indexer.check_payment_milestone_again(campaign_app_id)
+    check_info = index.check_payment_milestone_again(campaign_app_id)
     return jsonify(check_info), 200
 
 
@@ -624,7 +625,7 @@ def investors_list_in_campaign(campaign_id):
 
     # pass the details
     try:
-        check_nft_wallet = indexer.list_investors(campaign_id)
+        check_nft_wallet = index.list_investors(campaign_id)
         return jsonify(check_nft_wallet), 200
     except Exception as error:
         return str(error), 400
@@ -635,7 +636,7 @@ def investors_list_in_campaign(campaign_id):
 def check_nft(campaign_app_id, user_app_id):
 
     # pass the details
-    result = indexer.check_claim_nft(user_app_id, campaign_app_id)
+    result = index.check_claim_nft(user_app_id, campaign_app_id)
     print(result)
 
     if len(result) == 1:
@@ -651,7 +652,7 @@ def check_nft(campaign_app_id, user_app_id):
 def nft_in_campaign(campaign_app_id):
 
     # pass the details
-    nft_campaign = indexer.nft_in_wallet(campaign_app_id)
+    nft_campaign = index.nft_in_wallet(campaign_app_id)
     return jsonify(nft_campaign)
 
 
@@ -659,7 +660,7 @@ def nft_in_campaign(campaign_app_id):
 @app.route('/total_nft/<int:app_id>')
 def total_nft(app_id):
     try:
-        assets = indexer.assets_in_wallet(app_id)
+        assets = index.assets_in_wallet(app_id)
 
         return jsonify(assets), 200
     except Exception as Error:
@@ -670,7 +671,7 @@ def total_nft(app_id):
 @app.route('/nft_info/<int:nft_id>')
 def asset_info(nft_id):
     try:
-        assets = indexer.asset_details(nft_id)
+        assets = index.asset_details(nft_id)
         return jsonify(assets), 200
     except Exception as Error:
         print(f"Check Asset ID! Error: {Error}")
@@ -679,7 +680,7 @@ def asset_info(nft_id):
 # Get the details of the campaign
 @app.route('/campaign_details/<int:campaign_id>')
 def campaign_info(campaign_id):
-    info = indexer.campaign(campaign_id)
+    info = index.campaign(campaign_id)
     return jsonify(info)
 
 
