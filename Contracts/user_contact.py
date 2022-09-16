@@ -22,4 +22,4 @@ def approval_program():
 
 # ClearState Program
 def clearstate_contract():
-    return Return(Approve())
+    return Approve()
