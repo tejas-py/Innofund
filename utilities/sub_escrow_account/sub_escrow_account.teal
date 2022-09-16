@@ -1,3 +1,30 @@
 #pragma version 6
+byte "CASHDILLO ESCROW ACCOUNT"
+byte "*#%@&"
+==
+bnz main_l8
+txn ApplicationID
+int 0
+==
+bnz main_l7
+txn OnCompletion
+int NoOp
+==
+bnz main_l6
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l5
+err
+main_l5:
+int 1
+return
+main_l6:
+int 1
+return
+main_l7:
+int 1
+return
+main_l8:
 int 1
 return

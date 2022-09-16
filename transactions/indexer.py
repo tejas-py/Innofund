@@ -302,6 +302,8 @@ def check_claim_nft(user_app_id, campaign_app_id):
     # get the top 10 investors list
     top_investors = list_investors(campaign_app_id)[:10]
     list_len = len(top_investors)
+    # get the top investor
+    top_investor = utilities.CommonFunctions.get_address_from_application(top_investors[0]['user_app_id'])
 
     # create blank dictionary
     nft_user_details = []
@@ -349,49 +351,12 @@ def check_claim_nft(user_app_id, campaign_app_id):
             except Exception as error:
                 print(error)
 
-            # for top investors' length to 10
-            if list_len == 10:
-                result1 = {'NFT amount user can claim': 1}
-                nft_user_details.append(result1)
-
-            # for top investors' length between 5 and 9
-            if 5 <= list_len <= 9:
-                if user_app_id == top_investors[0]['user_app_id'] or user_app_id == top_investors[1]['user_app_id'] or \
-                        user_app_id == top_investors[2]['user_app_id'] or user_app_id == top_investors[3]['user_app_id']\
-                        or user_app_id == top_investors[4]['user_app_id'] or user_app_id == top_investors[5]['user_app_id']:
-                    result2={'NFT amount user can claim':2}
-                    nft_user_details.append (result2)
+                # Give the NFT to top investor
+                if nft_user_details[1]['claimed_nft'] == "False" and user_wallet_address == top_investor:
+                    result = {'NFT amount user can claim': 1}
+                    nft_user_details.append(result)
                 else:
-                    result2={'NFT amount user can claim':1}
-                    nft_user_details.append (result2)
-
-            # for top investors' length equal to 4
-            if list_len == 4:
-                if user_app_id == top_investors[0]['user_app_id'] or user_app_id == top_investors[1]['user_app_id']:
-                    result3={'NFT amount user can claim':3}
-                    nft_user_details.append (result3)
-                else:
-                    result3={'NFT amount user can claim':2}
-                    nft_user_details.append (result3)
-
-            # for top investors' length equal to 3
-            if list_len == 3:
-                if user_app_id == top_investors[0]['user_app_id']:
-                    result4={'NFT amount user can claim':4}
-                    nft_user_details.append (result4)
-                else:
-                    result4={'NFT amount user can claim':3}
-                    nft_user_details.append (result4)
-
-            # for top investors' length equal to 2
-            if list_len == 2:
-                result5 = {'NFT amount user can claim': 5}
-                nft_user_details.append(result5)
-
-            # for top investors' length equal to 2
-            if list_len == 1:
-                result5 = {'NFT amount user can claim': 10}
-                nft_user_details.append(result5)
+                    pass
 
     except Exception as Error:
         print(Error)

@@ -196,10 +196,10 @@ def reject_approve_campaign():
 def block_campaign():
     # get the details
     user_block = request.get_json()
-    campaign_app_id = int(user_block['campaign_app_id'])
-    milestone_app_id = int(user_block['milestone_app_id'])
+    campaign_app_id = user_block['campaign_app_id']
+    milestone_app_id = user_block['milestone_app_id']
     wallet_address = user_block['admin_wallet_address']
-    note = user_block['meta_data']
+    note = "Block Running Campaign"
 
     try:
         if CommonFunctions.check_balance(wallet_address, 4000):
@@ -290,7 +290,7 @@ def mint_nft():
     address = CommonFunctions.get_address_from_application(app_id)
 
     try:
-        if CommonFunctions.check_balance(address, 1000+NFT_price):
+        if CommonFunctions.check_balance(address, 1000):
             try:
                 # pass the details to algorand to mint asset
                 asset_txn = admin.admin_asset(algod_client, usertype, app_id,
@@ -298,7 +298,7 @@ def mint_nft():
 
                 return jsonify(asset_txn), 200
             except Exception as error:
-                return jsonify({'message': error}), 500
+                return jsonify({'message': str(error)}), 500
         else:
             return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos"}), 400
     except Exception as wallet_error:
@@ -517,10 +517,11 @@ def multi_investing():
 
     # get the details
     investment_details = request.get_json()
-    # test_dict = {'investments': {123:123, 345:123}, 'fees': 123}
+    # test_dict = {'investments': {123:123, 345:123}, 'fees': 4000}
     campaign_investment = investment_details['investments_details']
     address = investment_details['investor_wallet_address']
-    note = investment_details['meta_data']
+    note = str(investment_details['meta_data'])
+    print(campaign_investment)
 
     # txn to sub-escrow account
     txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
@@ -535,14 +536,23 @@ def sub_escrow_to_campaign():
     # get the details
     transaction_details = request.get_json()
     campaign_investment = transaction_details['investments_details']
-    note = transaction_details['meta_data']
+    note = str(transaction_details['meta_data'])
 
     # txn from sub-escrow account to escrow account
     txn_ids = []
-    for campaign_app_id, one_investment in campaign_investment['investments']:
-        txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), one_investment, note)
-        txn_ids.append(txn_id)
-
+    print(campaign_investment['investments'])
+    for campaign_app_id in campaign_investment['investments']:
+        # amount to transfer to every campaign
+        one_investment = campaign_investment['investments'][campaign_app_id]
+        amt = one_investment*10**6
+        # creating transaction and getting transaction id
+        try:
+            txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), int(amt), note)
+        except Exception as E:
+            return jsonify(str(E)), 500
+        txn_details = {"CampaignAppId": campaign_app_id, "TransactionId": txn_id}
+        # appending multiple transaction id
+        txn_ids.append(txn_details)
     return jsonify(txn_ids), 200
 
 

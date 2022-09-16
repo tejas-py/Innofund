@@ -20,7 +20,6 @@ def approval_program():
     return program
 
 
-if __name__ == "__main__":
-    with open("user_contact.teal", "w") as f:
-        compiled = compileTeal(approval_program(), mode=Mode.Application, version=6)
-        f.write(compiled)
+# ClearState Program
+def clearstate_contract():
+    return Return(Approve())

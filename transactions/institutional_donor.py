@@ -2,12 +2,10 @@ import base64
 from algosdk.future import transaction
 from algosdk import encoding
 from utilities import CommonFunctions
-from API import connection
 
 
 # logic sign
 def logic_sig(client):
-
     # contract location
     myprogram = 'sub_escrow_account/sub_escrow_account.teal'
 
@@ -26,7 +24,7 @@ def transfer_sub_escrow_account(client, campaign_investment, address, note):
 
     # define the total investment and sub-escrow account
     sub_escrow_account = logic_sig(client).address()
-    total_investment = campaign_investment['fees']
+    total_investment = campaign_investment['fee']
 
     # find the total amount for investing
     for campaign_id in campaign_investment['investments']:
@@ -35,9 +33,10 @@ def transfer_sub_escrow_account(client, campaign_investment, address, note):
 
     # get node suggested parameters
     params = client.suggested_params()
-
+    final_amt = int(total_investment*1000_000)
+    print(final_amt)
     # payment transaction
-    txn = transaction.PaymentTxn(sender=address, sp=params, receiver=sub_escrow_account, amt=total_investment, note=note)
+    txn = transaction.PaymentTxn(sender=address, sp=params, receiver=sub_escrow_account, amt=final_amt, note=note)
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
@@ -57,12 +56,35 @@ def escrow_campaign(client, campaign_app_id, amount, note):
     campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaign_app_id.to_bytes(8, 'big')))
 
     # payment transaction
-    txn = transaction.PaymentTxn(sender=sub_escrow_account, sp=params, receiver=campaign_wallet_address, amt=amount, note=note)
+    app_args = ["update_investment", int(CommonFunctions.Today_seconds()), int(amount)]
+    txn_1 = transaction.ApplicationNoOpTxn(sub_escrow_account, params, campaign_app_id, app_args)
+    txn_2 = transaction.PaymentTxn(sender=sub_escrow_account, sp=params, receiver=campaign_wallet_address, amt=amount, note=note)
 
-    signed_txn = transaction.LogicSigTransaction(txn, logic_sig(client))
+    print("Grouping transactions...")
+    # compute group id and put it into each transaction
+    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    print("groupID of the Transaction: ", group_id)
+    txn_1.group = group_id
+    txn_2.group = group_id
 
-    tx_id = signed_txn.transaction.get_txid()
-    client.send_transactions([signed_txn])
+    # sign transactions
+    print("Signing transactions...")
+
+    stxn_1 = transaction.LogicSigTransaction(txn_1, logic_sig(client))
+    print("Investor signed txn_1: ", stxn_1.get_txid())
+
+    stxn_2 = transaction.LogicSigTransaction(txn_2, logic_sig(client))
+    print("Investor signed txn_2: ", stxn_2.get_txid())
+
+    # assemble transaction group
+    print("Assembling transaction group...")
+    signedGroup = [stxn_1, stxn_2]
+
+    # send transactions
+    print("Sending transaction group...")
+    tx_id = client.send_transactions(signedGroup)
+
+    # wait for confirmation
     CommonFunctions.wait_for_confirmation(client, tx_id)
 
-    return tx_id
+    return str(tx_id)

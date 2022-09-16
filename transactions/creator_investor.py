@@ -1,8 +1,8 @@
 from algosdk.future.transaction import *
 import API.connection
-import utilities.CommonFunctions as com_func
+from utilities.CommonFunctions import get_address_from_application, Today_seconds
 from transactions import indexer
-
+from Contracts import campaign_contract, milestone_contract, teal
 
 # Declare application state storage (immutable)
 local_ints = 0
@@ -15,1003 +15,6 @@ local_schema = StateSchema(local_ints, local_bytes)
 # connect to algorand client
 algod_client = API.connection.algo_conn()
 
-approval_program_source_initial = b"""#pragma version 6
-txn ApplicationID
-int 0
-==
-bnz main_l117
-txn OnCompletion
-int NoOp
-==
-bnz main_l27
-txn OnCompletion
-int UpdateApplication
-==
-bnz main_l10
-txn OnCompletion
-int DeleteApplication
-==
-bnz main_l5
-err
-main_l5:
-global GroupSize
-int 3
-==
-txna ApplicationArgs 0
-byte "Delete Campaign"
-==
-&&
-bnz main_l7
-err
-main_l7:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "campaign_status"
-app_global_get
-byte "inactive"
-==
-||
-bnz main_l9
-int 0
-return
-main_l9:
-int 1
-return
-main_l10:
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
-byte "update_investment"
-==
-&&
-bnz main_l24
-global GroupSize
-int 3
-==
-txna ApplicationArgs 0
-byte "update_details"
-==
-&&
-bnz main_l23
-txna ApplicationArgs 0
-byte "Approve/Reject ESG Campaign"
-==
-bnz main_l14
-err
-main_l14:
-txna ApplicationArgs 2
-btoi
-int 1
-==
-bnz main_l16
-int 1
-return
-main_l16:
-byte "campaign_status"
-byte "active"
-app_global_put
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
-<
-bnz main_l18
-int 0
-return
-main_l18:
-txna ApplicationArgs 0
-byte "Approve/Reject Campaign"
-==
-bnz main_l22
-txna ApplicationArgs 0
-byte "Approve/Reject ESG Campaign"
-==
-bnz main_l21
-err
-main_l21:
-byte "ESG"
-txna ApplicationArgs 3
-app_global_put
-int 1
-return
-main_l22:
-int 1
-return
-main_l23:
-byte "campaign_status"
-app_global_get
-byte "inactive"
-==
-assert
-byte "title"
-txna ApplicationArgs 1
-app_global_put
-byte "category"
-txna ApplicationArgs 2
-app_global_put
-byte "end_time"
-txna ApplicationArgs 3
-btoi
-app_global_put
-byte "funding_category"
-txna ApplicationArgs 4
-app_global_put
-byte "fund_limit"
-txna ApplicationArgs 5
-btoi
-app_global_put
-byte "country"
-txna ApplicationArgs 6
-app_global_put
-int 1
-return
-main_l24:
-txna ApplicationArgs 2
-btoi
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
--
-<=
-byte "end_time"
-app_global_get
-txna ApplicationArgs 1
-btoi
->
-&&
-byte "campaign_status"
-app_global_get
-byte "active"
-==
-&&
-bnz main_l26
-err
-main_l26:
-byte "total_investment"
-byte "total_investment"
-app_global_get
-txna ApplicationArgs 2
-btoi
-+
-app_global_put
-int 1
-return
-main_l27:
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
-byte "Check if the campaign has ended."
-==
-&&
-bnz main_l114
-txna ApplicationArgs 0
-byte "Approve/Reject Campaign"
-==
-bnz main_l105
-txna ApplicationArgs 0
-byte "Reject Reward Campaign"
-==
-bnz main_l93
-global GroupSize
-int 4
-==
-txna ApplicationArgs 0
-byte "delete campaign"
-==
-&&
-bnz main_l92
-global GroupSize
-int 3
-==
-txn Sender
-global CreatorAddress
-==
-&&
-txna ApplicationArgs 0
-byte "Send NFT to Campaign"
-==
-&&
-bnz main_l91
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
-byte "Claim NFT"
-==
-&&
-bnz main_l88
-global GroupSize
-int 4
-==
-txn Sender
-global CreatorAddress
-==
-&&
-txna ApplicationArgs 0
-byte "Transfer NFT to Creator"
-==
-&&
-bnz main_l76
-txna ApplicationArgs 0
-byte "Milestone"
-==
-bnz main_l73
-txna ApplicationArgs 0
-byte "End Reward Milestone"
-==
-bnz main_l70
-txna ApplicationArgs 0
-byte "last_milestone"
-==
-bnz main_l67
-txna ApplicationArgs 0
-byte "return payment to investors, milestone rejected"
-==
-bnz main_l61
-txna ApplicationArgs 0
-byte "Block Reward Campaign"
-==
-bnz main_l49
-txna ApplicationArgs 0
-byte "Block Campaign"
-==
-bnz main_l45
-txna ApplicationArgs 0
-byte "3rd Milestone"
-==
-bnz main_l42
-err
-main_l42:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l44
-int 0
-return
-main_l44:
-byte "campaign_status"
-byte "inactive"
-app_global_put
-int 1
-return
-main_l45:
-int 1
-store 0
-int 2
-store 1
-main_l46:
-load 1
-txna ApplicationArgs 1
-btoi
-<
-bnz main_l48
-byte "campaign_status"
-byte "inactive"
-app_global_put
-int 1
-return
-main_l48:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-load 0
-txnas Accounts
-itxn_field Receiver
-load 1
-txnas ApplicationArgs
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-load 0
-int 1
-+
-store 0
-load 1
-int 1
-+
-store 1
-b main_l46
-main_l49:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 0
-itxn_field AssetReceiver
-int 10
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-txna ApplicationArgs 0
-byte "Block Reward Campaign"
-==
-bnz main_l57
-txna ApplicationArgs 0
-byte "Block Campaign"
-==
-bnz main_l56
-txna ApplicationArgs 0
-byte "Reject Reward Campaign"
-==
-bnz main_l55
-txna ApplicationArgs 0
-byte "Transfer NFT to Creator"
-==
-bnz main_l54
-err
-main_l54:
-int 1
-return
-main_l55:
-int 1
-return
-main_l56:
-int 1
-return
-main_l57:
-int 1
-store 0
-int 2
-store 1
-main_l58:
-load 1
-txna ApplicationArgs 1
-btoi
-<
-bnz main_l60
-byte "campaign_status"
-byte "inactive"
-app_global_put
-int 1
-return
-main_l60:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-load 0
-txnas Accounts
-itxn_field Receiver
-load 1
-txnas ApplicationArgs
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-load 0
-int 1
-+
-store 0
-load 1
-int 1
-+
-store 1
-b main_l58
-main_l61:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l63
-int 0
-return
-main_l63:
-int 1
-store 0
-int 3
-store 1
-main_l64:
-load 1
-txna ApplicationArgs 2
-btoi
-<
-bnz main_l66
-byte "campaign_status"
-byte "inactive"
-app_global_put
-int 1
-return
-main_l66:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-load 0
-txnas Accounts
-itxn_field Receiver
-load 1
-txnas ApplicationArgs
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-load 0
-int 1
-+
-store 0
-load 1
-int 1
-+
-store 1
-b main_l64
-main_l67:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l69
-int 0
-return
-main_l69:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-txna Accounts 1
-itxn_field Receiver
-txna Accounts 1
-itxn_field CloseRemainderTo
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l70:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l72
-int 0
-return
-main_l72:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 1
-itxn_field AssetReceiver
-txna Accounts 1
-itxn_field AssetCloseTo
-int 0
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-txna Accounts 1
-itxn_field Receiver
-txna Accounts 1
-itxn_field CloseRemainderTo
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l73:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l75
-int 0
-return
-main_l75:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-txna Accounts 1
-itxn_field Receiver
-txna ApplicationArgs 2
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l76:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 0
-itxn_field AssetReceiver
-int 10
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-txna ApplicationArgs 0
-byte "Block Reward Campaign"
-==
-bnz main_l84
-txna ApplicationArgs 0
-byte "Block Campaign"
-==
-bnz main_l83
-txna ApplicationArgs 0
-byte "Reject Reward Campaign"
-==
-bnz main_l82
-txna ApplicationArgs 0
-byte "Transfer NFT to Creator"
-==
-bnz main_l81
-err
-main_l81:
-int 1
-return
-main_l82:
-int 1
-return
-main_l83:
-int 1
-return
-main_l84:
-int 1
-store 0
-int 2
-store 1
-main_l85:
-load 1
-txna ApplicationArgs 1
-btoi
-<
-bnz main_l87
-byte "campaign_status"
-byte "inactive"
-app_global_put
-int 1
-return
-main_l87:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-load 0
-txnas Accounts
-itxn_field Receiver
-load 1
-txnas ApplicationArgs
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-load 0
-int 1
-+
-store 0
-load 1
-int 1
-+
-store 1
-b main_l85
-main_l88:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l90
-int 0
-return
-main_l90:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txn Sender
-itxn_field AssetReceiver
-txna ApplicationArgs 2
-btoi
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l91:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field AssetReceiver
-int 0
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-int 1
-return
-main_l92:
-int 1
-return
-main_l93:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 0
-itxn_field AssetReceiver
-int 10
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-itxn_submit
-txna ApplicationArgs 0
-byte "Block Reward Campaign"
-==
-bnz main_l101
-txna ApplicationArgs 0
-byte "Block Campaign"
-==
-bnz main_l100
-txna ApplicationArgs 0
-byte "Reject Reward Campaign"
-==
-bnz main_l99
-txna ApplicationArgs 0
-byte "Transfer NFT to Creator"
-==
-bnz main_l98
-err
-main_l98:
-int 1
-return
-main_l99:
-int 1
-return
-main_l100:
-int 1
-return
-main_l101:
-int 1
-store 0
-int 2
-store 1
-main_l102:
-load 1
-txna ApplicationArgs 1
-btoi
-<
-bnz main_l104
-byte "campaign_status"
-byte "inactive"
-app_global_put
-int 1
-return
-main_l104:
-itxn_begin
-int pay
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field Sender
-load 0
-txnas Accounts
-itxn_field Receiver
-load 1
-txnas ApplicationArgs
-btoi
-itxn_field Amount
-int 0
-itxn_field Fee
-itxn_submit
-load 0
-int 1
-+
-store 0
-load 1
-int 1
-+
-store 1
-b main_l102
-main_l105:
-txna ApplicationArgs 2
-btoi
-int 1
-==
-bnz main_l107
-int 1
-return
-main_l107:
-byte "campaign_status"
-byte "active"
-app_global_put
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
-<
-bnz main_l109
-int 0
-return
-main_l109:
-txna ApplicationArgs 0
-byte "Approve/Reject Campaign"
-==
-bnz main_l113
-txna ApplicationArgs 0
-byte "Approve/Reject ESG Campaign"
-==
-bnz main_l112
-err
-main_l112:
-byte "ESG"
-txna ApplicationArgs 3
-app_global_put
-int 1
-return
-main_l113:
-int 1
-return
-main_l114:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
->
-byte "fund_limit"
-app_global_get
-byte "total_investment"
-app_global_get
-==
-||
-bnz main_l116
-int 0
-return
-main_l116:
-int 1
-return
-main_l117:
-txn NumAppArgs
-int 9
-==
-assert
-byte "title"
-txna ApplicationArgs 0
-app_global_put
-byte "category"
-txna ApplicationArgs 1
-app_global_put
-byte "end_time"
-txna ApplicationArgs 2
-btoi
-app_global_put
-byte "funding_category"
-txna ApplicationArgs 3
-app_global_put
-byte "fund_limit"
-txna ApplicationArgs 4
-btoi
-app_global_put
-byte "reward_type"
-txna ApplicationArgs 5
-app_global_put
-byte "country"
-txna ApplicationArgs 6
-app_global_put
-byte "total_investment"
-txna ApplicationArgs 7
-btoi
-app_global_put
-byte "ESG"
-txna ApplicationArgs 8
-btoi
-app_global_put
-byte "campaign_status"
-byte "inactive"
-app_global_put
-byte "end_time"
-app_global_get
-byte "start_time"
-app_global_get
->
-bnz main_l119
-err
-main_l119:
-int 1
-return"""
-
-approval_program_source_initial_milestone = b"""#pragma version 6
-txn ApplicationID
-int 0
-==
-bnz main_l20
-txn OnCompletion
-int NoOp
-==
-bnz main_l9
-txn OnCompletion
-int UpdateApplication
-==
-bnz main_l6
-txn OnCompletion
-int DeleteApplication
-==
-bnz main_l5
-err
-main_l5:
-int 1
-return
-main_l6:
-global GroupSize
-int 3
-==
-txna ApplicationArgs 0
-byte "update_details"
-==
-&&
-bnz main_l8
-err
-main_l8:
-byte "milestone_title"
-txna ApplicationArgs 1
-app_global_put
-byte "milestone_number"
-txna ApplicationArgs 2
-btoi
-app_global_put
-byte "end_time"
-txna ApplicationArgs 3
-btoi
-app_global_put
-int 1
-return
-main_l9:
-global GroupSize
-int 2
-==
-txna ApplicationArgs 0
-byte "start"
-==
-&&
-bnz main_l17
-global GroupSize
-int 1
-==
-txna ApplicationArgs 0
-byte "end"
-==
-&&
-bnz main_l14
-txna ApplicationArgs 0
-byte "no_check"
-==
-bnz main_l13
-err
-main_l13:
-int 1
-return
-main_l14:
-txna ApplicationArgs 1
-btoi
-byte "end_time"
-app_global_get
-<=
-bnz main_l16
-err
-main_l16:
-int 1
-return
-main_l17:
-txna ApplicationArgs 1
-byte "milestone_title"
-app_global_get
-==
-txna ApplicationArgs 2
-btoi
-byte "milestone_number"
-app_global_get
-==
-&&
-txna ApplicationArgs 3
-btoi
-byte "end_time"
-app_global_get
-<
-&&
-bnz main_l19
-err
-main_l19:
-int 1
-return
-main_l20:
-txn NumAppArgs
-int 3
-==
-assert
-byte "milestone_title"
-txna ApplicationArgs 0
-app_global_put
-byte "milestone_number"
-txna ApplicationArgs 1
-btoi
-app_global_put
-byte "end_time"
-txna ApplicationArgs 2
-btoi
-app_global_put
-int 1
-return"""
-
-clear_program_source = b"""#pragma version 6
-int 1
-"""
-
 
 # Create new campaign
 def create_campaign_app(client, public_address, title,
@@ -1019,9 +22,10 @@ def create_campaign_app(client, public_address, title,
                         reward_type, country, ESG, milestone_title, milestone_number, end_time_milestone):
     print("Creating campaign application...")
 
-    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
-    approval_program_milestone = com_func.compile_program(client, approval_program_source_initial_milestone)
+    # import smart contract for the application
+    approval_program_campaign = teal.to_teal(client, campaign_contract.approval_program())
+    clear_program = teal.to_teal(client, campaign_contract.clearstate_contract())
+    approval_program_milestone = teal.to_teal(client, milestone_contract.approval_program())
 
     # Declaring sender
     sender = public_address
@@ -1077,16 +81,16 @@ def create_campaign_app(client, public_address, title,
 def start_milestones(client, campaign_app_id, milestone_app_id, milestone_title, milestone_number):
     print("Starting the milestone...")
 
-    sender = com_func.get_address_from_application(campaign_app_id)
+    sender = get_address_from_application(campaign_app_id)
 
     params = client.suggested_params()
 
     # call the campaign to see if the campaign has ended
-    args_list_campaign = ["Check if the campaign has ended.", int(com_func.Today_seconds())]
+    args_list_campaign = ["Check if the campaign has ended.", int(Today_seconds())]
     txn_1 = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_campaign)
 
     # call the milestone to start the application
-    args_list_milestone = ['start', bytes(milestone_title, 'utf-8'), int(milestone_number), int(com_func.Today_seconds())]
+    args_list_milestone = ['start', bytes(milestone_title, 'utf-8'), int(milestone_number), int(Today_seconds())]
     txn_2 = ApplicationNoOpTxn(sender, params, milestone_app_id, args_list_milestone, note="Milestone Started")
 
     print("Grouping transactions...")
@@ -1107,10 +111,10 @@ def end_milestone(client, milestone_app_id):
     print(f'Ending {milestone_app_id} milestone...')
 
     params = client.suggested_params()
-    sender = com_func.get_address_from_application(milestone_app_id)
+    sender = get_address_from_application(milestone_app_id)
 
     # 100 days after the current date
-    submission_time = com_func.Today_seconds() - 7948800
+    submission_time = Today_seconds() - 7948800
     app_args = ['end', int(submission_time)]
 
     txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args, note="Milestone Ended")
@@ -1126,7 +130,7 @@ def reject_milestone(client, note, milestone_app_id):
     print(f"Rejecting {milestone_app_id} milestone...")
 
     params = client.suggested_params()
-    sender = com_func.get_address_from_application(milestone_app_id)
+    sender = get_address_from_application(milestone_app_id)
     app_args = ['no_check']
 
     txn = ApplicationNoOpTxn(sender, params, milestone_app_id, app_args, note=note)
@@ -1181,7 +185,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
 
     print(f"Assigning {asset_id} NFT to {campaign_id} Campaign...")
     # define address from private key of creator
-    creator_account = com_func.get_address_from_application(campaign_id)
+    creator_account = get_address_from_application(campaign_id)
     campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaign_id.to_bytes(8, 'big')))
     print("campaign wallet:", campaign_wallet_address)
 
@@ -1208,7 +212,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
         sender=creator_account,
         sp=params_txn2,
         receiver=campaign_wallet_address,
-        amt=10,
+        amt=1,
         index=asset_id
     )
 
@@ -1247,19 +251,15 @@ def claim_nft(client, user_app_id, asset_id, campaign_app_id):
             params_txn2.flat_fee = True
 
             # get the wallet address of the user
-            wallet_address = com_func.get_address_from_application(user_app_id)
+            wallet_address = get_address_from_application(user_app_id)
 
             # check if the user has claimed the nft
             asset_claim_info = indexer.check_claim_nft(user_app_id, campaign_app_id)
 
             if asset_claim_info[0]['can_claim_NFT'] == "True" and asset_claim_info[1]['claimed_nft'] == "False":
 
-                # get the asset amount to be claimed
-                asset_claim_info = indexer.check_claim_nft(user_app_id, campaign_app_id)
-                asset_amount = asset_claim_info[2]['NFT amount user can claim']
-
                 # define the arguments
-                app_args_list = ["Claim NFT", int(com_func.Today_seconds()), int(asset_amount)]
+                app_args_list = ["Claim NFT", int(Today_seconds())]
                 asset_list = [asset_id]
 
                 # Transaction 1: Opting to asset
@@ -1296,9 +296,6 @@ def update_call_app(client, campaignID, investment, investor_account, meta_data)
 
     campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaignID.to_bytes(8, 'big')))
 
-    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
-
     # get node suggested parameters
     params = client.suggested_params()
 
@@ -1307,8 +304,8 @@ def update_call_app(client, campaignID, investment, investor_account, meta_data)
     receiver = campaign_wallet_address
 
     # Update the investment of the campaign application: Transaction 1
-    app_args = ["update_investment", int(com_func.Today_seconds()), int(investment)]
-    txn_1 = ApplicationUpdateTxn(sender, params, campaignID, approval_program_campaign, clear_program, app_args)
+    app_args = ["update_investment", int(Today_seconds()), int(investment)]
+    txn_1 = ApplicationNoOpTxn(sender, params, campaignID, app_args)
 
     # Transaction from Investor Account to Escrow Account: Transaction 2
     amount = int(investment)
@@ -1331,19 +328,16 @@ def update_app(client, app_id, investment):
 
     print(f"Updating Investment in {app_id} Campaign...")
     # declare sender
-    sender = com_func.get_address_from_application(app_id)
-
-    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
+    sender = get_address_from_application(app_id)
 
     # define updated arguments
-    app_args = ["update_investment", int(com_func.Today_seconds()), int(investment)]
+    app_args = ["update_investment", int(Today_seconds()), int(investment)]
 
     # get node suggested parameters
     params = client.suggested_params()
 
     # create unsigned transaction
-    txn = ApplicationUpdateTxn(sender, params, app_id, approval_program_campaign, clear_program, app_args)
+    txn = ApplicationNoOpTxn(sender, params, app_id, app_args)
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
@@ -1365,14 +359,14 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
     campaign_info = indexer.campaign(campaign_app_id)
     total_amount_in_campaign = campaign_info['totalInvested']
 
-    creator_wallet_address = com_func.get_address_from_application(campaign_app_id)
+    creator_wallet_address = get_address_from_application(campaign_app_id)
 
     # claim initial milestone money
     if milestone_number == 1:
         if indexer.check_payment_milestone(campaign_app_id) == "False":
 
             account_lst = [creator_wallet_address]
-            args_list = ["Milestone", int(com_func.Today_seconds()), int(total_amount_in_campaign / 2)]
+            args_list = ["Milestone", int(Today_seconds()), int(total_amount_in_campaign / 2)]
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list, note="Milestone 1 money, claimed", accounts=account_lst)
 
             txngrp = [{'txn': encoding.msgpack_encode(txn)}]
@@ -1388,7 +382,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         if indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
-            args_list_3 = ["End Reward Milestone", int(com_func.Today_seconds())]
+            args_list_3 = ["End Reward Milestone", int(Today_seconds())]
             asset_list = [indexer.nft_in_campaign(campaign_app_id)]
 
             params_txn = client.suggested_params()
@@ -1429,7 +423,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
         if indexer.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
-            args_list_3 = ["last_milestone", int(com_func.Today_seconds())]
+            args_list_3 = ["last_milestone", int(Today_seconds())]
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
 
@@ -1484,7 +478,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
         total_investors = len(investors_list)
 
         # define the arguments for the transactions
-        arg = ['return payment to investors, milestone rejected', int(com_func.Today_seconds()), int(total_investors)]
+        arg = ['return payment to investors, milestone rejected', int(Today_seconds()), int(total_investors)]
         investors_wallet_address_list = []
 
         # get node parameters
@@ -1494,7 +488,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
         # get the wallet address and the invested amount from the list
         # investments are in microAlgo format
         for investor, investment in investors_list:
-            investor_wallet_address = com_func.get_address_from_application(investor)
+            investor_wallet_address = get_address_from_application(investor)
             investors_wallet_address_list.append(investor_wallet_address)
             arg.append(int(investment/2))
 
@@ -1513,7 +507,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
 def call_asset_destroy(client, asset_id, campaignID):
 
     # define address from private key of creator
-    creator_account = com_func.get_address_from_application(campaignID)
+    creator_account = get_address_from_application(campaignID)
 
     # set suggested params
     params = client.suggested_params()
@@ -1542,10 +536,6 @@ def update_campaign(client, public_address, app_id, title,
                     fund_limit, country, milestone_id, milestones_title, milestone_number, milestone_end_time):
     print("Updating existing campaign....")
 
-    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
-    approval_program_milestone = com_func.compile_program(client, approval_program_source_initial_milestone)
-
     # declare sender
     sender = public_address
 
@@ -1558,14 +548,14 @@ def update_campaign(client, public_address, app_id, title,
     params = client.suggested_params()
 
     # update campaign transaction
-    txn_1 = ApplicationUpdateTxn(sender, params, app_id, approval_program_campaign, clear_program, campaign)
+    txn_1 = ApplicationNoOpTxn(sender, params, app_id, campaign)
 
     # update milestones transactions
     milestone_1 = ["update_details", bytes(milestones_title[0], 'utf-8'), int(milestone_number[0]), int(milestone_end_time[0])]
-    txn_2 = ApplicationUpdateTxn(sender, params, int(milestone_id[0]), approval_program_milestone, clear_program, milestone_1)
+    txn_2 = ApplicationNoOpTxn(sender, params, int(milestone_id[0]), milestone_1)
 
     milestone_2 = ["update_details", bytes(milestones_title[1], 'utf-8'), int(milestone_number[1]), int(milestone_end_time[1])]
-    txn_3 = ApplicationUpdateTxn(sender, params, int(milestone_id[1]), approval_program_milestone, clear_program, milestone_2)
+    txn_3 = ApplicationNoOpTxn(sender, params, int(milestone_id[1]), milestone_2)
 
     # compute group id and put it into each transaction
     print("Grouping transactions...")
@@ -1585,11 +575,7 @@ def update_campaign(client, public_address, app_id, title,
 # Reason for approving/rejecting Campaign
 def approve_reject_campaign(client, public_address, campaign_id, status, ESG):
 
-    approval_program_campaign = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
-
     # if campaign gets rejected ESG == 0, even if the campaign is ESG
-
     print(f"Approving/Rejecting {campaign_id} campaign....")
     # declaring the sender
     sender = public_address
@@ -1598,11 +584,10 @@ def approve_reject_campaign(client, public_address, campaign_id, status, ESG):
     params = client.suggested_params()
 
     if ESG > 1:
-        app_args = ["Approve/Reject ESG Campaign", int(com_func.Today_seconds()), int(status), int(ESG)]
-        print(app_args)
-        txn = ApplicationUpdateTxn(sender, params, campaign_id, approval_program_campaign, clear_program, app_args)
+        app_args = ["Approve/Reject ESG Campaign", int(Today_seconds()), int(status), int(ESG)]
+        txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args)
     else:
-        app_args = ["Approve/Reject Campaign", int(com_func.Today_seconds()), int(status)]
+        app_args = ["Approve/Reject Campaign", int(Today_seconds()), int(status)]
         txn = ApplicationNoOpTxn(sender, params, campaign_id, app_args=app_args)
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
@@ -1630,7 +615,7 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
         params.flat_fee = True
 
         # get the campaign creator address
-        campaign_creator_address = com_func.get_address_from_application(campaign_id)
+        campaign_creator_address = get_address_from_application(campaign_id)
 
         # define the arguments to be passed
         app_args = ["Block Reward Campaign", int(total_investors)]
@@ -1640,7 +625,7 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
         # get the wallet address and the invested amount from the list
         # investments are in microAlgo format
         for investor, investment in investors_list:
-            investor_wallet_address = com_func.get_address_from_application(investor)
+            investor_wallet_address = get_address_from_application(investor)
             account_list.append(investor_wallet_address)
             app_args.append(int(investment))
 
@@ -1664,7 +649,7 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
         # get the wallet address and the invested amount from the list
         # investments are in microAlgo format
         for investor, investment in investors_list:
-            investor_wallet_address = com_func.get_address_from_application(investor)
+            investor_wallet_address = get_address_from_application(investor)
             investors_wallet_address_list.append(investor_wallet_address)
             arg.append(int(investment))
 
@@ -1672,7 +657,7 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
         txn_1 = ApplicationNoOpTxn(sender, params, campaign_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
 
     # delete campaign: Transaction 2
-    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id)
+    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=["Delete Campaign"])
 
     # delete milestones: transaction 3,4
     txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
@@ -1701,7 +686,7 @@ def reject_reward_campaign(client, public_address, campaign_id, reason):
 
     # declaring the addresses
     sender = public_address
-    campaign_creator_address = com_func.get_address_from_application(campaign_id)
+    campaign_creator_address = get_address_from_application(campaign_id)
 
     # get node suggested parameters
     params = client.suggested_params()
@@ -1730,7 +715,7 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     print(f"Deleting {campaign_id} Campaign, {milestone_app_id} milestones and transferring {asset_id} NFT....")
 
     # define address from private key of creator
-    sender = com_func.get_address_from_application(campaign_id)
+    sender = get_address_from_application(campaign_id)
 
     # set suggested params
     params = client.suggested_params()

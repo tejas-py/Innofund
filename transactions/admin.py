@@ -1,6 +1,7 @@
 from algosdk.future import transaction
-import utilities.CommonFunctions as com_func
+from utilities.CommonFunctions import get_address_from_application, wait_for_confirmation
 from algosdk import account, mnemonic, encoding
+from Contracts import admin_contract, teal
 
 
 # Declare application state storage (immutable)
@@ -11,97 +12,14 @@ global_bytes = 5
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
-# Declare approval program source
-approval_program_source_initial = b"""#pragma version 6
-txn ApplicationID
-int 0
-==
-bnz main_l10
-txn OnCompletion
-int NoOp
-==
-bnz main_l5
-txn OnCompletion
-int DeleteApplication
-==
-bnz main_l4
-err
-main_l4:
-int 1
-return
-main_l5:
-txna ApplicationArgs 0
-byte "Withdraw NFT"
-==
-bnz main_l9
-global GroupSize
-int 3
-==
-txna ApplicationArgs 0
-byte "Buy NFT"
-==
-&&
-bnz main_l8
-err
-main_l8:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 1
-itxn_field AssetReceiver
-int 10
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-byte "NFT bought from Cashdillo Market-Place"
-itxn_field Note
-itxn_submit
-int 1
-return
-main_l9:
-itxn_begin
-int axfer
-itxn_field TypeEnum
-txna Accounts 0
-itxn_field AssetReceiver
-int 10
-itxn_field AssetAmount
-txna Assets 0
-itxn_field XferAsset
-int 0
-itxn_field Fee
-byte "NFT withdraw from Cashdillo Market-Place"
-itxn_field Note
-itxn_submit
-int 1
-return
-main_l10:
-txn NumAppArgs
-int 1
-==
-assert
-byte "usertype"
-txna ApplicationArgs 0
-app_global_put
-int 1
-return
-"""
-
-
-# Declare clear state program source
-clear_program_source = b"""#pragma version 5
-int 1
-"""
-
 
 # Generate a new admin account as well as new user id for each user that registers
 def create_admin_account(client, usertype):
     print("Creating admin application...")
 
-    approval_program = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
+    # import smart contract for the application
+    approval_program = teal.to_teal(client, admin_contract.approval_program())
+    clear_program = teal.to_teal(client, admin_contract.clearstate_contract())
 
     private_key, address = account.generate_account()
     print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))
@@ -126,53 +44,51 @@ def create_admin_account(client, usertype):
     signed_txn = txn.sign(private_key)
     tx_id = signed_txn.transaction.get_txid()
     client.send_transactions([signed_txn])
-    com_func.wait_for_confirmation(client, tx_id)
+    wait_for_confirmation(client, tx_id)
     transaction_response = client.pending_transaction_info(tx_id)
     app_id = transaction_response['application-index']
 
     return app_id
 
-
-# update admin details on blockchain
-def update_admin(client, public_address, admin_id, name, usertype, email):
-    print("Updating existing admin....")
-
-    approval_program = com_func.compile_program(client, approval_program_source_initial)
-    clear_program = com_func.compile_program(client, clear_program_source)
-
-    # declare sender
-    sender = public_address
-
-    # get node suggested parameters
-    params = client.suggested_params()
-
-    app_args = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
-
-    # create unsigned transaction
-    txn = transaction.ApplicationUpdateTxn(sender, params, admin_id, approval_program, clear_program, app_args)
-
-    txngrp = [{'txn':encoding.msgpack_encode (txn)}]
-
-    return txngrp
+#
+# # update admin details on blockchain
+# def update_admin(client, public_address, admin_id, name, usertype, email):
+#     print("Updating existing admin....")
+#
+#     approval_program = com_func.compile_program(client, approval_program_source_initial)
+#     clear_program = com_func.compile_program(client, clear_program_source)
+#
+#     # declare sender
+#     sender = public_address
+#
+#     # get node suggested parameters
+#     params = client.suggested_params()
+#
+#     app_args = [bytes(name, 'utf8'), bytes(usertype, 'utf8'), bytes(email, 'utf8')]
+#
+#     # create unsigned transaction
+#     txn = transaction.ApplicationUpdateTxn(sender, params, admin_id, approval_program, clear_program, app_args)
+#
+#     txngrp = [{'txn':encoding.msgpack_encode (txn)}]
+#
+#     return txngrp
 
 
 # call user app and create asset
-def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url, amt):
+def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url, amt=None):
 
     # define address from private key of creator
-    creator_account = com_func.get_address_from_application(user_app_id)
+    creator_account = get_address_from_application(user_app_id)
 
     if usertype == 'creator' or usertype == 'admin':
         # set suggested params
         params = client.suggested_params()
-        params.fee = amt
-        params.flat_fee = True
 
         print("Minting NFT...")
 
         # creating asset: transaction 2
-        txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=10, default_frozen=False,
-                                         unit_name=unit_name, asset_name=asset_name, decimals=1, url=f'{image_url}#i',
+        txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=1, default_frozen=False,
+                                         unit_name=unit_name, asset_name=asset_name, decimals=0, url=f'{image_url}#i',
                                          manager=creator_account, freeze="", reserve=creator_account,
                                          clawback="")
 
@@ -249,8 +165,8 @@ def buy_nft(client, asset_id, user_app_id, nft_price):
 
     # get the wallet address
     admin_app_id = 107294801
-    creator_address = com_func.get_address_from_application(user_app_id)
-    admin_wallet_address = com_func.get_address_from_application(admin_app_id)
+    creator_address = get_address_from_application(user_app_id)
+    admin_wallet_address = get_address_from_application(admin_app_id)
 
     # Optin NFT
     txn_1 = transaction.AssetTransferTxn(
@@ -303,4 +219,3 @@ def buy_nft(client, asset_id, user_app_id, nft_price):
               {'txn': encoding.msgpack_encode(txn_3)}]
 
     return txngrp
-
