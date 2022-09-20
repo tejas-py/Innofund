@@ -178,7 +178,10 @@ def approval_program():
         check_arg_NFT_transfer
     )
 
-    campaign_ends = Seq(App.globalPut(Bytes("campaign_status"), Bytes("inactive")), Approve())
+    campaign_ends = Seq(
+        App.globalPut(Bytes("campaign_status"), Bytes("inactive")),
+        Approve()
+    )
 
     update_esg = Seq(
         App.globalPut(Bytes("ESG"), Txn.application_args[3]),
@@ -192,10 +195,10 @@ def approval_program():
 
     check_campaign_running = If(Btoi(Txn.application_args[1]) < App.globalGet(Bytes("end_time")), args_cond, Reject())
 
-    change_status = Seq([
+    change_status = Seq(
         App.globalPut(Bytes("campaign_status"), Bytes("active")),
         check_campaign_running
-    ])
+    )
 
     # arg 2 is the status of the campaign, 0 = inactive/Reject, 1 = Approve
     check_status = If(Btoi(Txn.application_args[2]) == Int(1), change_status, Approve())
@@ -256,7 +259,7 @@ def approval_program():
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
-        ), campaign_ends, Reject())
+        ), App.globalPut(Bytes("campaign_status"), Bytes("inactive")), Reject())
 
     update_campaign_details = Seq(
         [

@@ -107,6 +107,7 @@ def create_campaign():
                                                                       category, end_time, fund_category, fund_limit,
                                                                       reward_type, country, ESG, milestone_title_lst,
                                                                       milestone_list, end_time_lst)
+                print(campaignID_txn)
                 return jsonify(campaignID_txn), 200
             except Exception as error:
                 error_msg = {"message": str(error)}
@@ -559,18 +560,21 @@ def sub_escrow_to_campaign():
 # admin approves the milestone and investment get transfer to creator
 @app.route('/approve_milestone', methods=["POST"])
 def approve_milestone():
-    # get the details from the user
-    investment_details = request.get_json()
-    campaign_app_id = int(investment_details['campaign_app_id'])
-    milestone_no = investment_details['milestone_number']
-    admin_wallet_address = investment_details['admin_wallet_address']
-    milestone_app_id = int(investment_details['milestone_app_id'])
+    try:
+        # get the details from the user
+        investment_details = request.get_json()
+        campaign_app_id = int(investment_details['campaign_app_id'])
+        milestone_no = investment_details['milestone_number']
+        admin_wallet_address = investment_details['admin_wallet_address']
+        milestone_app_id = int(0)
 
-    """approve_milestone_again = 0 if admin confirms the milestone and checks the NFT amount in the campaign is zero. 
-    approve_milestone_again = 1 if the admin confirms to approve the milestone even if there is an NFT in 
-    the campaign remaining i.e., the investor didn't claim the nft in time"""
+        """approve_milestone_again = 0 if admin confirms the milestone and checks the NFT amount in the campaign is zero. 
+        approve_milestone_again = 1 if the admin confirms to approve the milestone even if there is an NFT in 
+        the campaign remaining i.e., the investor didn't claim the nft in time"""
 
-    approve_milestone_again = int(investment_details['transfer_nft_to_creator'])
+        approve_milestone_again = int(investment_details['transfer_nft_to_creator'])
+    except Exception as error:
+        return str(error)
 
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 2000):

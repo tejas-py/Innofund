@@ -445,9 +445,9 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             params_txn_1.fee = 1000
             params_txn_1.flat_fee = True
 
-            arg = ['3rd Milestone']
+            arg = ['3rd Milestone', int(Today_seconds())]
 
-            txn = ApplicationNoOpTxn(sender, params_txn_1, milestone_app_id, app_args=arg, note="approve")
+            txn = ApplicationNoOpTxn(sender, params_txn_1, campaign_app_id, app_args=arg, note="approve")
             txngrp = [{'txn': encoding.msgpack_encode(txn)}]
             return txngrp
 
