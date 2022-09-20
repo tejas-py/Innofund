@@ -184,6 +184,7 @@ def reject_approve_campaign():
                     return jsonify(reject_campaign_id_txn), 200
 
             except Exception as error:
+                print(error)
                 return jsonify({'message': str(error)}), 500
         else:
             return jsonify({'message': "To Approve campaign, Minimum Balance should be 1000 microAlgos"}), 400
@@ -695,4 +696,4 @@ def campaign_info(campaign_id):
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run(debug=True, port=4000)
