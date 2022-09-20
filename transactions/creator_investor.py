@@ -21,11 +21,13 @@ def create_campaign_app(client, public_address, title,
                         category, end_time, fund_category, fund_limit,
                         reward_type, country, ESG, milestone_title, milestone_number, end_time_milestone):
     print("Creating campaign application...")
-
-    # import smart contract for the application
-    approval_program_campaign = teal.to_teal(client, campaign_contract.approval_program())
-    clear_program = teal.to_teal(client, campaign_contract.clearstate_contract())
-    approval_program_milestone = teal.to_teal(client, milestone_contract.approval_program())
+    try:
+        # import smart contract for the application
+        approval_program_campaign = teal.to_teal(client, campaign_contract.approval_program())
+        clear_program = teal.to_teal(client, campaign_contract.clearstate_contract())
+        approval_program_milestone = teal.to_teal(client, milestone_contract.approval_program())
+    except Exception as eror:
+        print(eror)
 
     # Declaring sender
     sender = public_address
