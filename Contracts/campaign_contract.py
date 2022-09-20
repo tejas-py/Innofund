@@ -133,8 +133,11 @@ def approval_program():
 
     # blocking running campaign
     inner_txn8 = Seq([
-        account_number.store(Int(1)),
-        For(repayment_number.store(Int(2)), repayment_number.load() < Btoi(Txn.application_args[1]), repayment_number.store(repayment_number.load() + Int(1))).Do(
+        repayment_number.store(Int(2)),
+        For(
+            account_number.store(Int(1)), account_number.load() <= Btoi(Txn.application_args[1]),
+            account_number.store(account_number.load() + Int(1))
+            ).Do(
             InnerTxnBuilder.Begin(),
             # Transaction: Return payment to investors
             InnerTxnBuilder.SetFields({
@@ -147,7 +150,7 @@ def approval_program():
             # Submit the transaction
             InnerTxnBuilder.Submit(),
             # Increment Account number
-            account_number.store(account_number.load() + Int(1))
+            repayment_number.store(repayment_number.load() + Int(1))
         ),
         App.globalPut(Bytes("campaign_status"), Bytes("inactive")),
         Approve(),
@@ -334,11 +337,20 @@ def approval_program():
             App.globalGet(Bytes("campaign_status")) == Bytes("inactive")
         ), Approve(), Reject())
 
+    block_delete_campaign_cond = If(
+        App.globalGet(Bytes("campaign_status")) == Bytes("inactive"),
+        Approve(), Reject()
+    )
+
     delete_campaign = Cond(
         [And(
             Global.group_size() == Int(3),
             Txn.application_args[0] == Bytes("Delete Campaign")
-        ), delete_campaign_cond]
+        ), delete_campaign_cond],
+        [And(
+            Global.group_size() == Int(4),
+            Txn.application_args[0] == Bytes("Block/Delete Campaign")
+        ), block_delete_campaign_cond]
     )
 
     program = Cond(

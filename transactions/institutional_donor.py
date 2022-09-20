@@ -13,7 +13,7 @@ def logic_sig(client):
     response = client.compile(data.decode('utf-8'))
     program = base64.decodebytes(response['result'].encode("ascii"))
 
-    arg1 = (123).to_bytes(8, 'big')
+    arg1 = bytes("Donation to Campaign", 'utf-8')
     lsig = transaction.LogicSigAccount(program, args=[arg1])
 
     return lsig
@@ -24,17 +24,16 @@ def transfer_sub_escrow_account(client, campaign_investment, address, note):
 
     # define the total investment and sub-escrow account
     sub_escrow_account = logic_sig(client).address()
-    total_investment = campaign_investment['fee']
+    total_investment = float(campaign_investment['fee'])
 
     # find the total amount for investing
     for campaign_id in campaign_investment['investments']:
         investment = campaign_investment['investments'][campaign_id]
-        total_investment += investment
+        total_investment += float(investment)
 
     # get node suggested parameters
     params = client.suggested_params()
     final_amt = int(total_investment*1000_000)
-    print(final_amt)
     # payment transaction
     txn = transaction.PaymentTxn(sender=address, sp=params, receiver=sub_escrow_account, amt=final_amt, note=note)
 

@@ -38,7 +38,7 @@ def create_account():
                 error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
                 return jsonify(error_msg), 400
         except Exception as wallet_error:
-            error_msg = {"message": wallet_error}
+            error_msg = {"message": "Wallet Error!" + str(wallet_error)}
             return jsonify(error_msg), 400
     else:
         error_msg = {"message": "wrong user type"}
@@ -156,7 +156,7 @@ def update_campaign_details():
             error_msg = {"message": "To update campaign, Minimum Balance should be 3000 microAlgos"}
             return jsonify(error_msg), 400
     except Exception as wallet_error:
-        return jsonify({"message": f"Check Wallet Address, Error: {wallet_error}"}), 400
+        return jsonify({"message": f"Check Wallet Address, Error: {str(wallet_error)}"}), 400
 
 
 # Block/Reject/Approve Campaign
@@ -208,7 +208,8 @@ def block_campaign():
                 txn = creator_investor.block_campaign(algod_client, wallet_address, campaign_app_id, milestone_app_id, note)
                 return jsonify(txn), 200
             except Exception as error:
-                return jsonify({'message': str(error)})
+                print(error)
+                return jsonify({'message': str(error)}), 400
         else:
             return jsonify({'message': "To Block campaign, Minimum Balance should be 4000 microAlgos"}), 400
 
@@ -521,7 +522,6 @@ def multi_investing():
     campaign_investment = investment_details['investments_details']
     address = investment_details['investor_wallet_address']
     note = str(investment_details['meta_data'])
-    print(campaign_investment)
 
     # txn to sub-escrow account
     txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
@@ -540,11 +540,10 @@ def sub_escrow_to_campaign():
 
     # txn from sub-escrow account to escrow account
     txn_ids = []
-    print(campaign_investment['investments'])
     for campaign_app_id in campaign_investment['investments']:
         # amount to transfer to every campaign
         one_investment = campaign_investment['investments'][campaign_app_id]
-        amt = one_investment*10**6
+        amt = float(one_investment)*10**6
         # creating transaction and getting transaction id
         try:
             txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), int(amt), note)

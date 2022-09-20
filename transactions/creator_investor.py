@@ -1,7 +1,7 @@
 from algosdk.future.transaction import *
 import API.connection
 from utilities.CommonFunctions import get_address_from_application, Today_seconds
-from transactions import indexer
+from transactions import indexer as index
 from Contracts import campaign_contract, milestone_contract, teal
 
 # Declare application state storage (immutable)
@@ -235,7 +235,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
 def claim_nft(client, user_app_id, asset_id, campaign_app_id):
 
     # top 10 investors in the campaign
-    top_investors = indexer.list_investors(campaign_app_id)[:10]
+    top_investors = index.list_investors(campaign_app_id)[:10]
 
     # check if the user has invested in the campaign
     for one_investor in top_investors:
@@ -254,7 +254,7 @@ def claim_nft(client, user_app_id, asset_id, campaign_app_id):
             wallet_address = get_address_from_application(user_app_id)
 
             # check if the user has claimed the nft
-            asset_claim_info = indexer.check_claim_nft(user_app_id, campaign_app_id)
+            asset_claim_info = index.check_claim_nft(user_app_id, campaign_app_id)
 
             if asset_claim_info[0]['can_claim_NFT'] == "True" and asset_claim_info[1]['claimed_nft'] == "False":
 
@@ -356,14 +356,14 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
     params.flat_fee = True
 
     # get the total investment amount in campaign
-    campaign_info = indexer.campaign(campaign_app_id)
+    campaign_info = index.campaign(campaign_app_id)
     total_amount_in_campaign = campaign_info['totalInvested']
 
     creator_wallet_address = get_address_from_application(campaign_app_id)
 
     # claim initial milestone money
     if milestone_number == 1:
-        if indexer.check_payment_milestone(campaign_app_id) == "False":
+        if index.check_payment_milestone(campaign_app_id) == "False":
 
             account_lst = [creator_wallet_address]
             args_list = ["Milestone", int(Today_seconds()), int(total_amount_in_campaign / 2)]
@@ -377,13 +377,13 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             return txngrp
 
     # submitting the milestone 1 report for Reward Campaign
-    elif indexer.campaign_type(campaign_app_id) == "Reward" and milestone_number == 2:
+    elif index.campaign_type(campaign_app_id) == "Reward" and milestone_number == 2:
 
-        if indexer.check_payment_milestone(campaign_app_id) == "True":
+        if index.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
             args_list_3 = ["End Reward Milestone", int(Today_seconds())]
-            asset_list = [indexer.nft_in_campaign(campaign_app_id)]
+            asset_list = [index.nft_in_campaign(campaign_app_id)]
 
             params_txn = client.suggested_params()
             params_txn.fee = 3000
@@ -393,7 +393,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             if approve_milestone_again == 0:
 
                 # check the nft amount remaining in the campaign
-                nft_amt_remaining = indexer.nft_amt_in_campaign(campaign_app_id)
+                nft_amt_remaining = index.nft_amt_in_campaign(campaign_app_id)
 
             # if the admin approves the milestone even if NFT is left in the campaign
             else:
@@ -418,9 +418,9 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             return txngrp
 
     # submitting the milestone 1 report for Donation campaign
-    elif indexer.campaign_type(campaign_app_id) == "Donation" and milestone_number == 2:
+    elif index.campaign_type(campaign_app_id) == "Donation" and milestone_number == 2:
 
-        if indexer.check_payment_milestone(campaign_app_id) == "True":
+        if index.check_payment_milestone(campaign_app_id) == "True":
 
             account_lst = [creator_wallet_address]
             args_list_3 = ["last_milestone", int(Today_seconds())]
@@ -436,7 +436,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
     # submitting the milestone 2 report
     elif milestone_number == 3:
-        if indexer.check_payment_milestone_2(campaign_app_id) == "True":
+        if index.check_payment_milestone_2(campaign_app_id) == "True":
 
             print(f"Calling {milestone_app_id}...")
 
@@ -474,7 +474,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
     elif milestone_no == "1":
 
         # get the list of the investors and the number of investors
-        investors_list = indexer.list_investors(campaign_app_id)
+        investors_list = index.list_investors(campaign_app_id)
         total_investors = len(investors_list)
 
         # define the arguments for the transactions
@@ -601,17 +601,16 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
 
     # declaring the addresses
     sender = wallet_address
-    nft_in_campaign = indexer.nft_in_campaign(campaign_id)
+    nft_in_campaign = index.nft_in_campaign(campaign_id)
 
     if nft_in_campaign > 0:
-
         # get the list of the investors and the number of investors
-        investors_list = indexer.list_investors(campaign_id)
+        investors_list = index.list_investors(campaign_id)
         total_investors = len(investors_list)
 
         # get node parameters
         params = client.suggested_params()
-        params.fee = int((1000 * total_investors) + 1000)
+        params.fee = int((1000 * total_investors + 1000) + 1000)
         params.flat_fee = True
 
         # get the campaign creator address
@@ -633,9 +632,8 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
         txn_1 = ApplicationNoOpTxn(sender, params, campaign_id, app_args, note=note, accounts=account_list, foreign_assets=asset_list)
 
     else:
-
         # get the list of the investors and the number of investors
-        investors_list = indexer.list_investors(campaign_id)
+        investors_list = index.list_investors(campaign_id)
         total_investors = len(investors_list)
 
         # define the arguments for the transactions
@@ -644,24 +642,27 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
 
         # get node parameters
         params = client.suggested_params()
-        params.fee = int(1000 * total_investors)
+        params.fee = 1000 * int(total_investors) + 1000
 
         # get the wallet address and the invested amount from the list
         # investments are in microAlgo format
-        for investor, investment in investors_list:
-            investor_wallet_address = get_address_from_application(investor)
+        for investments in investors_list:
+            investor_wallet_address = get_address_from_application(investments['user_app_id'])
             investors_wallet_address_list.append(investor_wallet_address)
-            arg.append(int(investment))
+            arg.append(int(investments['invested']))
 
         # create the transaction object
         txn_1 = ApplicationNoOpTxn(sender, params, campaign_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
 
+    params_txn = client.suggested_params()
+
     # delete campaign: Transaction 2
-    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=["Delete Campaign"])
+    txn_2 = ApplicationDeleteTxn(sender, params_txn, campaign_id, app_args=["Block/Delete Campaign"])
 
     # delete milestones: transaction 3,4
-    txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
-    txn_4 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
+    txn_3 = ApplicationDeleteTxn(sender, params_txn, int(milestone_app_id[0]))
+
+    txn_4 = ApplicationDeleteTxn(sender, params_txn, int(milestone_app_id[1]))
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
@@ -694,7 +695,7 @@ def reject_reward_campaign(client, public_address, campaign_id, reason):
     params.flat_fee = True
 
     # find the asset in the campaign
-    asset_in_campaign = indexer.nft_in_campaign(campaign_id)
+    asset_in_campaign = index.nft_in_campaign(campaign_id)
 
     # define the arguments to be passed
     app_args = ["Reject Reward Campaign"]
@@ -721,7 +722,7 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     params = client.suggested_params()
 
     # if campaign is not yet approved by the admin
-    if indexer.nft_info_in_campaign(campaign_id) > 0 and indexer.campaign_end(campaign_id) == 'not ended':
+    if index.nft_info_in_campaign(campaign_id) > 0 and index.campaign_end(campaign_id) == 'not ended':
 
         # set params for transaction 1
         params_txn1 = client.suggested_params()

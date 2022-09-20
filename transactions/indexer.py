@@ -242,12 +242,11 @@ def check_payment_milestone_again(campaign_app_id):
 def list_investors(campaign_id):
 
     # get the wallet address of the campaign
-    campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + campaign_id.to_bytes(8, 'big')))
+    campaign_wallet_address = encoding.encode_address(encoding.checksum(b'appID' + int(campaign_id).to_bytes(8, 'big')))
 
     # search investment done in campaign
     nft_search = indexerConnection.search_transactions(address=campaign_wallet_address, txn_type="pay")
     transactions = nft_search['transactions']
-    print(transactions)
 
     # create a blank dictionary for loops
     investors_in_campaign = []
@@ -368,7 +367,7 @@ def check_claim_nft(user_app_id, campaign_app_id):
 def nft_in_campaign(campaign_app_id):
 
     # get the address of the campaign
-    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))
+    campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + int(campaign_app_id).to_bytes (8, 'big')))
     asset_id = 0
 
     try:

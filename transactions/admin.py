@@ -90,7 +90,7 @@ def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url,
         txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=1, default_frozen=False,
                                          unit_name=unit_name, asset_name=asset_name, decimals=0, url=f'{image_url}#i',
                                          manager=creator_account, freeze="", reserve=creator_account,
-                                         clawback="")
+                                         clawback="", strict_empty_address_check=False)
 
         result = [{'txn': encoding.msgpack_encode(txn)}]
 
