@@ -259,7 +259,7 @@ def approval_program():
         Or(
             Btoi(Txn.application_args[1]) > App.globalGet(Bytes("end_time")),
             App.globalGet(Bytes("fund_limit")) == App.globalGet(Bytes("total_investment"))
-        ), Approve(), Reject())
+        ), campaign_ends, Reject())
 
     update_campaign_details = Seq(
         [

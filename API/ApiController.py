@@ -569,14 +569,12 @@ def approve_milestone():
     approve_milestone_again = 1 if the admin confirms to approve the milestone even if there is an NFT in 
     the campaign remaining i.e., the investor didn't claim the nft in time"""
 
-    approve_milestone_again = int(investment_details['transfer_nft_to_creator'])
-
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 2000):
             try:
                 # pass the details to the algorand to run the transaction
                 txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no,
-                                                               milestone_app_id, approve_milestone_again)
+                                                               milestone_app_id)
                 return jsonify(txn_details)
             except Exception as error:
                 return str(error), 500

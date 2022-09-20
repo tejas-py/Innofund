@@ -349,6 +349,8 @@ def update_app(client, app_id, investment):
 # Admin Approves the Milestone and send the investment to creator
 def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None, approve_milestone_again=None):
 
+    approve_milestone_again = 0
+
     # create transactions
     print("Creating transactions...")
 
@@ -358,6 +360,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
     params.flat_fee = True
 
     # get the total investment amount in campaign
+    print("he")
     campaign_info = index.campaign(campaign_app_id)
     total_amount_in_campaign = campaign_info['totalInvested']
 
@@ -366,7 +369,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
     # claim initial milestone money
     if milestone_number == 1:
         if index.check_payment_milestone(campaign_app_id) == "False":
-
+            print("he")
             account_lst = [creator_wallet_address]
             args_list = ["Milestone", int(Today_seconds()), int(total_amount_in_campaign / 2)]
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list, note="Milestone 1 money, claimed", accounts=account_lst)
