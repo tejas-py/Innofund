@@ -551,7 +551,7 @@ def sub_escrow_to_campaign():
             txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), int(amt), note)
         except Exception as E:
             return jsonify(str(E)), 500
-        txn_details = {"CampaignAppId": campaign_app_id, "TransactionId": txn_id}
+        txn_details = {"campaignAppId": int(campaign_app_id), "transactionId": txn_id}
         # appending multiple transaction id
         txn_ids.append(txn_details)
     return jsonify(txn_ids), 200
