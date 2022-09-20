@@ -349,8 +349,6 @@ def update_app(client, app_id, investment):
 # Admin Approves the Milestone and send the investment to creator
 def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None, approve_milestone_again=None):
 
-    approve_milestone_again = 0
-
     # create transactions
     print("Creating transactions...")
 

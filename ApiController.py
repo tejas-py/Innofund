@@ -572,7 +572,7 @@ def approve_milestone():
         approve_milestone_again = 1 if the admin confirms to approve the milestone even if there is an NFT in 
         the campaign remaining i.e., the investor didn't claim the nft in time"""
 
-        approve_milestone_again = int(investment_details['transfer_nft_to_creator'])
+        approve_milestone_again = 0
     except Exception as error:
         return str(error)
 
