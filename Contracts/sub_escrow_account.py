@@ -1,11 +1,12 @@
 from pyteal import *
 
 
-def donation_escrow(campaign_app_id, campaign_wallet_address, institutional_donor_wallet):
+def donation_escrow(institutional_donor_wallet):
 
     return_payment = Seq([
         Assert(Txn.type_enum() == TxnType.Payment),
         Assert(Txn.receiver == Txn.accounts[institutional_donor_wallet]),
+        Assert(Txn.amount == Btoi(Txn.application_args[1])),
         Assert(Txn.fee == Int(1000)),
         Approve()
     ])
@@ -13,11 +14,11 @@ def donation_escrow(campaign_app_id, campaign_wallet_address, institutional_dono
     multi_transactions = Seq([
         # Txn_1
         Assert(Gtxn[0].type_enum() == TxnType.ApplicationCall),
-        Assert(Gtxn[0].application_id() == Int(campaign_app_id)),
+        Assert(Gtxn[0].application_id() == Btoi(Txn.application_args[1])),
         Assert(Gtxn[0].application_args[0] == Bytes("update_investment")),
         # Txn_2
         Assert(Gtxn[1].type_enum() == TxnType.Payment),
-        Assert(Gtxn[1].receiver() == campaign_wallet_address),
+        Assert(Gtxn[1].receiver() == Txn.application_args[2]),
         Assert(Gtxn[1].amount() == Gtxn[0].application_args[2]),
         Assert(Txn.fee() <= Int(2000)),
         Approve()

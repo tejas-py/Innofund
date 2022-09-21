@@ -74,6 +74,7 @@ def escrow_campaign(client, campaign_app_id, amount, note):
 
     stxn_2 = transaction.LogicSigTransaction(txn_2, logic_sig(client))
     print("Investor signed txn_2: ", stxn_2.get_txid())
+    payment_transaction_id = stxn_2.get_txid()
 
     # assemble transaction group
     print("Assembling transaction group...")
@@ -86,4 +87,4 @@ def escrow_campaign(client, campaign_app_id, amount, note):
     # wait for confirmation
     CommonFunctions.wait_for_confirmation(client, tx_id)
 
-    return str(tx_id)
+    return str(payment_transaction_id)
