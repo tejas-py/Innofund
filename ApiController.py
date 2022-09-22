@@ -525,10 +525,13 @@ def multi_investing():
     address = investment_details['investor_wallet_address']
     note = str(investment_details['meta_data'])
 
-    # txn to sub-escrow account
-    txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
+    try:
+        # txn to sub-escrow account
+        txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
 
-    return jsonify(txn), 200
+        return jsonify(txn), 200
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
 
 
 # Transaction from sub-escrow account to campaign account
