@@ -3,35 +3,47 @@ from pyteal import *
 
 def donation_escrow(institutional_donor_wallet):
 
-    return_payment = Seq([
+    return_payment = Seq(
         Assert(Txn.type_enum() == TxnType.Payment),
-        Assert(Txn.receiver == Txn.accounts[institutional_donor_wallet]),
-        Assert(Txn.amount == Btoi(Txn.application_args[1])),
-        Assert(Txn.fee == Int(1000)),
+        Assert(Txn.receiver() == Addr(institutional_donor_wallet)),
+        Assert(Txn.amount() == Btoi(Txn.application_args[1])),
+        Assert(Txn.fee() <= Int(1000)),
+        Assert(Global.group_size() == Int(1)),
         Approve()
-    ])
+    )
 
     multi_transactions = Seq([
         # Txn_1
         Assert(Gtxn[0].type_enum() == TxnType.ApplicationCall),
         Assert(Gtxn[0].application_id() == Btoi(Txn.application_args[1])),
         Assert(Gtxn[0].application_args[0] == Bytes("update_investment")),
+        Assert(Gtxn[0].fee() <= Int(1000)),
         # Txn_2
         Assert(Gtxn[1].type_enum() == TxnType.Payment),
         Assert(Gtxn[1].receiver() == Txn.application_args[2]),
-        Assert(Gtxn[1].amount() == Gtxn[0].application_args[2]),
-        Assert(Txn.fee() <= Int(2000)),
+        Assert(Gtxn[1].amount() == Btoi(Gtxn[0].application_args[2])),
+        Assert(Gtxn[1].fee() <= Int(1000)),
         Approve()
     ])
 
-    program = Cond(
-        # Condition 1
-        [And(
-            Global.group_size() == Int(2),
-            Txn.application_args[0] == Bytes("Donation to Campaign")
-        ), multi_transactions],
-        # Condition 2
-        [Txn.application_args[0] == Bytes("Donation payment failed, Return payment to donors"), return_payment],
+    program = Seq(
+        Assert(Txn.rekey_to() == Global.zero_address()),
+        Assert(Txn.close_remainder_to() == Global.zero_address()),
+        Cond(
+            # Condition 1
+            [And(
+                Global.group_size() == Int(2),
+                Txn.application_args[0] == Bytes("Donation to Campaign")
+            ), multi_transactions],
+            # Condition 2
+            [Txn.application_args[0] == Bytes("Donation payment failed, Return payment to donors"), return_payment],
+        )
     )
 
     return program
+
+
+if __name__ == "__main__":
+    with open("../utilities/sub_escrow_account/test_escrow.teal", "w") as f:
+        compiled = compileTeal(donation_escrow("QLB57Q3SDZZAFPF6D6Y6NEZNIGIS2QCAWW52YDYEF33TTD5KOXKNLOU3LQ"), mode=Mode.Signature, version=6)
+        f.write(compiled)

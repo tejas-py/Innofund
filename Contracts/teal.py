@@ -17,7 +17,6 @@ def to_teal(client, smart_contract):
     return prog_campaign
 
 
-# convert pyteal to teal (signature)
 def to_teal_sign(client, smart_contract):
 
     # First convert the PyTeal to TEAL
@@ -30,3 +29,4 @@ def to_teal_sign(client, smart_contract):
     prog_campaign = encoding.base64.b64decode(b64_campaign)
 
     return prog_campaign
+

@@ -8,6 +8,7 @@ import time
 
 # connect to indexer
 myindexer = connection.connect_indexer()
+algodclient = connection.algo_conn()
 
 
 # compile program used to compile the source code, used when new application is created
@@ -79,8 +80,9 @@ def to_json(json_file):
 
 
 def check_balance(wallet_address, amt):
-    account_info = myindexer.account_info(wallet_address)
-    balance = account_info['account']['amount']
+    account_i = algodclient.account_info(wallet_address)
+    balance = account_i['min-balance']
+
     if balance >= amt:
         return True
     else:
@@ -94,4 +96,3 @@ def check_asset(asset_id):
             return "Asset exist"
     except Exception as e:
         return e
-

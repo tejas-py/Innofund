@@ -116,7 +116,7 @@ def create_campaign():
             error_msg = {"message": "To create campaign, Minimum Balance should be 3000 microAlgos"}
             return jsonify(error_msg), 400
     except Exception as wallet_error:
-        error_msg = {"message": wallet_error}
+        error_msg = {"message": str(wallet_error)}
         return jsonify(error_msg), 400
 
 
