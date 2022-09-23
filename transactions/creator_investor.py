@@ -21,13 +21,11 @@ def create_campaign_app(client, public_address, title,
                         category, end_time, fund_category, fund_limit,
                         reward_type, country, ESG, milestone_title, milestone_number, end_time_milestone):
     print("Creating campaign application...")
-    try:
-        # import smart contract for the application
-        approval_program_campaign = teal.to_teal(client, campaign_contract.approval_program())
-        clear_program = teal.to_teal(client, campaign_contract.clearstate_contract())
-        approval_program_milestone = teal.to_teal(client, milestone_contract.approval_program())
-    except Exception as eror:
-        print(eror)
+
+    # import smart contract for the application
+    approval_program_campaign = teal.to_teal(client, campaign_contract.approval_program())
+    clear_program = teal.to_teal(client, campaign_contract.clearstate_contract())
+    approval_program_milestone = teal.to_teal(client, milestone_contract.approval_program())
 
     # Declaring sender
     sender = public_address
@@ -724,36 +722,20 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     # set suggested params
     params = client.suggested_params()
 
-    # if campaign is not yet approved by the admin
-    if index.nft_info_in_campaign(campaign_id) > 0 and index.campaign_end(campaign_id) == 'not ended':
+    # set params for transaction 1
+    params_txn1 = client.suggested_params()
+    params_txn1.fee = 2000
+    params_txn1.flat_fee = True
 
-        # set params for transaction 1
-        params_txn1 = client.suggested_params()
-        params_txn1.fee = 2000
-        params_txn1.flat_fee = True
+    # define arguments
+    args_list = ["Transfer NFT to Creator"]
+    asset_list = [asset_id]
 
-        # define arguments
-        args_list = ["Transfer NFT to Creator"]
-        asset_list = [asset_id]
-
-        # define txn
-        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list)
-
-    # if the campaign is ended and nfts are claimed by the investors
-    else:
-
-        # set params for transaction 1
-        params_txn1 = client.suggested_params()
-        params_txn1.fee = 1000
-        params_txn1.flat_fee = True
-
-        args_list = ['delete campaign']
-
-        # define txn
-        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list)
+    # define txn
+    txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list)
 
     # delete campaign: Transaction 2
-    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=['Delete Campaign'])
+    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=['Block/Delete Campaign'])
 
     # delete milestones: transaction 3,4
     txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
