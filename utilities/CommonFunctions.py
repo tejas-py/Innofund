@@ -1,4 +1,4 @@
-from algosdk import mnemonic, account
+from algosdk import mnemonic
 import base64
 import os
 from API import connection
@@ -81,9 +81,10 @@ def to_json(json_file):
 
 def check_balance(wallet_address, amt):
     account_i = algodclient.account_info(wallet_address)
-    balance = account_i['min-balance']
+    min_balance = account_i['min-balance']
+    balance = account_i['amount']
 
-    if balance >= amt:
+    if balance >= amt and balance > min_balance:
         return True
     else:
         return False
