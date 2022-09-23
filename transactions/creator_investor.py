@@ -731,28 +731,71 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     args_list = ["Transfer NFT to Creator"]
     asset_list = [asset_id]
 
-    # define txn
-    txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list)
+    # if campaign is not yet approved by the admin
+    if index.nft_info_in_campaign(campaign_id) > 0 and index.campaign_end(campaign_id) == 'not ended':
 
-    # delete campaign: Transaction 2
-    txn_2 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=['Block/Delete Campaign'])
+        # set params for transaction 1
+        params_txn1 = client.suggested_params()
+        params_txn1.fee = 2000
+        params_txn1.flat_fee = True
 
-    # delete milestones: transaction 3,4
-    txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
-    txn_4 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
+        # define arguments
+        args_list = ["Transfer NFT to Creator"]
+        asset_list = [asset_id]
 
-    print("Grouping transactions...")
-    # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
-    print("...computed groupId: ", group_id)
-    txn_1.group = group_id
-    txn_2.group = group_id
-    txn_3.group = group_id
-    txn_4.group = group_id
+        # define txn
+        txn_1 = ApplicationNoOpTxn(sender=sender, sp=params_txn1, index=campaign_id, app_args=args_list, foreign_assets=asset_list)
 
-    txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
-              {'txn': encoding.msgpack_encode(txn_2)},
-              {'txn': encoding.msgpack_encode(txn_3)},
-              {'txn': encoding.msgpack_encode(txn_4)}]
+        # delete campaign: Transaction 2
+        txn_2 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=['Block/Delete Campaign'])
 
-    return txngrp
+        # delete milestones: transaction 3,4
+        txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
+        txn_4 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
+
+        print("Grouping transactions...")
+        # compute group id and put it into each transaction
+        group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+        print("...computed groupId: ", group_id)
+        txn_1.group = group_id
+        txn_2.group = group_id
+        txn_3.group = group_id
+        txn_4.group = group_id
+
+        txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+                  {'txn': encoding.msgpack_encode(txn_2)},
+                  {'txn': encoding.msgpack_encode(txn_3)},
+                  {'txn': encoding.msgpack_encode(txn_4)}]
+
+        return txngrp
+
+    # if the campaign is ended and nfts are claimed by the investors
+    else:
+
+        # set params for transaction 1
+        params_txn1 = client.suggested_params()
+        params_txn1.fee = 1000
+        params_txn1.flat_fee = True
+
+        args_list = ['Delete Campaign', int(Today_seconds())]
+
+        # delete campaign: Transaction 2
+        txn_1 = ApplicationDeleteTxn(sender, params, campaign_id, app_args=args_list)
+
+        # delete milestones: transaction 3,4
+        txn_2 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[0]))
+        txn_3 = ApplicationDeleteTxn(sender, params, int(milestone_app_id[1]))
+
+        print("Grouping transactions...")
+        # compute group id and put it into each transaction
+        group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+        print("...computed groupId: ", group_id)
+        txn_1.group = group_id
+        txn_2.group = group_id
+        txn_3.group = group_id
+
+        txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
+                  {'txn': encoding.msgpack_encode(txn_2)},
+                  {'txn': encoding.msgpack_encode(txn_3)}]
+
+        return txngrp
