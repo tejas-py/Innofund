@@ -454,11 +454,11 @@ def campaign_nft():
                 txn_id = creator_investor.nft_to_campaign(algod_client, asset_id, campaign_id)
                 return jsonify(txn_id), 200
             except Exception as error:
-                return str(error), 500
+                return jsonify({'message': str(error)}), 500
         else:
-            return "To assign NFT to a campaign, Minimum Balance should be 3000 microAlgos", 400
+            return jsonify({'message': "To assign NFT to a campaign, Minimum Balance should be 3000 microAlgos"}), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # Transfer NFT from Campaign Creator to Investor
@@ -480,11 +480,11 @@ def clamming_nft():
                                                          asset_id, campaign_app_id)
                 return jsonify(txn_details), 200
             except Exception as error:
-                return str(error), 500
+                return jsonify({'message': str(error)}), 500
         else:
-            return f"To transfer {asset_id} NFT, Minimum Balance should be 3000 microAlgos", 400
+            return jsonify({'message': f"To transfer {asset_id} NFT, Minimum Balance should be 3000 microAlgos"}), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # destroy asset, Group transaction: (campaign call app and destroy asset)
@@ -509,9 +509,18 @@ def investing():
     investor_account = participation_details['investor_wallet_address']
     meta_data = str(participation_details['metadata'])
 
-    participationID = creator_investor.update_call_app(algod_client, campaignID,
-                                                       investment, investor_account, meta_data)
-    return jsonify(participationID), 200
+    try:
+        if CommonFunctions.check_balance(investor_account, 2000+investment):
+            try:
+                participationID = creator_investor.update_call_app(algod_client, campaignID,
+                                                                   investment, investor_account, meta_data)
+                return jsonify(participationID), 200
+            except Exception as error:
+                return jsonify({'message': str(error)}), 500
+        else:
+            return jsonify({'message': 'Wallet balance low!'}), 500
+    except Exception as error:
+        return jsonify({'message': f'Wallet error! {error}'}), 400
 
 
 # Investment by Institutional Donors
@@ -525,13 +534,27 @@ def multi_investing():
     address = investment_details['investor_wallet_address']
     note = str(investment_details['meta_data'])
 
-    try:
-        # txn to sub-escrow account
-        txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
+    # define the total investment and sub-escrow account
+    total_investment = float(campaign_investment['fee'])
 
-        return jsonify(txn), 200
+    # find the total amount for investing
+    for campaign_id in campaign_investment['investments']:
+        investment = campaign_investment['investments'][campaign_id]
+        total_investment += float(investment)
+
+    try:
+        if CommonFunctions.check_balance(address, total_investment):
+            try:
+                # txn to sub-escrow account
+                txn = institutional_donor.transfer_sub_escrow_account(algod_client, total_investment*1000_000, address, note)
+
+                return jsonify(txn), 200
+            except Exception as error:
+                return jsonify({'message': str(error)}), 500
+        else:
+            return jsonify({'message': 'Wallet balance low'}), 400
     except Exception as error:
-        return jsonify({'message': str(error)}), 500
+        return jsonify({'message': f"Wallet error! {error}"}), 400
 
 
 # Transaction from sub-escrow account to campaign account
@@ -553,7 +576,7 @@ def sub_escrow_to_campaign():
         try:
             txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), int(amt), note)
         except Exception as E:
-            return jsonify(str(E)), 500
+            return jsonify({'message': str(E), 'investments_details': txn_ids}), 500
         txn_details = {"campaignAppId": int(campaign_app_id), "transactionId": txn_id}
         # appending multiple transaction id
         txn_ids.append(txn_details)
@@ -577,7 +600,7 @@ def approve_milestone():
 
         approve_milestone_again = 0
     except Exception as error:
-        return str(error)
+        return jsonify({'message': str(error)}), 400
 
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 2000):
@@ -587,11 +610,11 @@ def approve_milestone():
                                                                milestone_app_id, approve_milestone_again)
                 return jsonify(txn_details)
             except Exception as error:
-                return str(error), 500
+                return jsonify({'message': str(error)}), 500
         else:
-            return "Minimum Balance should be 2000 microAlgos", 400
+            return jsonify({'message': "Minimum Balance should be 2000 microAlgos"}), 400
     except Exception as wallet_error:
-        return f"Check Wallet Address, Error: {wallet_error}", 400
+        return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
 # admin approves the milestone and investment get transfer to creator
@@ -605,9 +628,18 @@ def reject_milestone():
     milestone_number = investment_details['milestone_number']
     note = investment_details['note']
 
-    # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, milestone_number, campaign_app_id, note)
-    return jsonify(txn_details), 200
+    try:
+        if CommonFunctions.check_balance(admin_wallet_address, 1000):
+            try:
+                # pass the details to the algorand to run the transaction
+                txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, milestone_number, campaign_app_id, note)
+                return jsonify(txn_details), 200
+            except Exception as error:
+                return jsonify({'message': str(error)}), 500
+        else:
+            return jsonify({'message': "Wallet balance low!"}), 400
+    except Exception as E:
+        return jsonify({'message': f"Wallet error! {E}"}), 400
 
 
 # admin approves the milestone and investment get transfer to creator
@@ -619,13 +651,21 @@ def milestone1_claim():
     milestone_no = 1
     creator_wallet_address = investment_details['creator_wallet_address']
 
-    # pass the details to the algorand to run the transaction
-    txn_details = creator_investor.pull_investment(algod_client, creator_wallet_address, campaign_app_id, milestone_no)
-
-    if txn_details == {"initial_payment_claimed": "TRUE"}:
-        return jsonify(txn_details), 400
-    else:
-        return jsonify(txn_details), 200
+    try:
+        if CommonFunctions.check_balance(creator_wallet_address, 1000):
+            try:
+                # pass the details to the algorand to run the transaction
+                txn_details = creator_investor.pull_investment(algod_client, creator_wallet_address, campaign_app_id, milestone_no)
+                if txn_details == {"initial_payment_claimed": "TRUE"}:
+                    return jsonify(txn_details), 400
+                else:
+                    return jsonify(txn_details), 200
+            except Exception as error:
+                jsonify({'message': str(error)}), 500
+        else:
+            return jsonify({'message': "Wallet balance low"}), 400
+    except Exception as error:
+        return jsonify({'message': f"Wallet Error! {error}"})
 
 
 # check milestone 1

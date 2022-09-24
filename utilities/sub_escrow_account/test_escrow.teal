@@ -3,54 +3,45 @@ txn RekeyTo
 global ZeroAddress
 ==
 assert
-txn CloseRemainderTo
-global ZeroAddress
-==
-assert
 global GroupSize
 int 2
 ==
-txna ApplicationArgs 0
-byte "Donation to Campaign"
+gtxn 0 TypeEnum
+int appl
+==
+&&
+gtxn 1 TypeEnum
+int pay
 ==
 &&
 bnz main_l4
-txna ApplicationArgs 0
-byte "Donation payment failed, Return payment to donors"
+global GroupSize
+int 1
 ==
-bnz main_l3
-err
-main_l3:
 txn TypeEnum
 int pay
 ==
-assert
+&&
+bnz main_l3
+err
+main_l3:
 txn Receiver
 addr QLB57Q3SDZZAFPF6D6Y6NEZNIGIS2QCAWW52YDYEF33TTD5KOXKNLOU3LQ
 ==
 assert
-txn Amount
-txna ApplicationArgs 1
-btoi
+txn CloseRemainderTo
+addr QLB57Q3SDZZAFPF6D6Y6NEZNIGIS2QCAWW52YDYEF33TTD5KOXKNLOU3LQ
 ==
 assert
 txn Fee
 int 1000
 <=
 assert
-global GroupSize
-int 1
-==
-assert
 int 1
 return
 main_l4:
-gtxn 0 TypeEnum
-int appl
-==
-assert
 gtxn 0 ApplicationID
-txna ApplicationArgs 1
+gtxna 0 ApplicationArgs 3
 btoi
 ==
 assert
@@ -62,12 +53,8 @@ gtxn 0 Fee
 int 1000
 <=
 assert
-gtxn 1 TypeEnum
-int pay
-==
-assert
 gtxn 1 Receiver
-txna ApplicationArgs 2
+gtxna 0 Accounts 1
 ==
 assert
 gtxn 1 Amount
