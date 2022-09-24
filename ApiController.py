@@ -534,23 +534,15 @@ def multi_investing():
     address = investment_details['investor_wallet_address']
     note = str(investment_details['meta_data'])
 
-    # define the total investment and sub-escrow account
-    total_investment = float(campaign_investment['fee'])
-
-    # find the total amount for investing
-    for campaign_id in campaign_investment['investments']:
-        investment = campaign_investment['investments'][campaign_id]
-        total_investment += float(investment)
-
     try:
-        if CommonFunctions.check_balance(address, total_investment):
+        if CommonFunctions.check_balance(address, 1000):
             try:
                 # txn to sub-escrow account
-                txn = institutional_donor.transfer_sub_escrow_account(algod_client, total_investment*1000_000, address, note)
+                txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
 
                 return jsonify(txn), 200
             except Exception as error:
-                return jsonify({'message': str(error)}), 500
+                return jsonify({'message': f"Internal Error! {error}"}), 500
         else:
             return jsonify({'message': 'Wallet balance low'}), 400
     except Exception as error:

@@ -20,16 +20,23 @@ def logic_sig(client):
 
 
 # transactions from institutional donor to sub-escrow account
-def transfer_sub_escrow_account(client, total_investment, address, note):
+def transfer_sub_escrow_account(client, campaign_investment, address, note):
 
     # define the total investment and sub-escrow account
     sub_escrow_account = logic_sig(client).address()
+    # define the total investment and sub-escrow account
+    total_investment = float(campaign_investment['fee'])
+
+    # find the total amount for investing
+    for campaign_id in campaign_investment['investments']:
+        investment = campaign_investment['investments'][campaign_id]
+        total_investment += float(investment)
 
     # get node suggested parameters
     params = client.suggested_params()
 
     # payment transaction
-    txn = transaction.PaymentTxn(sender=address, sp=params, receiver=sub_escrow_account, amt=total_investment, note=note)
+    txn = transaction.PaymentTxn(sender=address, sp=params, receiver=sub_escrow_account, amt= int(total_investment)*1000_000, note=note)
 
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
