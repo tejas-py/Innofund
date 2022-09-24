@@ -510,7 +510,7 @@ def investing():
     meta_data = str(participation_details['metadata'])
 
     try:
-        if CommonFunctions.check_balance(investor_account, 2000+investment):
+        if CommonFunctions.check_balance(investor_account, 2000+investment) and investment != 0:
             try:
                 participationID = creator_investor.update_call_app(algod_client, campaignID,
                                                                    investment, investor_account, meta_data)
