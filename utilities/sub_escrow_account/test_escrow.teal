@@ -3,6 +3,10 @@ txn RekeyTo
 global ZeroAddress
 ==
 assert
+txn CloseRemainderTo
+global ZeroAddress
+==
+assert
 global GroupSize
 int 2
 ==
@@ -29,10 +33,6 @@ txn Receiver
 addr QLB57Q3SDZZAFPF6D6Y6NEZNIGIS2QCAWW52YDYEF33TTD5KOXKNLOU3LQ
 ==
 assert
-txn CloseRemainderTo
-addr QLB57Q3SDZZAFPF6D6Y6NEZNIGIS2QCAWW52YDYEF33TTD5KOXKNLOU3LQ
-==
-assert
 txn Fee
 int 1000
 <=
@@ -54,7 +54,7 @@ int 1000
 <=
 assert
 gtxn 1 Receiver
-gtxna 0 Accounts 1
+gtxna 0 Accounts 0
 ==
 assert
 gtxn 1 Amount

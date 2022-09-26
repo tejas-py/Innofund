@@ -553,10 +553,14 @@ def multi_investing():
 @app.route('/transfer_to_campaign', methods=['POST'])
 def sub_escrow_to_campaign():
 
-    # get the details
-    transaction_details = request.get_json()
-    campaign_investment = transaction_details['investments_details']
-    note = str(transaction_details['meta_data'])
+    try:
+        # get the details
+        transaction_details = request.get_json()
+        campaign_investment = transaction_details['investments_details']
+        note = str(transaction_details['meta_data'])
+        address = transaction_details['investor_wallet_address']
+    except Exception as error:
+        return {'message': str(error)}, 500
 
     # txn from sub-escrow account to escrow account
     txn_ids = []
@@ -566,7 +570,7 @@ def sub_escrow_to_campaign():
         amt = float(one_investment)*10**6
         # creating transaction and getting transaction id
         try:
-            txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), int(amt), note)
+            txn_id = institutional_donor.escrow_campaign(algod_client, address, int(campaign_app_id), int(amt), note)
         except Exception as E:
             return jsonify({'message': str(E), 'investments_details': txn_ids}), 500
         txn_details = {"campaignAppId": int(campaign_app_id), "transactionId": txn_id}

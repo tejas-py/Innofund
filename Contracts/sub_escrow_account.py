@@ -5,7 +5,6 @@ def donation_escrow(institutional_donor_wallet):
 
     return_payment = Seq(
         Assert(Txn.receiver() == Addr(institutional_donor_wallet)),
-        Assert(Txn.close_remainder_to() == Addr(institutional_donor_wallet)),
         Assert(Txn.fee() <= Int(1000)),
         Approve()
     )
@@ -16,7 +15,7 @@ def donation_escrow(institutional_donor_wallet):
         Assert(Gtxn[0].application_args[0] == Bytes("update_investment")),
         Assert(Gtxn[0].fee() <= Int(1000)),
         # Txn_2
-        Assert(Gtxn[1].receiver() == Gtxn[0].accounts[1]),
+        # Assert(Gtxn[1].receiver() == Gtxn[0].accounts[0]),
         Assert(Gtxn[1].amount() == Btoi(Gtxn[0].application_args[2])),
         Assert(Gtxn[1].fee() <= Int(1000)),
         Approve()
@@ -24,6 +23,7 @@ def donation_escrow(institutional_donor_wallet):
 
     program = Seq(
         Assert(Txn.rekey_to() == Global.zero_address()),
+        Assert(Txn.close_remainder_to() == Global.zero_address()),
         Cond(
             # Condition 1
             [And(
