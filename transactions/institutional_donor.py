@@ -25,7 +25,6 @@ def transfer_sub_escrow_account(client, campaign_investment, address, note):
     sub_escrow_account = logic_sig(client, address).address()
     # define the total investment and sub-escrow account
     total_investment = float(campaign_investment['fee'])
-    print(total_investment)
 
     # find the total amount for investing
     for campaign_id in campaign_investment['investments']:
