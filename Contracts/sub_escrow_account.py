@@ -40,9 +40,3 @@ def donation_escrow(institutional_donor_wallet):
     )
 
     return program
-
-
-if __name__ == "__main__":
-    with open("../utilities/sub_escrow_account/test_escrow.teal", "w") as f:
-        compiled = compileTeal(donation_escrow("QLB57Q3SDZZAFPF6D6Y6NEZNIGIS2QCAWW52YDYEF33TTD5KOXKNLOU3LQ"), mode=Mode.Signature, version=6)
-        f.write(compiled)

@@ -286,9 +286,7 @@ def mint_nft():
     unit_name = mint_asset['unit_name']
     asset_name = mint_asset['asset_name']
     meta_hash = mint_asset['image_hash']
-    NFT_price = mint_asset['NFT_price']
-    # meta = mint_asset['hash']
-    # b_meta = bytes(meta, 'utf-8')
+    description = mint_asset['description']
 
     address = CommonFunctions.get_address_from_application(app_id)
 
@@ -297,13 +295,13 @@ def mint_nft():
             try:
                 # pass the details to algorand to mint asset
                 asset_txn = admin.admin_asset(algod_client, usertype, app_id,
-                                              unit_name, asset_name, meta_hash, NFT_price)
+                                              unit_name, asset_name, meta_hash, description)
 
                 return jsonify(asset_txn), 200
             except Exception as error:
                 return jsonify({'message': str(error)}), 500
         else:
-            return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos"}), 400
+            return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000 microAlgos"}), 400
     except Exception as wallet_error:
         return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
 

@@ -1,3 +1,4 @@
+import json
 from algosdk.future import transaction
 from utilities.CommonFunctions import get_address_from_application, wait_for_confirmation
 from algosdk import account, mnemonic, encoding
@@ -75,7 +76,7 @@ def create_admin_account(client, usertype):
 
 
 # call user app and create asset
-def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url, amt=None):
+def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url, description):
 
     # define address from private key of creator
     creator_account = get_address_from_application(user_app_id)
@@ -86,11 +87,26 @@ def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url,
 
         print("Minting NFT...")
 
+        # note
+        json_object = {
+            'standard': 'arc69',
+            'description': description,
+            'external_url': image_url,
+            'properties': {
+                'from': 'www.cashdillo.com',
+                'set': 'True',
+                'type': 'Reward',
+                'name': asset_name,
+                'image': image_url
+            }
+        }
+        note_field = json.dumps(json_object)
+
         # creating asset: transaction 2
         txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=1, default_frozen=False,
-                                         unit_name=unit_name, asset_name=asset_name, decimals=0, url=f'{image_url}#i',
+                                         unit_name=unit_name, asset_name=asset_name, decimals=0, url=image_url,
                                          manager=creator_account, freeze="", reserve=creator_account,
-                                         clawback="", strict_empty_address_check=False)
+                                         clawback="", strict_empty_address_check=False, note=note_field.encode())
 
         result = [{'txn': encoding.msgpack_encode(txn)}]
 
