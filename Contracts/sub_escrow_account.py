@@ -15,7 +15,6 @@ def donation_escrow(institutional_donor_wallet):
         Assert(Gtxn[0].application_args[0] == Bytes("update_investment")),
         Assert(Gtxn[0].fee() <= Int(1000)),
         # Txn_2
-        # Assert(Gtxn[1].receiver() == Gtxn[0].accounts[0]),
         Assert(Gtxn[1].amount() == Btoi(Gtxn[0].application_args[2])),
         Assert(Gtxn[1].fee() <= Int(1000)),
         Approve()
