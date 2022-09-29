@@ -441,7 +441,10 @@ def campaign_type(campaign_id):
         key = one_arg['key']
         if "ZnVuZGluZ19jYXRlZ29yeQ==" == key:
             value = one_arg['value']['bytes']
-            fund_category = str(base64.b64decode(value)).replace('b\'', "").replace('\'', "")
+            print("value", value)
+            fund_category = str(base64.b64decode(value)).replace("b'6", "6").replace("'", "")
+            print("test", fund_category)
+            print("f", str(base64.b64decode(value)))
 
             if fund_category == donation[0] or fund_category == donation[1]:
                 return "Donation"
@@ -476,3 +479,7 @@ def campaign_end(campaign_app_id):
         return "ended"
     else:
         return "not ended"
+
+
+campaign_type(113552758)
+

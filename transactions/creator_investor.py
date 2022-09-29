@@ -377,6 +377,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
     # submitting the milestone 1 report for Reward Campaign
     elif index.campaign_type(campaign_app_id) == "Reward" and milestone_number == 2:
+        print("here")
 
         if index.check_payment_milestone(campaign_app_id) == "True":
 
@@ -454,7 +455,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             txngrp = {"Milestone Status": "Milestone 2 has not been approved yet"}
             return txngrp
     else:
-        return "Wrong input"
+        return {'message': "wrong input"}
 
 
 def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_app_id, note):
