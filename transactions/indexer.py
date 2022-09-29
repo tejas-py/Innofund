@@ -308,13 +308,10 @@ def check_claim_nft(user_app_id, campaign_app_id):
     nft_user_details = []
 
     # check if the user can claim nft
-    if list_len > 0:
-        # check if the user has invested in the campaign
-        for one_investment_info in top_investors:
-            if user_app_id == one_investment_info['user_app_id']:
-                result = {"can_claim_NFT": "True"}
-                nft_user_details.append(result)
-                break
+    if list_len > 0 and top_investor == user_app_id:
+        result = {"can_claim_NFT": "True"}
+        nft_user_details.append(result)
+
     else:
         final_result = {"can_claim_NFT": "False"}
         nft_user_details.append(final_result)
@@ -324,12 +321,13 @@ def check_claim_nft(user_app_id, campaign_app_id):
         if nft_user_details[0]['can_claim_NFT'] == "True":
 
             # get the address of the user and the nft of the campaign
-            user_wallet_address = utilities.CommonFunctions.get_address_from_application(user_app_id)
+            user_wallet_address = utilities.CommonFunctions.get_address_from_application(top_investor)
             nft_asset_id = nft_in_campaign(campaign_app_id)
 
             # has the user claim the nft
             try:
-                txns = indexerConnection.search_transactions(address=user_wallet_address, address_role='receiver', asset_id=nft_asset_id)['transactions']
+                txns = indexerConnection.search_transactions(address=user_wallet_address, address_role='receiver',
+                                                             asset_id=nft_asset_id)['transactions']
                 # transaction for claimed NFT
                 if len(txns) > 0:
                     for one_txn in txns:
