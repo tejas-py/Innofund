@@ -286,9 +286,7 @@ def mint_nft():
     unit_name = mint_asset['unit_name']
     asset_name = mint_asset['asset_name']
     meta_hash = mint_asset['image_hash']
-    NFT_price = mint_asset['NFT_price']
-    # meta = mint_asset['hash']
-    # b_meta = bytes(meta, 'utf-8')
+    description = mint_asset['description']
 
     address = CommonFunctions.get_address_from_application(app_id)
 
@@ -297,13 +295,13 @@ def mint_nft():
             try:
                 # pass the details to algorand to mint asset
                 asset_txn = admin.admin_asset(algod_client, usertype, app_id,
-                                              unit_name, asset_name, meta_hash, NFT_price)
+                                              unit_name, asset_name, meta_hash, description)
 
                 return jsonify(asset_txn), 200
             except Exception as error:
                 return jsonify({'message': str(error)}), 500
         else:
-            return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000+{NFT_price} microAlgos"}), 400
+            return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000 microAlgos"}), 400
     except Exception as wallet_error:
         return jsonify({'message': f"Check Wallet Address, Error: {wallet_error}"}), 400
 
@@ -553,10 +551,14 @@ def multi_investing():
 @app.route('/transfer_to_campaign', methods=['POST'])
 def sub_escrow_to_campaign():
 
-    # get the details
-    transaction_details = request.get_json()
-    campaign_investment = transaction_details['investments_details']
-    note = str(transaction_details['meta_data'])
+    try:
+        # get the details
+        transaction_details = request.get_json()
+        campaign_investment = transaction_details['investments_details']
+        note = str(transaction_details['meta_data'])
+        address = transaction_details['investor_wallet_address']
+    except Exception as error:
+        return {'message': str(error)}, 500
 
     # txn from sub-escrow account to escrow account
     txn_ids = []
@@ -566,7 +568,7 @@ def sub_escrow_to_campaign():
         amt = float(one_investment)*10**6
         # creating transaction and getting transaction id
         try:
-            txn_id = institutional_donor.escrow_campaign(algod_client, int(campaign_app_id), int(amt), note)
+            txn_id = institutional_donor.escrow_campaign(algod_client, address, int(campaign_app_id), int(amt), note)
         except Exception as E:
             return jsonify({'message': str(E), 'investments_details': txn_ids}), 500
         txn_details = {"campaignAppId": int(campaign_app_id), "transactionId": txn_id}
@@ -598,9 +600,12 @@ def approve_milestone():
         if CommonFunctions.check_balance(admin_wallet_address, 2000):
             try:
                 # pass the details to the algorand to run the transaction
-                txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id, milestone_no,
-                                                               milestone_app_id, approve_milestone_again)
-                return jsonify(txn_details)
+                txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id,
+                                                               milestone_no, milestone_app_id, approve_milestone_again)
+                if txn_details[0]['txn']:
+                    return jsonify(txn_details), 200
+                else:
+                    return jsonify(txn_details), 400
             except Exception as error:
                 return jsonify({'message': str(error)}), 500
         else:
@@ -735,4 +740,4 @@ def campaign_info(campaign_id):
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run(debug=False, port=3000)

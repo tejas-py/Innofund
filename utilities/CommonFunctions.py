@@ -81,7 +81,6 @@ def to_json(json_file):
 
 def check_balance(wallet_address, amt):
     account_i = algodclient.account_info(wallet_address)
-    print(account_i)
     min_balance = account_i['min-balance']
     balance = account_i['amount']
 
