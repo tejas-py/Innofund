@@ -22,7 +22,6 @@ def donation_escrow(institutional_donor_wallet):
 
     program = Seq(
         Assert(Txn.rekey_to() == Global.zero_address()),
-        Assert(Txn.close_remainder_to() == Global.zero_address()),
         Cond(
             # Condition 1
             [And(

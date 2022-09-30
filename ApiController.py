@@ -545,8 +545,15 @@ def multi_investing():
     address = investment_details['investor_wallet_address']
     note = str(investment_details['meta_data'])
 
+    # donation amount
+    donation = float(campaign_investment['fee'])
+    # find the total amount for investing
+    for campaign_id in campaign_investment['investments']:
+        investment = campaign_investment['investments'][campaign_id]
+        donation += float(investment)
+
     try:
-        if CommonFunctions.check_balance(address, 1000):
+        if CommonFunctions.check_balance(address, int(donation*1000_000)+1000):
             try:
                 # txn to sub-escrow account
                 txn = institutional_donor.transfer_sub_escrow_account(algod_client, campaign_investment, address, note)
