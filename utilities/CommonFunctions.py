@@ -81,10 +81,11 @@ def to_json(json_file):
 
 def check_balance(wallet_address, amt):
     account_i = algodclient.account_info(wallet_address)
-    min_balance = account_i['min-balance']
+    locked_balance = account_i['min-balance']
     balance = account_i['amount']
+    available_balance = balance - locked_balance
 
-    if balance >= amt and balance > min_balance:
+    if balance >= amt and available_balance > balance+amt:
         return True
     else:
         return False
