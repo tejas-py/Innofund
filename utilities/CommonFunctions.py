@@ -85,7 +85,7 @@ def check_balance(wallet_address, amt):
     balance = account_i['amount']
     available_balance = balance - locked_balance
 
-    if balance >= amt and available_balance > balance+amt:
+    if balance >= amt and available_balance > amt:
         return True
     else:
         return False
