@@ -1,0 +1,49 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+#  pull_request:
+#    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Python Environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+    - name: Install Dependencies
+      run: |
+        python -m pip3 install --upgrade pip3
+        pip3 install -r requirements.txt
+  
+    - name: Run Tests
+      run: |
+        python manage.py test
+  main-deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+    - uses: actions/checkout@v2
+    - name: rsync deployments
+      uses: burnett01/rsync-deployments@5.1
+      with:
+        switches: -avzr --delete
+        path: /
+        REMOTE_PATH: /home/ubuntu/Innofund/
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_KEY: ${{ secrets.EC2_SSH_KEY }}
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: /home/ubuntu/Innofund/python3 ApiController.py
