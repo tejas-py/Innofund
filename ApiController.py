@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+import os
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, institutional_donor
@@ -18,9 +19,15 @@ algod_client = connection.algo_conn()
 # home page
 @app.route('/')
 def home_page():
+    return "<h1>Cashdillo Blockchain Server</h1>"\
+           "<p>Head to the <a href='https://www.cashdillo.com'>Cashdillo</a> website.</p>"
 
-    return "<h1> This is the Cashdillo Blockchain server. </h1>" \
-           "<p> To head to the Cashdillo website, visit: <a href='https://www.cashdillo.com'>Cashdillo</a> </p>"
+
+# favicon
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico')
 
 
 # Create unique id for respective accounts created.
