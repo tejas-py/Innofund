@@ -15,6 +15,14 @@ cors = CORS(app, resources={
 algod_client = connection.algo_conn()
 
 
+# home page
+@app.route('/')
+def home_page():
+
+    return "<h1> This is the Cashdillo Blockchain server. </h1>" \
+           "<p> To head to the Cashdillo website, visit: <a href='https://www.cashdillo.com'>Cashdillo</a> </p>"
+
+
 # Create unique id for respective accounts created.
 @app.route('/create_account', methods=["POST"])
 def create_account():

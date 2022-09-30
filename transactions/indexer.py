@@ -302,7 +302,7 @@ def check_claim_nft(user_app_id, campaign_app_id):
     top_investors = list_investors(campaign_app_id)[:10]
     list_len = len(top_investors)
     # get the top investor
-    top_investor = utilities.CommonFunctions.get_address_from_application(top_investors[0]['user_app_id'])
+    top_investor = top_investors[0]['user_app_id']
 
     # create blank dictionary
     nft_user_details = []

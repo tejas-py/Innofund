@@ -236,7 +236,7 @@ def claim_nft(client, user_app_id, asset_id, campaign_app_id):
 
     # top 10 investors in the campaign
     top_investors = index.list_investors(campaign_app_id)[:10]
-    top_investor = get_address_from_application(top_investors[0]['user_app_id'])
+    top_investor = top_investors[0]['user_app_id']
 
     # check if the user has invested in the campaign
     if top_investor == user_app_id:
