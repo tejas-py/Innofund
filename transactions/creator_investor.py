@@ -1,7 +1,7 @@
 from algosdk.future.transaction import *
 import API.connection
 from utilities.CommonFunctions import get_address_from_application, Today_seconds
-from transactions import indexer as index
+from transactions import index
 from Contracts import campaign_contract, milestone_contract, teal
 
 # Declare application state storage (immutable)
@@ -65,7 +65,7 @@ def create_campaign_app(client, public_address, title,
     print("Grouping transactions...")
 
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+    group_id = calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
@@ -95,7 +95,7 @@ def start_milestones(client, campaign_app_id, milestone_app_id, milestone_title,
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    group_id = calculate_group_id([txn_1, txn_2])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
@@ -218,7 +218,7 @@ def nft_to_campaign(client, asset_id, campaign_id):
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+    group_id = calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
@@ -270,7 +270,7 @@ def claim_nft(client, user_app_id, asset_id, campaign_app_id):
 
             print("Grouping transactions...")
             # compute group id and put it into each transaction
-            group_id = transaction.calculate_group_id([txn_1, txn_2])
+            group_id = calculate_group_id([txn_1, txn_2])
             print("...computed groupId: ", group_id)
             txn_1.group = group_id
             txn_2.group = group_id
@@ -311,7 +311,7 @@ def update_call_app(client, campaignID, investment, investor_account, meta_data)
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    group_id = calculate_group_id([txn_1, txn_2])
     txn_1.group = group_id
     txn_2.group = group_id
 
@@ -559,7 +559,7 @@ def update_campaign(client, public_address, app_id, title,
 
     # compute group id and put it into each transaction
     print("Grouping transactions...")
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+    group_id = calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
@@ -666,7 +666,7 @@ def block_campaign(client, wallet_address, campaign_id, milestone_app_id, note):
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+    group_id = calculate_group_id([txn_1, txn_2, txn_3, txn_4])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
@@ -754,7 +754,7 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
 
         print("Grouping transactions...")
         # compute group id and put it into each transaction
-        group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3, txn_4])
+        group_id = calculate_group_id([txn_1, txn_2, txn_3, txn_4])
         print("...computed groupId: ", group_id)
         txn_1.group = group_id
         txn_2.group = group_id
@@ -787,7 +787,7 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
 
         print("Grouping transactions...")
         # compute group id and put it into each transaction
-        group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+        group_id = calculate_group_id([txn_1, txn_2, txn_3])
         print("...computed groupId: ", group_id)
         txn_1.group = group_id
         txn_2.group = group_id

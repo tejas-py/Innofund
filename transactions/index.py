@@ -476,7 +476,3 @@ def campaign_end(campaign_app_id):
         return "ended"
     else:
         return "not ended"
-
-
-campaign_type(113552758)
-

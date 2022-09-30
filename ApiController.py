@@ -1,9 +1,8 @@
 import os
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from utilities import check, CommonFunctions
-from transactions import admin, creator_investor, create_update_account, institutional_donor
-import transactions.indexer as index
+from transactions import admin, creator_investor, create_update_account, institutional_donor, index
 from API import connection
 
 # defining the flask app and setting up cors
@@ -19,8 +18,7 @@ algod_client = connection.algo_conn()
 # home page
 @app.route('/')
 def home_page():
-    return "<h1>Cashdillo Blockchain Server</h1>"\
-           "<p>Head to the <a href='https://www.cashdillo.com'>Cashdillo</a> website.</p>"
+    return redirect("https://www.cashdillo.com", code=302)
 
 
 # favicon

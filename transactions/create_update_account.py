@@ -99,7 +99,7 @@ def campaign_milestones(client, campaign_app_id, milestone_app_id):
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
+    group_id = calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
