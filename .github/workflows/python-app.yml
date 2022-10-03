@@ -27,7 +27,7 @@ jobs:
         python ApiController.py test
   main-deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v2
     - name: rsync deployments
