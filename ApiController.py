@@ -637,13 +637,17 @@ def approve_milestone():
 # admin approves the milestone and investment get transfer to creator
 @app.route('/reject_milestone', methods=["POST"])
 def reject_milestone():
-    # get the details from the user
-    investment_details = request.get_json()
-    admin_wallet_address = investment_details['admin_wallet_address']
-    campaign_app_id = investment_details['campaign_app_id']
-    milestone_app_id = investment_details['milestone_app_id']
-    milestone_number = investment_details['milestone_number']
-    note = investment_details['note']
+
+    try:
+        # get the details from the user
+        investment_details = request.get_json()
+        admin_wallet_address = investment_details['admin_wallet_address']
+        campaign_app_id = investment_details['campaign_app_id']
+        milestone_app_id = investment_details['milestone_app_id']
+        milestone_number = investment_details['milestone_number']
+        note = investment_details['note']
+    except Exception as error:
+        return jsonify({'message': 'Cannot Initiate Blockchain, Algorand Server down'})
 
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 1000):
