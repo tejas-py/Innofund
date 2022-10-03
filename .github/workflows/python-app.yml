@@ -9,25 +9,33 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: ["3.10"]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Set up Python Environment
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-    - name: Install Dependencies
+    - name: Install dependencies
       run: |
-        python -m pip3 install --upgrade pip3
-        pip3 install -r requirements.txt
-  
-    - name: Run Tests
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
       run: |
-        python manage.py test
-  main-deploy:
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    #- name: Test with pytest
+     # run: |
+      #  pytest
+        
+  main-deploy-ec2:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v2
     - name: rsync deployments
@@ -46,4 +54,6 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          script: /home/ubuntu/Innofund/python3 ApiController.py
+          script: sudo service blockchain restart
+
+
