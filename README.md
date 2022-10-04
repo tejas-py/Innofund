@@ -10,7 +10,7 @@ Contains Smart Contract where details of the users are passed as the arguments o
 i) username:
 Should be, 6< username >12
 Should at least contains one capital letter, one small letter and one number
-Shouldn't contain spaces
+Shouldn't contain spaces 
 
 ii) usertype:
 should be a (Investor, investor, Creator or creator)
