@@ -682,10 +682,12 @@ def approve_milestone():
                 # pass the details to the algorand to run the transaction
                 txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id,
                                                                milestone_no, milestone_app_id, approve_milestone_again)
-                if txn_details[0]['txn']:
-                    return jsonify(txn_details), 200
-                else:
-                    return jsonify(txn_details), 400
+
+                for result in txn_details:
+                    if result == 'txn':
+                        return jsonify(txn_details), 200
+                    else:
+                        return jsonify(txn_details), 400
             except Exception as error:
                 return jsonify({'message': str(error)}), 500
         else:

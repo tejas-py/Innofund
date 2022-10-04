@@ -424,10 +424,8 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
             account_lst = [creator_wallet_address]
             args_list_3 = ["last_milestone", int(Today_seconds())]
-            print(args_list_3)
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
-            print(txn)
             txngrp = [{'txn': encoding.msgpack_encode(txn)}]
             return txngrp
 
