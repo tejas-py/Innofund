@@ -666,7 +666,7 @@ def approve_milestone():
         campaign_app_id = int(investment_details['campaign_app_id'])
         milestone_no = investment_details['milestone_number']
         admin_wallet_address = investment_details['admin_wallet_address']
-        milestone_app_id = int(0)
+        milestone_app_id = int(investment_details['milestone_number'])
 
         """approve_milestone_again = 0 if admin confirms the milestone and checks the NFT amount in the campaign is zero. 
         approve_milestone_again = 1 if the admin confirms to approve the milestone even if there is an NFT in 
