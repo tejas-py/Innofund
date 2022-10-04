@@ -647,7 +647,7 @@ def reject_milestone():
         milestone_number = investment_details['milestone_number']
         note = investment_details['note']
     except Exception as error:
-        return jsonify({'message': 'Cannot Initiate Blockchain, Algorand Server down'})
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 1000):
