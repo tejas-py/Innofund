@@ -104,7 +104,7 @@ def admin_asset(client, usertype, user_app_id, unit_name, asset_name, image_url,
 
         # creating asset: transaction 2
         txn = transaction.AssetConfigTxn(sender=creator_account, sp=params, total=1, default_frozen=False,
-                                         unit_name=unit_name, asset_name=asset_name, decimals=0, url=image_url,
+                                         unit_name=unit_name.capitalize(), asset_name=asset_name, decimals=0, url=image_url,
                                          manager=creator_account, freeze="", reserve=creator_account,
                                          clawback="", strict_empty_address_check=False, note=note_field.encode())
 

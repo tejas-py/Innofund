@@ -1,5 +1,4 @@
 import os
-import re
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from utilities import check, CommonFunctions
@@ -336,7 +335,7 @@ def mint_nft():
 
     try:
         if CommonFunctions.check_balance(address, 1000):
-            if re.search("[A-Z]", unit_name):
+            if unit_name.isalpha():
                 try:
                     # pass the details to algorand to mint asset
                     asset_txn = admin.admin_asset(algod_client, usertype, app_id,
@@ -346,7 +345,7 @@ def mint_nft():
                 except Exception as error:
                     return jsonify({'message': str(error)}), 500
             else:
-                return jsonify({'message': "NFT Unit name should be in Capital letters"})
+                return jsonify({'message': "NFT Name can only in Alphabets"}), 400
         else:
             return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000 microAlgos"}), 400
     except Exception as wallet_error:
