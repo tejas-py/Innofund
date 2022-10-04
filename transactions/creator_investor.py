@@ -414,7 +414,7 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
                 return {'message': f"NFT has not been claimed yet by the investors, NFT amount remaining to claim: {nft_amt_remaining}"}
 
         else:
-            txngrp = {"Milestone Status": "Milestone 1 money has not been claimed yet"}
+            txngrp = [{"message": "Initial Payment not claimed"}]
             return txngrp
 
     # submitting the milestone 1 report for Donation campaign
@@ -424,14 +424,15 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
             account_lst = [creator_wallet_address]
             args_list_3 = ["last_milestone", int(Today_seconds())]
+            print(args_list_3)
 
             txn = ApplicationNoOpTxn(sender, params, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed")
-
+            print(txn)
             txngrp = [{'txn': encoding.msgpack_encode(txn)}]
             return txngrp
 
         else:
-            txngrp = {"Milestone Status": "Milestone 1 money has not been claimed yet"}
+            txngrp = [{"message": "Initial Payment not claimed"}]
             return txngrp
 
     # submitting the milestone 2 report
@@ -452,10 +453,10 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             return txngrp
 
         else:
-            txngrp = {"Milestone Status": "Milestone 2 has not been approved yet"}
+            txngrp = [{"message": "Milestone 2 has not been approved yet"}]
             return txngrp
     else:
-        return {'message': "wrong input"}
+        return [{'message': "wrong input"}]
 
 
 def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_app_id, note):
