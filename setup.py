@@ -706,6 +706,7 @@ def reject_milestone():
         milestone_app_id = investment_details['milestone_app_id']
         milestone_number = investment_details['milestone_number']
         note = investment_details['note']
+        print(milestone_number)
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 

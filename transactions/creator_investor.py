@@ -475,6 +475,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
 
         # get the list of the investors and the number of investors
         investors_list = index.list_investors(campaign_app_id)
+        print(investors_list)
         total_investors = len(investors_list)
 
         # define the arguments for the transactions
@@ -483,7 +484,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
 
         # get node parameters
         params = client.suggested_params()
-        params.fee = int(1000 * total_investors)
+        params.fee = int(1000 * total_investors) + 1000
 
         # get the wallet address and the invested amount from the list
         # investments are in microAlgo format
@@ -491,6 +492,8 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
             investor_wallet_address = get_address_from_application(investor)
             investors_wallet_address_list.append(investor_wallet_address)
             arg.append(int(investment/2))
+
+        print(arg)
 
         # create the transaction object
         txn = ApplicationNoOpTxn(sender, params, campaign_app_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
