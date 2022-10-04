@@ -500,7 +500,7 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
         txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     else:
-        txngrp = {'message': "Wrong milestone number"}
+        txngrp = [{'message': "Wrong milestone number"}]
 
     return txngrp
 

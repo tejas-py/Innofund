@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from utilities import check, CommonFunctions
@@ -335,14 +336,17 @@ def mint_nft():
 
     try:
         if CommonFunctions.check_balance(address, 1000):
-            try:
-                # pass the details to algorand to mint asset
-                asset_txn = admin.admin_asset(algod_client, usertype, app_id,
-                                              unit_name, asset_name, meta_hash, description)
+            if re.search("[A-Z]", unit_name):
+                try:
+                    # pass the details to algorand to mint asset
+                    asset_txn = admin.admin_asset(algod_client, usertype, app_id,
+                                                  unit_name, asset_name, meta_hash, description)
 
-                return jsonify(asset_txn), 200
-            except Exception as error:
-                return jsonify({'message': str(error)}), 500
+                    return jsonify(asset_txn), 200
+                except Exception as error:
+                    return jsonify({'message': str(error)}), 500
+            else:
+                return jsonify({'message': "NFT Unit name should be in Capital letters"})
         else:
             return jsonify({'message': f"To Mint NFT, Minimum Balance should be 1000 microAlgos"}), 400
     except Exception as wallet_error:
@@ -717,7 +721,13 @@ def reject_milestone():
             try:
                 # pass the details to the algorand to run the transaction
                 txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, str(milestone_number), campaign_app_id, note)
-                return jsonify(txn_details), 200
+
+                for result in txn_details:
+                    if result == 'txn':
+                        return jsonify(txn_details), 200
+                    else:
+                        return jsonify(txn_details), 400
+
             except Exception as error:
                 return jsonify({'message': str(error)}), 500
         else:
