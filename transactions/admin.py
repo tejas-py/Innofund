@@ -15,7 +15,7 @@ local_schema = transaction.StateSchema(local_ints, local_bytes)
 
 
 # Generate a new admin account as well as new user id for each user that registers
-def create_admin_account(client, usertype):
+def create_admin_account(client):
     print("Creating admin application...")
 
     # import smart contract for the application
@@ -36,7 +36,7 @@ def create_admin_account(client, usertype):
 
     params = client.suggested_params()
 
-    args_list = [bytes(usertype, 'utf8')]
+    args_list = [bytes("admin", 'utf8')]
 
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete,
                                            approval_program, clear_program,

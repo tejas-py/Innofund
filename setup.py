@@ -31,10 +31,14 @@ def favicon():
 # Create unique id for respective accounts created.
 @app.route('/create_account', methods=["POST"])
 def create_account():
-    # Get details of the user
-    user_details = request.get_json()
-    address = user_details['wallet_address']
-    usertype = user_details['user_type']
+
+    try:
+        # Get details of the user
+        user_details = request.get_json()
+        address = user_details['wallet_address']
+        usertype = user_details['user_type']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     # check details of the user
     user_type = check.check_user(usertype)
@@ -63,7 +67,7 @@ def create_account():
 def create_admin_account():
 
     # give the admin id for the admin
-    admin_user_id = admin.create_admin_account(algod_client, "admin")
+    admin_user_id = admin.create_admin_account(algod_client)
     json_return = {"Admin App Id": admin_user_id}
     return jsonify(json_return)
 
@@ -71,10 +75,14 @@ def create_admin_account():
 # delete account
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
-    # Get the user Details
-    user_delete = request.get_json()
-    user_id = int(user_delete['user_app_id'])
-    address = CommonFunctions.get_address_from_application(user_id)
+    try:
+        # Get the user Details
+        user_delete = request.get_json()
+        user_id = int(user_delete['user_app_id'])
+        address = CommonFunctions.get_address_from_application(user_id)
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
     try:
         if CommonFunctions.check_balance(address, 1000):
             try:
@@ -92,25 +100,28 @@ def delete_user():
 # Creating a Campaign id for each campaign created by accounts.
 @app.route('/create_campaign', methods=["POST"])
 def create_campaign():
-    # get details of the campaign to create
-    campaign_details = request.get_json()
-    address = campaign_details['creator_wallet_address']
+    try:
+        # get details of the campaign to create
+        campaign_details = request.get_json()
+        address = campaign_details['creator_wallet_address']
 
-    # campaign details
-    title = campaign_details['title']
-    category = campaign_details['category']
-    end_time = campaign_details['end_time']
-    fund_category = campaign_details['fund_category']
-    fund_limit = campaign_details['fund_limit']
-    reward_type = campaign_details['reward_type']
-    country = campaign_details['country']
-    ESG = campaign_details['ESG']
-    milestone = campaign_details['milestone']
+        # campaign details
+        title = campaign_details['title']
+        category = campaign_details['category']
+        end_time = campaign_details['end_time']
+        fund_category = campaign_details['fund_category']
+        fund_limit = campaign_details['fund_limit']
+        reward_type = campaign_details['reward_type']
+        country = campaign_details['country']
+        ESG = campaign_details['ESG']
+        milestone = campaign_details['milestone']
 
-    # make the list from the dictionary
-    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'])
-    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'])
-    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
+        # make the list from the dictionary
+        milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'])
+        milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'])
+        end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(address, 3000):
@@ -136,23 +147,26 @@ def create_campaign():
 # update the existing campaign
 @app.route('/update_campaign', methods=['POST'])
 def update_campaign_details():
-    # get details of the campaign to update
-    campaign_details = request.get_json()
-    address = campaign_details['creator_wallet_address']
-    campaignID = int(campaign_details['campaign_app_id'])
-    title = campaign_details['title']
-    category = campaign_details['category']
-    end_time = campaign_details['end_time']
-    fund_category = campaign_details['fund_category']
-    fund_limit = int(campaign_details['fund_limit'])
-    country = campaign_details['country']
-    milestone = campaign_details['milestone']
+    try:
+        # get details of the campaign to update
+        campaign_details = request.get_json()
+        address = campaign_details['creator_wallet_address']
+        campaignID = int(campaign_details['campaign_app_id'])
+        title = campaign_details['title']
+        category = campaign_details['category']
+        end_time = campaign_details['end_time']
+        fund_category = campaign_details['fund_category']
+        fund_limit = int(campaign_details['fund_limit'])
+        country = campaign_details['country']
+        milestone = campaign_details['milestone']
 
-    # make the list from the dictionary
-    milestone_app_id_lst = (milestone['milestone_app_id']['1'], milestone['milestone_app_id']['2'])
-    milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'])
-    milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'])
-    end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
+        # make the list from the dictionary
+        milestone_app_id_lst = (milestone['milestone_app_id']['1'], milestone['milestone_app_id']['2'])
+        milestone_title_lst = (milestone['milestone_title']['1'], milestone['milestone_title']['2'])
+        milestone_list = (milestone['milestone_number']['1'], milestone['milestone_number']['2'])
+        end_time_lst = (milestone['end_time_milestone']['1'], milestone['end_time_milestone']['2'])
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(address, 3000):
@@ -176,12 +190,15 @@ def update_campaign_details():
 # Block/Reject/Approve Campaign
 @app.route('/reject_approve_campaign', methods=["POST"])
 def reject_approve_campaign():
-    # Get Details
-    reject_campaign_details = request.get_json()
-    address = reject_campaign_details['admin_wallet_address']
-    campaignID = reject_campaign_details['campaign_app_id']
-    status = int(reject_campaign_details['note']) # value = 0 if rejected, value = 1 if approved
-    ESG = int(reject_campaign_details['ESG'])
+    try:
+        # Get Details
+        reject_campaign_details = request.get_json()
+        address = reject_campaign_details['admin_wallet_address']
+        campaignID = reject_campaign_details['campaign_app_id']
+        status = int(reject_campaign_details['note']) # value = 0 if rejected, value = 1 if approved
+        ESG = int(reject_campaign_details['ESG'])
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(address, 1000):
@@ -209,12 +226,15 @@ def reject_approve_campaign():
 # Block the running campaign
 @app.route('/block_campaign', methods=["POST"])
 def block_campaign():
-    # get the details
-    user_block = request.get_json()
-    campaign_app_id = user_block['campaign_app_id']
-    milestone_app_id = user_block['milestone_app_id']
-    wallet_address = user_block['admin_wallet_address']
-    note = "Block Running Campaign"
+    try:
+        # get the details
+        user_block = request.get_json()
+        campaign_app_id = user_block['campaign_app_id']
+        milestone_app_id = user_block['milestone_app_id']
+        wallet_address = user_block['admin_wallet_address']
+        note = "Block Running Campaign"
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(wallet_address, 4000):
@@ -235,11 +255,15 @@ def block_campaign():
 # delete campaign and unfreeze nft linked with the campaign
 @app.route('/delete_campaign', methods=['POST'])
 def delete_campaign():
-    # Get the user Details
-    user_delete = request.get_json()
-    campaign_app_id = int(user_delete['campaign_app_id'])
-    nft_id = int(user_delete['nft_id'])
-    milestone_app_id = user_delete['milestone_app_id']
+    try:
+        # Get the user Details
+        user_delete = request.get_json()
+        campaign_app_id = int(user_delete['campaign_app_id'])
+        nft_id = int(user_delete['nft_id'])
+        milestone_app_id = user_delete['milestone_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
     address = CommonFunctions.get_address_from_application(campaign_app_id)
 
     # creating the list of milestone app id
@@ -277,12 +301,15 @@ def delete_campaign():
 # start the milestone
 @app.route('/start_milestone', methods=['POST'])
 def init_milestone():
-    # get the details
-    milestone_details = request.get_json()
-    campaign_app_id = milestone_details['campaign_app_id']
-    milestone_app_id = milestone_details['milestone_app_id']
-    milestone_title = milestone_details['milestone_title']
-    milestone_no = milestone_details['milestone_number']
+    try:
+        # get the details
+        milestone_details = request.get_json()
+        campaign_app_id = milestone_details['campaign_app_id']
+        milestone_app_id = milestone_details['milestone_app_id']
+        milestone_title = milestone_details['milestone_title']
+        milestone_no = milestone_details['milestone_number']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     milestone_txn = creator_investor.start_milestones(algod_client, campaign_app_id, milestone_app_id, milestone_title,
                                                       milestone_no)
@@ -292,14 +319,17 @@ def init_milestone():
 # Group Transaction: (Call user app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
-    # get the details of the campaign to mint asset
-    mint_asset = request.get_json()
-    app_id = mint_asset['app_id']
-    usertype = mint_asset['user_type']
-    unit_name = mint_asset['unit_name']
-    asset_name = mint_asset['asset_name']
-    meta_hash = mint_asset['image_hash']
-    description = mint_asset['description']
+    try:
+        # get the details of the campaign to mint asset
+        mint_asset = request.get_json()
+        app_id = mint_asset['app_id']
+        usertype = mint_asset['user_type']
+        unit_name = mint_asset['unit_name']
+        asset_name = mint_asset['asset_name']
+        meta_hash = mint_asset['image_hash']
+        description = mint_asset['description']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     address = CommonFunctions.get_address_from_application(app_id)
 
@@ -322,11 +352,14 @@ def mint_nft():
 # Transfer nft to the marketplace
 @app.route('/nft_marketplace/transfer_nft_to_marketplace', methods=['POST'])
 def transfer_nft_to_marketplace():
-    # get the details
-    transaction_details = request.get_json()
-    asset_id = transaction_details['nft_id']
-    admin_application_id = 107294801
-    wallet_address = transaction_details['admin_wallet_address']
+    try:
+        # get the details
+        transaction_details = request.get_json()
+        asset_id = transaction_details['nft_id']
+        admin_application_id = 107294801
+        wallet_address = transaction_details['admin_wallet_address']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(wallet_address, 2000):
@@ -342,10 +375,14 @@ def transfer_nft_to_marketplace():
 # Withdraw nft from marketplace
 @app.route('/nft_marketplace/withdraw_nft', methods=['POST'])
 def withdraw_nft():
-    # get the details
-    transaction_details = request.get_json()
-    asset_id = transaction_details['nft_id']
-    admin_application_id = 107294801
+
+    try:
+        # get the details
+        transaction_details = request.get_json()
+        asset_id = transaction_details['nft_id']
+        admin_application_id = 107294801
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
     wallet_address = CommonFunctions.get_address_from_application(admin_application_id)
 
     try:
@@ -362,11 +399,15 @@ def withdraw_nft():
 # Buy NFT for creator from marketplace
 @app.route('/nft_marketplace/buy_nft', methods=['POST'])
 def buy_nft():
-    # get the details
-    transaction_detail = request.get_json()
-    asset_id = transaction_detail['nft_id']
-    user_app_id = transaction_detail['user_app_id']
-    nft_price = transaction_detail['nft_price']
+    try:
+        # get the details
+        transaction_detail = request.get_json()
+        asset_id = transaction_detail['nft_id']
+        user_app_id = transaction_detail['user_app_id']
+        nft_price = transaction_detail['nft_price']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
     wallet_address = CommonFunctions.get_address_from_application(user_app_id)
 
     try:
@@ -427,12 +468,16 @@ def asset_optin():
 # Transfer NFT from admin to campaign creator
 @app.route('/transfer_asset', methods=["POST"])
 def transfer_nft():
-    # get the details for transferring the NFT
-    transfer_details = request.get_json()
-    asset_id = transfer_details['NFT_asset_id']
-    nft_amount = transfer_details['nft_amount']
-    admin_address = transfer_details['admin_wallet_address']
-    creator_address = transfer_details['creator_wallet_address']
+
+    try:
+        # get the details for transferring the NFT
+        transfer_details = request.get_json()
+        asset_id = transfer_details['NFT_asset_id']
+        nft_amount = transfer_details['nft_amount']
+        admin_address = transfer_details['admin_wallet_address']
+        creator_address = transfer_details['creator_wallet_address']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(admin_address, 1000):
@@ -452,10 +497,15 @@ def transfer_nft():
 # sending NFT to Campaign
 @app.route('/campaign_nft', methods=['POST'])
 def campaign_nft():
-    # get the details
-    nft = request.get_json()
-    asset_id = nft['NFT_asset_id']
-    campaign_id = nft['campaign_app_id']
+
+    try:
+        # get the details
+        nft = request.get_json()
+        asset_id = nft['NFT_asset_id']
+        campaign_id = nft['campaign_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
     address = CommonFunctions.get_address_from_application(campaign_id)
 
     try:
@@ -475,11 +525,15 @@ def campaign_nft():
 # Transfer NFT from Campaign Creator to Investor
 @app.route('/investor_nft_claimed', methods=["POST"])
 def clamming_nft():
-    # getting the transaction details
-    transfer_details = request.get_json()
-    user_app_id = transfer_details['user_app_id']
-    asset_id = transfer_details['nft_asset_id']
-    campaign_app_id = transfer_details['campaign_app_id']
+
+    try:
+        # getting the transaction details
+        transfer_details = request.get_json()
+        user_app_id = transfer_details['user_app_id']
+        asset_id = transfer_details['nft_asset_id']
+        campaign_app_id = transfer_details['campaign_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     investor_address = CommonFunctions.get_address_from_application(user_app_id)
 
@@ -513,12 +567,15 @@ def burn_asset():
 # Investor Participating in Campaign by investing.
 @app.route('/participating', methods=["POST"])
 def investing():
-    # get the details of investor participation's
-    participation_details = request.get_json()
-    campaignID = participation_details['campaign_app_id']
-    investment = float(participation_details['amount'])
-    investor_account = participation_details['investor_wallet_address']
-    meta_data = str(participation_details['metadata'])
+    try:
+        # get the details of investor participation's
+        participation_details = request.get_json()
+        campaignID = participation_details['campaign_app_id']
+        investment = float(participation_details['amount'])
+        investor_account = participation_details['investor_wallet_address']
+        meta_data = str(participation_details['metadata'])
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(investor_account, 2000+investment) and investment != 0:
@@ -538,12 +595,15 @@ def investing():
 @app.route('/multiple_investments', methods=['POST'])
 def multi_investing():
 
-    # get the details
-    investment_details = request.get_json()
-    # test_dict = {'investments': {123:123, 345:123}, 'fees': 4000}
-    campaign_investment = investment_details['investments_details']
-    address = investment_details['investor_wallet_address']
-    note = str(investment_details['meta_data'])
+    try:
+        # get the details
+        investment_details = request.get_json()
+        # test_dict = {'investments': {123:123, 345:123}, 'fees': 4000}
+        campaign_investment = investment_details['investments_details']
+        address = investment_details['investor_wallet_address']
+        note = str(investment_details['meta_data'])
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     # donation amount
     donation = float(campaign_investment['fee'])
@@ -578,7 +638,7 @@ def sub_escrow_to_campaign():
         note = str(transaction_details['meta_data'])
         address = transaction_details['investor_wallet_address']
     except Exception as error:
-        return {'message': str(error)}, 500
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     # txn from sub-escrow account to escrow account
     txn_ids = []
@@ -614,7 +674,7 @@ def approve_milestone():
 
         approve_milestone_again = 0
     except Exception as error:
-        return jsonify({'message': str(error)}), 400
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(admin_wallet_address, 2000):
@@ -666,11 +726,15 @@ def reject_milestone():
 # admin approves the milestone and investment get transfer to creator
 @app.route('/claim_milestone_1', methods=["POST"])
 def milestone1_claim():
-    # get the details from the user
-    investment_details = request.get_json()
-    campaign_app_id = investment_details['campaign_app_id']
-    milestone_no = 1
-    creator_wallet_address = investment_details['creator_wallet_address']
+
+    try:
+        # get the details from the user
+        investment_details = request.get_json()
+        campaign_app_id = investment_details['campaign_app_id']
+        milestone_no = 1
+        creator_wallet_address = investment_details['creator_wallet_address']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(creator_wallet_address, 1000):
