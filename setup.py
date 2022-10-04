@@ -704,7 +704,7 @@ def reject_milestone():
         admin_wallet_address = investment_details['admin_wallet_address']
         campaign_app_id = investment_details['campaign_app_id']
         milestone_app_id = investment_details['milestone_app_id']
-        milestone_number = str(investment_details['milestone_number'])
+        milestone_number = investment_details['milestone_number']
         note = investment_details['note']
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
@@ -713,7 +713,7 @@ def reject_milestone():
         if CommonFunctions.check_balance(admin_wallet_address, 1000):
             try:
                 # pass the details to the algorand to run the transaction
-                txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, milestone_number, campaign_app_id, note)
+                txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, str(milestone_number), campaign_app_id, note)
                 return jsonify(txn_details), 200
             except Exception as error:
                 return jsonify({'message': str(error)}), 500
@@ -828,4 +828,4 @@ def campaign_info(campaign_id):
 
 # running the API
 if __name__ == "__main__":
-    app.run(debug=False, port=3000)
+    app.run(debug=True, port=3000)
