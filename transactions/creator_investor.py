@@ -488,15 +488,16 @@ def reject_milestones(client, sender, milestone_app_id, milestone_no, campaign_a
 
         # get the wallet address and the invested amount from the list
         # investments are in microAlgo format
-        for investor, investment in investors_list:
-            investor_wallet_address = get_address_from_application(investor)
+        for investors in investors_list:
+            investor_wallet_address = get_address_from_application(investors['user_app_id'])
             investors_wallet_address_list.append(investor_wallet_address)
-            arg.append(int(investment/2))
+            arg.append(int(investors['invested']/2))
 
         print(arg)
 
         # create the transaction object
         txn = ApplicationNoOpTxn(sender, params, campaign_app_id, app_args=arg, accounts=investors_wallet_address_list, note=note)
+
         txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     else:
