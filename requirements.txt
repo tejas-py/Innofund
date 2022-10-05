@@ -1,5 +1,4 @@
 Flask==2.2.2
 Flask-Cors==3.0.10
 py-algorand-sdk==1.18.0
-pyteal==0.18.1
 IPFS_API==0.2.3

@@ -1,4 +1,5 @@
-import IPFS_API
+# import IPFS_API
+import ipfsApi
 import os
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
@@ -6,7 +7,7 @@ from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, institutional_donor, index
 from API import connection
 
-IPFS_API.Start()
+# IPFS_API.Start()
 
 # defining the flask app and setting up cors
 app = Flask(__name__)
@@ -336,8 +337,8 @@ def mint_nft():
         # get the file for the nft and upload to the ipfs
         nft_file = request.files['nft_file']
         nft_file.save("/home/tejas/Webmob/innofund/nft_images/1.png")
-        hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
-        meta_hash = f"https://ipfs.io/ipfs/{hash}"
+        # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+        meta_hash = "https://ipfs.io/ipfs/{hash}"
         print(meta_hash)
     except Exception as error:
         return jsonify({'message': f'IPFS Error! {error}'}), 500
@@ -852,10 +853,14 @@ def campaign_info(campaign_id):
 @app.route('/ipfs', methods=['POST'])
 def upload_ipfs():
     image_info = request.files['images']
-    image_info.save("/home/tejas/Webmob/innofund/nft_images/1.png")
-    hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+    user_app_id = request.values['userAppId']
+    image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg")
+    # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+    api = ipfsApi.Client('127.0.0.1', 5001)
+    res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg')
+    print(res)
 
-    return f"https://ipfs.io/ipfs/{hash}"
+    return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
 
 
 # running the API
