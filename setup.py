@@ -1,9 +1,12 @@
+import IPFS_API
 import os
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, institutional_donor, index
 from API import connection
+
+IPFS_API.Start()
 
 # defining the flask app and setting up cors
 app = Flask(__name__)
@@ -321,15 +324,23 @@ def init_milestone():
 def mint_nft():
     try:
         # get the details of the campaign to mint asset
-        mint_asset = request.get_json()
-        app_id = mint_asset['app_id']
-        usertype = mint_asset['user_type']
-        unit_name = mint_asset['unit_name']
-        asset_name = mint_asset['asset_name']
-        meta_hash = mint_asset['image_hash']
-        description = mint_asset['description']
+        app_id = request.values['app_id']
+        usertype = request.values['user_type']
+        unit_name = request.values['unit_name']
+        asset_name = request.values['asset_name']
+        description = request.values['description']
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        # get the file for the nft and upload to the ipfs
+        nft_file = request.files['nft_file']
+        nft_file.save("/home/tejas/Webmob/innofund/nft_images/1.png")
+        hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+        meta_hash = f"https://ipfs.io/ipfs/{hash}"
+        print(meta_hash)
+    except Exception as error:
+        return jsonify({'message': f'IPFS Error! {error}'}), 500
 
     address = CommonFunctions.get_address_from_application(app_id)
 
@@ -836,6 +847,15 @@ def asset_info(nft_id):
 def campaign_info(campaign_id):
     info = index.campaign(campaign_id)
     return jsonify(info)
+
+
+@app.route('/ipfs', methods=['POST'])
+def upload_ipfs():
+    image_info = request.files['images']
+    image_info.save("/home/tejas/Webmob/innofund/nft_images/1.png")
+    hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+
+    return f"https://ipfs.io/ipfs/{hash}"
 
 
 # running the API

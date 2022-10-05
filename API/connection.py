@@ -1,3 +1,4 @@
+import IPFS_API
 from algosdk.v2client import algod, indexer
 
 
@@ -18,3 +19,4 @@ def connect_indexer():
     headers = {"X-API-Key": indexer_token}
     myindexer = indexer.IndexerClient(indexer_token, algod_indexer, headers)
     return myindexer
+
