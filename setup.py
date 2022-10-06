@@ -861,15 +861,15 @@ def upload_ipfs():
     # get the file and the user app id
     try:
         file_info = request.files['file']
+        file_extension = request.values['extension']
         user_app_id = request.values['userAppId']
     except Exception as error:
         return jsonify({'message': f"Payload Error! {error}"}), 400
 
     # get the extension of the file and save it on local storage
     try:
-        file_extension = str(file_info).split('.')[1].split("'")
         file_info.save(f"/home/ubuntu/Innofund/static/nft_images/"
-                       f"{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension[0]}")
+                       f"{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension}")
     except Exception as error:
         return jsonify({'message': f"Directory not found, Error: {error}"}), 500
 
@@ -877,7 +877,7 @@ def upload_ipfs():
     try:
         api = ipfsApi.Client('127.0.0.1', 5001)
         res = api.add(f'/home/ubuntu/Innofund/static/nft_images/'
-                      f'{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension[0]}')
+                      f'{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension}')
         return jsonify({'url': f"https://ipfs.io/ipfs/{res[0]['Hash']}"}), 200
     except Exception as error:
         return jsonify({'message': f"Server Not Connected, IPFS Down, Error: {error}"}), 500
