@@ -859,10 +859,11 @@ def campaign_info(campaign_id):
 def upload_ipfs():
     image_info = request.files['images']
     user_app_id = request.values['userAppId']
-    image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg")
-    # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+    image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}_{CommonFunctions.Today_seconds()}.jpg")
+
     api = ipfsApi.Client('127.0.0.1', 5001)
-    res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg')
+    res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}_{CommonFunctions.Today_seconds()}.jpg')
+
     print(res)
 
     return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
