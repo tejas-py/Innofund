@@ -1,11 +1,10 @@
-import os
-import ipfsApi
+from os import path, stat
+from ipfsApi import Client as ipfs_client
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, institutional_donor, index
 from API import connection
-
 
 # defining the flask app and setting up cors
 app = Flask(__name__)
@@ -26,7 +25,7 @@ def home_page():
 # favicon
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
+    return send_from_directory(path.join(app.root_path, 'static'),
                                'favicon.ico')
 
 
@@ -356,7 +355,7 @@ def mint_nft():
                 try:
                     # pass the details to algorand to mint asset
                     asset_txn = admin.admin_asset(algod_client, usertype, app_id,
-                                                  unit_name, asset_name, meta_hash, description)
+                                                  unit_name.upper(), asset_name, meta_hash, description)
 
                     return jsonify(asset_txn), 200
                 except Exception as error:
@@ -858,13 +857,25 @@ def campaign_info(campaign_id):
 @app.route('/ipfs', methods=['POST'])
 def upload_ipfs():
 
+    # extension support
+    extensions_allowed = ['jpg', 'jpeg', 'png', 'gif', 'ico', 'icon', 'webp', 'tiff', 'raw', 'jpeg2000', 'svg', 'pdf', 'jfif' # images
+                          'mp4', 'mov', 'wmv', 'avi', 'avchd', 'flv', 'f4v', 'swf', 'mkv', 'mpeg2', # Videos
+                          'pcm', 'wav', 'aiff', 'mp3', 'aac', 'ogg', 'wma', 'flac', 'alac'] # Audio
+
     # get the file and the user app id
     try:
         file_info = request.files['file']
-        file_extension = request.values['extension']
         user_app_id = request.values['userAppId']
     except Exception as error:
         return jsonify({'message': f"Payload Error! {error}"}), 400
+
+    # check the file extension
+    file_name = file_info.filename.split('.')
+    file_extension = file_name[len(file_name)-1]
+    if file_extension not in extensions_allowed:
+        return jsonify({'message': 'File type not supported'}), 400
+    else:
+        pass
 
     # get the extension of the file and save it on local storage
     try:
@@ -875,15 +886,17 @@ def upload_ipfs():
         return jsonify({'message': f"Directory not found, Error: {error}"}), 500
 
     # check the file size in MB
-    file_size = os.stat(file_location).st_size / 1_048_576
+    file_stats = stat(file_location)
+    file_size = file_stats.st_size / 1_048_576
+
     if file_size > 100:
-        return jsonify({'message': 'File size too large'})
+        return jsonify({'message': 'File size too large'}), 400
     else:
         pass
 
     # upload the file to IPFS client
     try:
-        api = ipfsApi.Client('127.0.0.1', 5001)
+        api = ipfs_client('127.0.0.1', 5001)
         res = api.add(file_location)
         return jsonify({'url': f"https://ipfs.io/ipfs/{res[0]['Hash']}"}), 200
     except Exception as error:

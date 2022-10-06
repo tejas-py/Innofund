@@ -1,4 +1,5 @@
-Flask==2.2.2
-Flask-Cors==3.0.10
-py-algorand-sdk==1.18.0
-# IPFS_API==0.2.3
+Flask~=2.2.2
+Flask-Cors~=3.0.10
+py-algorand-sdk~=1.18.0
+ipfsapi~=0.4.4
+pyteal~=0.18.1
