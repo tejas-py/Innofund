@@ -1,4 +1,3 @@
-import IPFS_API
 from algosdk.v2client import algod, indexer
 
 

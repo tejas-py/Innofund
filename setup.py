@@ -1,4 +1,5 @@
 import os
+import ipfsApi
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from utilities import check, CommonFunctions
@@ -854,17 +855,17 @@ def campaign_info(campaign_id):
     return jsonify(info)
 
 
-# @app.route('/ipfs', methods=['POST'])
-# def upload_ipfs():
-#     image_info = request.files['images']
-#     user_app_id = request.values['userAppId']
-#     image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg")
-#     # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
-#     api = ipfsApi.Client('127.0.0.1', 5001)
-#     res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg')
-#     print(res)
-#
-#     return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
+@app.route('/ipfs', methods=['POST'])
+def upload_ipfs():
+    image_info = request.files['images']
+    user_app_id = request.values['userAppId']
+    image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg")
+    # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+    api = ipfsApi.Client('127.0.0.1', 5001)
+    res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg')
+    print(res)
+
+    return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
 
 
 # running the API
