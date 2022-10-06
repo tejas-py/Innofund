@@ -868,7 +868,7 @@ def upload_ipfs():
     # get the extension of the file and save it on local storage
     try:
         file_extension = str(file_info).split('.')[1].split("'")
-        file_info.save(f"/home/ubuntu/Innofund/nft_images/"
+        file_info.save(f"/home/ubuntu/Innofund/static/nft_images/"
                        f"{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension[0]}")
     except Exception as error:
         return jsonify({'message': f"Directory not found, Error: {error}"}), 500
@@ -876,7 +876,7 @@ def upload_ipfs():
     # upload the file to IPFS client
     try:
         api = ipfsApi.Client('127.0.0.1', 5001)
-        res = api.add(f'/home/ubuntu/Innofund/nft_images/'
+        res = api.add(f'/home/ubuntu/Innofund/static/nft_images/'
                       f'{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension[0]}')
         return jsonify({'url': f"https://ipfs.io/ipfs/{res[0]['Hash']}"}), 200
     except Exception as error:
