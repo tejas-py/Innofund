@@ -763,7 +763,7 @@ def milestone1_claim():
         milestone_no = 1
         creator_wallet_address = investment_details['creator_wallet_address']
     except Exception as error:
-        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 400
 
     try:
         if CommonFunctions.check_balance(creator_wallet_address, 1000):
@@ -857,16 +857,30 @@ def campaign_info(campaign_id):
 
 @app.route('/ipfs', methods=['POST'])
 def upload_ipfs():
-    image_info = request.files['images']
-    user_app_id = request.values['userAppId']
-    image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}_{CommonFunctions.Today_seconds()}.jpg")
 
-    api = ipfsApi.Client('127.0.0.1', 5001)
-    res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}_{CommonFunctions.Today_seconds()}.jpg')
+    # get the file and the user app id
+    try:
+        file_info = request.files['file']
+        user_app_id = request.values['userAppId']
+    except Exception as error:
+        return jsonify({'message': f"Payload Error! {error}"}), 400
 
-    print(res)
+    # get the extension of the file and save it on local storage
+    try:
+        file_extension = str(file_info).split('.')[1].split("'")
+        file_info.save(f"/home/ubuntu/Innofund/nft_images/"
+                       f"{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension[0]}")
+    except Exception as error:
+        return jsonify({'message': f"Directory not found, Error: {error}"}), 500
 
-    return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
+    # upload the file to IPFS client
+    try:
+        api = ipfsApi.Client('127.0.0.1', 5001)
+        res = api.add(f'/home/ubuntu/Innofund/nft_images/'
+                      f'{user_app_id}_{CommonFunctions.Today_seconds()}.{file_extension[0]}')
+        return jsonify({'url': f"https://ipfs.io/ipfs/{res[0]['Hash']}"}), 200
+    except Exception as error:
+        return jsonify({'message': f"Server Not Connected, IPFS Down, Error: {error}"}), 500
 
 
 # running the API
