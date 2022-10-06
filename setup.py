@@ -858,7 +858,7 @@ def campaign_info(campaign_id):
 def upload_ipfs():
 
     # extension support
-    extensions_allowed = ['jpg', 'jpeg', 'png', 'gif', 'ico', 'icon', 'webp', 'tiff', 'raw', 'jpeg2000', 'svg', 'pdf', 'jfif' # images
+    extensions_allowed = ['jpg', 'jpeg', 'png', 'gif', 'ico', 'icon', 'webp', 'tiff', 'raw', 'jpeg2000', 'svg', 'pdf', 'jfif', # images
                           'mp4', 'mov', 'wmv', 'avi', 'avchd', 'flv', 'f4v', 'swf', 'mkv', 'mpeg2', # Videos
                           'pcm', 'wav', 'aiff', 'mp3', 'aac', 'ogg', 'wma', 'flac', 'alac'] # Audio
 
