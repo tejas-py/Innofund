@@ -1,5 +1,5 @@
 # import IPFS_API
-import ipfsApi
+# import ipfsApi
 import os
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
@@ -325,23 +325,30 @@ def init_milestone():
 def mint_nft():
     try:
         # get the details of the campaign to mint asset
-        app_id = request.values['app_id']
-        usertype = request.values['user_type']
-        unit_name = request.values['unit_name']
-        asset_name = request.values['asset_name']
-        description = request.values['description']
+        mint_asset = request.get_json()
+        app_id = mint_asset['app_id']
+        usertype = mint_asset['user_type']
+        unit_name = mint_asset['unit_name']
+        asset_name = mint_asset['asset_name']
+        meta_hash = mint_asset['image_hash']
+        description = mint_asset['description']
+        # app_id = request.values['app_id']
+        # usertype = request.values['user_type']
+        # unit_name = request.values['unit_name']
+        # asset_name = request.values['asset_name']
+        # description = request.values['description']
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
-    try:
-        # get the file for the nft and upload to the ipfs
-        nft_file = request.files['nft_file']
-        nft_file.save("/home/tejas/Webmob/innofund/nft_images/1.png")
-        # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
-        meta_hash = "https://ipfs.io/ipfs/{hash}"
-        print(meta_hash)
-    except Exception as error:
-        return jsonify({'message': f'IPFS Error! {error}'}), 500
+    # try:
+    #     # get the file for the nft and upload to the ipfs
+    #     nft_file = request.files['nft_file']
+    #     nft_file.save("/home/tejas/Webmob/innofund/nft_images/1.png")
+    #     # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+    #     meta_hash = "https://ipfs.io/ipfs/{hash}"
+    #     print(meta_hash)
+    # except Exception as error:
+    #     return jsonify({'message': f'IPFS Error! {error}'}), 500
 
     address = CommonFunctions.get_address_from_application(app_id)
 
@@ -850,17 +857,17 @@ def campaign_info(campaign_id):
     return jsonify(info)
 
 
-@app.route('/ipfs', methods=['POST'])
-def upload_ipfs():
-    image_info = request.files['images']
-    user_app_id = request.values['userAppId']
-    image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg")
-    # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
-    api = ipfsApi.Client('127.0.0.1', 5001)
-    res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg')
-    print(res)
-
-    return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
+# @app.route('/ipfs', methods=['POST'])
+# def upload_ipfs():
+#     image_info = request.files['images']
+#     user_app_id = request.values['userAppId']
+#     image_info.save(f"/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg")
+#     # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
+#     api = ipfsApi.Client('127.0.0.1', 5001)
+#     res = api.add(f'/home/ubuntu/Innofund/nft_images/{user_app_id}.jpg')
+#     print(res)
+#
+#     return f"https://ipfs.io/ipfs/{res[0]['Hash']}"
 
 
 # running the API
