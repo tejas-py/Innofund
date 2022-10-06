@@ -329,23 +329,8 @@ def mint_nft():
         asset_name = mint_asset['asset_name']
         meta_hash = mint_asset['image_hash']
         description = mint_asset['description']
-        # app_id = request.values['app_id']
-        # usertype = request.values['user_type']
-        # unit_name = request.values['unit_name']
-        # asset_name = request.values['asset_name']
-        # description = request.values['description']
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
-
-    # try:
-    #     # get the file for the nft and upload to the ipfs
-    #     nft_file = request.files['nft_file']
-    #     nft_file.save("/home/tejas/Webmob/innofund/nft_images/1.png")
-    #     # hash = IPFS_API.Publish('/home/tejas/Webmob/innofund/nft_images/1.png')
-    #     meta_hash = "https://ipfs.io/ipfs/{hash}"
-    #     print(meta_hash)
-    # except Exception as error:
-    #     return jsonify({'message': f'IPFS Error! {error}'}), 500
 
     address = CommonFunctions.get_address_from_application(app_id)
 
