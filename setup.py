@@ -5,7 +5,6 @@ from utilities import check, CommonFunctions
 from transactions import admin, creator_investor, create_update_account, institutional_donor, index
 from API import connection
 
-# IPFS_API.Start()
 
 # defining the flask app and setting up cors
 app = Flask(__name__)
