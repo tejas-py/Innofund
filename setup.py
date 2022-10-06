@@ -1,5 +1,3 @@
-# import IPFS_API
-# import ipfsApi
 import os
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
