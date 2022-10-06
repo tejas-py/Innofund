@@ -325,7 +325,7 @@ def mint_nft():
         mint_asset = request.get_json()
         app_id = mint_asset['app_id']
         usertype = mint_asset['user_type']
-        unit_name = mint_asset['unit_name']
+        unit_name = mint_asset['unit_name'].upper()
         asset_name = mint_asset['asset_name']
         meta_hash = mint_asset['image_hash']
         description = mint_asset['description']
@@ -355,7 +355,7 @@ def mint_nft():
                 try:
                     # pass the details to algorand to mint asset
                     asset_txn = admin.admin_asset(algod_client, usertype, app_id,
-                                                  unit_name.upper(), asset_name, meta_hash, description)
+                                                  unit_name, asset_name, meta_hash, description)
 
                     return jsonify(asset_txn), 200
                 except Exception as error:
