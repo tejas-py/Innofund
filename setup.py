@@ -687,7 +687,7 @@ def approve_milestone():
                 txn_details = creator_investor.pull_investment(algod_client, admin_wallet_address, campaign_app_id,
                                                                milestone_no, milestone_app_id, approve_milestone_again)
 
-                for result in txn_details:
+                for result in txn_details[0]:
                     if result == 'txn':
                         return jsonify(txn_details), 200
                     else:
@@ -722,7 +722,7 @@ def reject_milestone():
                 # pass the details to the algorand to run the transaction
                 txn_details = creator_investor.reject_milestones(algod_client, admin_wallet_address, milestone_app_id, str(milestone_number), campaign_app_id, note)
 
-                for result in txn_details:
+                for result in txn_details[0]:
                     if result == 'txn':
                         return jsonify(txn_details), 200
                     else:
