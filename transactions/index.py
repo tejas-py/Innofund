@@ -231,8 +231,10 @@ def check_payment_milestone_again(campaign_app_id):
         except Exception as e:
             print(e)
 
+    invested_amount_in_campaign = int(campaign(campaign_app_id)['totalInvested'])
+
     # check if the claim transaction exist or not
-    if "TWlsZXN0b25lIDEgbW9uZXksIGNsYWltZWQ=" in txn_notes:
+    if "TWlsZXN0b25lIDEgbW9uZXksIGNsYWltZWQ=" in txn_notes and invested_amount_in_campaign > 0:
         return {"initial_payment_claimed": "TRUE"}
     else:
         return {"initial_payment_claimed": "FALSE"}
