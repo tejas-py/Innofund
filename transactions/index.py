@@ -87,11 +87,11 @@ def asset_details(asset_id):
     asset_fee = indexerConnection.search_transactions_by_address(address=creator, txn_type="acfg", asset_id = asset_id)
     asset_transaction = asset_fee['transactions'][0]
 
-    asset = {"asset-name": params.get('name'),
-             "unit-name": params.get('unit-name'),
+    asset = {"asset_name": params.get('name'),
+             "unit_name": params.get('unit-name'),
              "url": params.get('url'),
              "total": params.get('total'),
-             "asset-id": asset_info.get('index'),
+             "asset_id": asset_info.get('index'),
              "Price": asset_transaction.get('fee')
              }
 
