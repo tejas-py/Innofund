@@ -380,7 +380,7 @@ def nft_in_campaign(campaign_app_id):
 
 
 # get the nft amount left in campaign
-def nft_amt_in_campaign(campaign_app_id=100315866):
+def nft_amt_in_campaign(campaign_app_id):
 
     # get the address of the campaign
     campaign_wallet_address = encoding.encode_address(encoding.checksum (b'appID' + campaign_app_id.to_bytes (8, 'big')))

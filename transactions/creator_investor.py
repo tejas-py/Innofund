@@ -343,7 +343,7 @@ def update_app(client, app_id, investment):
 
 
 # Admin Approves the Milestone and send the investment to creator
-def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None, approve_milestone_again=None):
+def pull_investment(client, sender, campaign_app_id=None, milestone_number=None, milestone_app_id=None):
 
     # create transactions
     print("Creating transactions...")
@@ -377,7 +377,6 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
 
     # submitting the milestone 1 report for Reward Campaign
     elif index.campaign_type(campaign_app_id) == "Reward" and milestone_number == 2:
-        print("here")
 
         if index.check_payment_milestone(campaign_app_id) == "True":
 
@@ -385,33 +384,24 @@ def pull_investment(client, sender, campaign_app_id=None, milestone_number=None,
             args_list_3 = ["End Reward Milestone", int(Today_seconds())]
             asset_list = [index.nft_in_campaign(campaign_app_id)]
 
+            # check the nft amount remaining in the campaign
+            nft_amt_remaining = index.nft_amt_in_campaign(campaign_app_id)
+
             params_txn = client.suggested_params()
             params_txn.fee = 3000
             params_txn.flat_fee = True
 
             # if the admin hit to approve milestone for the first time
-            if approve_milestone_again == 0:
+            if nft_amt_remaining > 0:
 
-                # check the nft amount remaining in the campaign
-                nft_amt_remaining = index.nft_amt_in_campaign(campaign_app_id)
+                return [{'message': f"NFT has not been claimed yet by the investor."}]
 
             # if the admin approves the milestone even if NFT is left in the campaign
             else:
-
-                # hard code the nft amount remaining to zero to proceed with the transaction
-                nft_amt_remaining = 0
-
-            # If there is no nft in the campaign then admin will get the transaction
-            if nft_amt_remaining == 0:
-
                 # transaction object to return
                 txn = ApplicationNoOpTxn(sender, params_txn, campaign_app_id, args_list_3, accounts=account_lst, note="Milestone 2 money, claimed", foreign_assets=asset_list)
                 txngrp = [{'txn': encoding.msgpack_encode(txn)}]
                 return txngrp
-
-            # if there is still an NFT in the campaign admin will not get the transaction
-            elif nft_amt_remaining > 0:
-                return {'message': f"NFT has not been claimed yet by the investors, NFT amount remaining to claim: {nft_amt_remaining}"}
 
         else:
             txngrp = [{"message": "Initial Payment not claimed"}]
