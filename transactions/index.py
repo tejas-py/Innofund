@@ -133,7 +133,7 @@ def assets_in_wallet(app_id):
 def campaign(campaign_id):
 
     # define variables
-    invested_amount = "None"
+    invested_amount = 0
     fund_limit = "None"
 
     # get the information of the application
