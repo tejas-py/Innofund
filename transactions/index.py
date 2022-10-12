@@ -134,7 +134,8 @@ def campaign(campaign_id):
 
     # define variables
     invested_amount = 0
-    fund_limit = "None"
+    fund_limit = 'None'
+    donation_percentage = 'None'
 
     # get the information of the application
     try:
@@ -158,7 +159,7 @@ def campaign(campaign_id):
     except Exception as error:
         print(error)
 
-    investment_details = {"totalInvested": invested_amount, "fundLimit": fund_limit}
+    investment_details = {"totalInvested": invested_amount, "fundLimit": fund_limit, "donationPercentage": int(invested_amount/fund_limit * 100)}
 
     return investment_details
 
