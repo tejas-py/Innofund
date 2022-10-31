@@ -1,4 +1,5 @@
 from algosdk.v2client import algod, indexer
+from ipfsApi import Client
 
 
 # Connection to the algorand network
@@ -19,3 +20,8 @@ def connect_indexer():
     myindexer = indexer.IndexerClient(indexer_token, algod_indexer, headers)
     return myindexer
 
+
+# connect to ipfs client
+def ipfs_client():
+    api = Client('127.0.0.1', 5001)
+    return api

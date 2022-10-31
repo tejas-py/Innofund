@@ -8,8 +8,8 @@ from Contracts import admin_contract, teal
 # Declare application state storage (immutable)
 local_ints = 0
 local_bytes = 0
-global_ints = 5
-global_bytes = 5
+global_ints = 0
+global_bytes = 1
 global_schema = transaction.StateSchema(global_ints, global_bytes)
 local_schema = transaction.StateSchema(local_ints, local_bytes)
 
@@ -19,8 +19,8 @@ def create_admin_account(client):
     print("Creating admin application...")
 
     # import smart contract for the application
-    approval_program = teal.to_teal(client, admin_contract.approval_program())
-    clear_program = teal.to_teal(client, admin_contract.clearstate_contract())
+    approval_program = teal.to_teal(admin_contract.approval_program())
+    clear_program = teal.to_teal(admin_contract.clearstate_contract())
 
     private_key, address = account.generate_account()
     print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))

@@ -6,7 +6,7 @@ from Contracts import user_contact, teal
 # Declare application state storage (immutable)
 local_ints = 0
 local_bytes = 0
-global_ints = 1
+global_ints = 0
 global_bytes = 1
 global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
@@ -18,8 +18,8 @@ def create_app(client, sender, usertype):
     print("Creating user application...")
 
     # import smart contract for the application
-    approval_program = teal.to_teal(client, user_contact.approval_program())
-    clear_program = teal.to_teal(client, user_contact.clearstate_contract())
+    approval_program = teal.to_teal(user_contact.approval_program())
+    clear_program = teal.to_teal(user_contact.clearstate_contract())
 
     on_complete = OnComplete.NoOpOC.real
 

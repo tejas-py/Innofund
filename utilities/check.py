@@ -27,7 +27,8 @@ def check_name(name):
         return "Approved"
 
 
-user_type_list = ["creator", "investor", "institutional-donor", "applicant"]
+user_type_list = ["creator", "investor", "institutional-donor",
+                  "grant-creator", "grant-manager", "grant-applicant"]
 
 
 # Check the User type.

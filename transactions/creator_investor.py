@@ -7,8 +7,8 @@ from Contracts import campaign_contract, milestone_contract, teal
 # Declare application state storage (immutable)
 local_ints = 0
 local_bytes = 0
-global_ints = 15
-global_bytes = 15
+global_ints = 6
+global_bytes = 4
 global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 
@@ -23,9 +23,9 @@ def create_campaign_app(client, public_address, title,
     print("Creating campaign application...")
 
     # import smart contract for the application
-    approval_program_campaign = teal.to_teal(client, campaign_contract.approval_program())
-    clear_program = teal.to_teal(client, campaign_contract.clearstate_contract())
-    approval_program_milestone = teal.to_teal(client, milestone_contract.approval_program())
+    approval_program_campaign = teal.to_teal(campaign_contract.approval_program())
+    clear_program = teal.to_teal(campaign_contract.clearstate_contract())
+    approval_program_milestone = teal.to_teal(milestone_contract.approval_program())
 
     # Declaring sender
     sender = public_address
@@ -718,10 +718,6 @@ def nft_delete(client, campaign_id, asset_id, milestone_app_id):
     params_txn1 = client.suggested_params()
     params_txn1.fee = 2000
     params_txn1.flat_fee = True
-
-    # define arguments
-    args_list = ["Transfer NFT to Creator"]
-    asset_list = [asset_id]
 
     # if campaign is not yet approved by the admin
     if index.nft_info_in_campaign(campaign_id) > 0 and index.campaign_end(campaign_id) == 'not ended':

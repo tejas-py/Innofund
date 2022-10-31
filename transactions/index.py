@@ -479,3 +479,38 @@ def campaign_end(campaign_app_id):
         return "ended"
     else:
         return "not ended"
+
+
+# decode params
+def decode(text):
+    bytes_decoded_string = base64.b64decode(text)
+    str_decoded_string = str(bytes_decoded_string, 'utf-8')
+    return str_decoded_string
+
+
+# get the key's value for an application
+def app_param_value(app_id, key=None):
+
+    app_details = indexerConnection.applications(app_id)
+    params_list = app_details['application']['params']['global-state']
+    sorted_params = []
+
+    for one_param in params_list:
+        encoded_key = one_param['key']
+        decoded_key = decode(encoded_key)
+
+        if one_param['value']['type'] == 2:
+            decoded_value = one_param['value']['uint']
+        else:
+            encoded_value = one_param['value']['bytes']
+            decoded_value = decode(encoded_value)
+
+        sorted_params.append({decoded_key: decoded_value})
+
+    if key:
+        for arg in sorted_params:
+            for one_item in arg:
+                if one_item == key:
+                    return arg.get(key)
+    else:
+        return sorted_params
