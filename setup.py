@@ -1254,6 +1254,6 @@ def reject_milestone():
         return jsonify(error_msg), 400
 
 
-# running the API
+# running the API on Port: 3000
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
