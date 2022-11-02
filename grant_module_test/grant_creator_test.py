@@ -190,9 +190,36 @@ def edit_grant(client, mnemonic_keys, user_app_id, grant_app_id, title, duration
     return tx_id
 
 
+# Delete Grant
+def delete_grant(client, mnemonic_keys, user_app_id, grant_app_id):
+    # derive private key and sender
+    private_key = mnemonic.to_private_key(mnemonic_keys)
+    sender = account.address_from_private_key(private_key)
+
+    # define the params
+    params = client.suggested_params()
+    params.fee = 3000
+    args_list = ['Delete Grant']
+    app_list = [grant_app_id]
+
+    print('creating transaction object...')
+    txn = ApplicationNoOpTxn(sender=sender, sp=params, index=user_app_id, app_args=args_list, foreign_apps=app_list)
+
+    print("Signing Transaction...")
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+    wait_for_confirmation(client, tx_id)
+
+    return tx_id
+
+
 # Admin Approve/Reject the grant
 def admin_grant_review(client, mnemonic_keys, review, grant_app_id):
-    print('creating application...')
     # derive private key and sender
     private_key = mnemonic.to_private_key(mnemonic_keys)
     sender = account.address_from_private_key(private_key)
@@ -247,6 +274,41 @@ def approve_grant_application(client, mnemonic_keys, wallet_address, application
 
     print('creating transaction object...')
     txn = ApplicationNoOpTxn(sender=sender, sp=params, index=grant_app_id, app_args=args_list, accounts=accounts_list, foreign_apps=apps)
+
+    print("Signing Transaction...")
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+    wait_for_confirmation(client, tx_id)
+
+    # display results
+    client.pending_transaction_info(tx_id)
+
+    return tx_id
+
+
+# Reject Applicant's Application for Grant
+# user app id: of the grant creator
+def reject_grant_application(client, mnemonic_keys, wallet_address, application_app_id, user_app_id, grant_app_id):
+
+    # derive the accounts
+    private_key = mnemonic.to_private_key(mnemonic_keys)
+    sender = wallet_address
+
+    # define the params
+    params = client.suggested_params()
+    params.fee = 2000
+    params.flat_fee = True
+
+    args_list = ["Reject grant application", "Change status to rejected"]
+    apps = [application_app_id]
+
+    print('creating transaction object...')
+    txn = ApplicationNoOpTxn(sender=sender, sp=params, index=grant_app_id, app_args=args_list, foreign_apps=apps)
 
     print("Signing Transaction...")
     signed_txn = txn.sign(private_key)

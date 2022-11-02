@@ -228,7 +228,30 @@ def admin_review():
 # Delete Grant
 @app.route('/grant_creator/grant/delete', methods=['POST'])
 def delete_grant():
-    return None
+    try:
+        # Get details of the user
+        review_details = request.get_json()
+        address = review_details['wallet_address']
+        mnemonic_keys = review_details['mnemonic_keys']
+        grant_app_id = review_details['grant_app_id']
+        user_app_id = review_details['user_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(address, 1000):
+            # give the user id for the user
+            try:
+                usertxn = grant_creator.delete_grant(algod_client, mnemonic_keys, user_app_id, grant_app_id)
+                return jsonify(usertxn), 200
+            except Exception as error:
+                return jsonify({"message": str(error)}), 500
+        else:
+            error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": "Wallet Error!" + str(wallet_error)}
+        return jsonify(error_msg), 400
 
 
 # Submit Application buy the grant applicant for grant
@@ -267,13 +290,62 @@ def applicant_submit_application():
 # Edit Grant Application
 @app.route('/grant_applicant/grant_application/edit_application', methods=['POST'])
 def edit_application():
-    return None
+    try:
+        # Get details of the user
+        application_details = request.get_json()
+        address = application_details['wallet_address']
+        mnemonic_keys = application_details['mnemonic_keys']
+        application_app_id = application_details['application_app_id']
+        user_app_id = application_details['user_app_id']
+        mile1 = application_details['mile1']
+        mile2 = application_details['mile2']
+        req_funds = application_details['req_funds']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(address, 1000):
+            # give the user id for the user
+            try:
+                usertxn = grant_applicant.edit_application_form(algod_client, mnemonic_keys, application_app_id, user_app_id, mile1, mile2, req_funds)
+                return jsonify(usertxn), 200
+            except Exception as error:
+                return jsonify({"message": str(error)}), 500
+        else:
+            error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": "Wallet Error!" + str(wallet_error)}
+        return jsonify(error_msg), 400
 
 
 # Delete Grant Application
 @app.route('/grant_applicant/grant_application/delete', methods=['POST'])
 def delete_grant_application():
-    return None
+    try:
+        # Get details of the user
+        application_details = request.get_json()
+        address = application_details['wallet_address']
+        mnemonic_keys = application_details['mnemonic_keys']
+        application_app_id = application_details['application_app_id']
+        user_app_id = application_details['user_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(address, 1000):
+            # give the user id for the user
+            try:
+                usertxn = grant_applicant.delete_application(algod_client, mnemonic_keys, application_app_id, user_app_id)
+                return jsonify(usertxn), 200
+            except Exception as error:
+                return jsonify({"message": str(error)}), 500
+        else:
+            error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": "Wallet Error!" + str(wallet_error)}
+        return jsonify(error_msg), 400
 
 
 # Approve applicant's Application

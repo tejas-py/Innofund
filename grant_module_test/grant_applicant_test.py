@@ -140,6 +140,34 @@ def edit_application_form(client, mnemonic_keys, application_app_id, user_app_id
     return tx_id
 
 
+# Delete Application
+def delete_application(client, mnemonic_keys, application_app_id, user_app_id):
+    # derive private key and sender
+    private_key = mnemonic.to_private_key(mnemonic_keys)
+    sender = account.address_from_private_key(private_key)
+
+    # define the params
+    params = client.suggested_params()
+    params.fee = 2000
+    args_list = ['Delete Grant Application']
+    app_list = [application_app_id]
+
+    print('creating transaction object...')
+    txn = ApplicationNoOpTxn(sender=sender, sp=params, index=user_app_id, app_args=args_list, foreign_apps=app_list)
+
+    print("Signing Transaction...")
+    signed_txn = txn.sign(private_key)
+    tx_id = signed_txn.transaction.get_txid()
+
+    # send transaction
+    client.send_transactions([signed_txn])
+
+    # await confirmation
+    wait_for_confirmation(client, tx_id)
+
+    return tx_id
+
+
 # find the balance
 def balance(client, app_id):
     wallet_address = encoding.encode_address(encoding.checksum(b'appID' + app_id.to_bytes(8, 'big')))

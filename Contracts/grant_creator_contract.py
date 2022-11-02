@@ -75,7 +75,7 @@ def grant():
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.ApplicationCall,
             TxnField.application_id: Txn.applications[1],
-            TxnField.application_args: [Txn.application_args[2]],
+            TxnField.application_args: [Txn.application_args[1]],
             TxnField.fee: Int(0)
         }),
         # Submit the transaction
@@ -138,10 +138,7 @@ def grant():
             Txn.application_args[0] == Bytes("Approve grant application")
         ), approve_applicant_application_status],
         # Condition 3
-        [And(
-            is_app_creator,
-            Txn.application_args[0] == Bytes("Reject grant application")
-        ), reject_applicant_application_status],
+        [Txn.application_args[0] == Bytes("Reject grant application"), reject_applicant_application_status],
         # Condition 4
         [And(
             is_app_creator,
@@ -161,7 +158,8 @@ def grant():
             App.globalGet(Bytes('status')) == Bytes('rejected'),
             App.globalGet(Bytes('status')) == Bytes('pending'),
             my_balance.value() == Int(0),
-        )), Approve()
+        )),
+        Approve()
     )
 
     # Delete Grant and Transfer the Grant Amount
