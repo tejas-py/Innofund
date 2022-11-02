@@ -225,8 +225,14 @@ def admin_review():
         return jsonify(error_msg), 400
 
 
+# Delete Grant
+@app.route('/grant_creator/grant/delete', methods=['POST'])
+def delete_grant():
+    return None
+
+
 # Submit Application buy the grant applicant for grant
-@app.route('/grant_applicant/submit_application', methods=["POST"])
+@app.route('/grant_applicant/grant_application/submit_application', methods=["POST"])
 def applicant_submit_application():
 
     try:
@@ -258,6 +264,18 @@ def applicant_submit_application():
         return jsonify(error_msg), 400
 
 
+# Edit Grant Application
+@app.route('/grant_applicant/grant_application/edit_application', methods=['POST'])
+def edit_application():
+    return None
+
+
+# Delete Grant Application
+@app.route('/grant_applicant/grant_application/delete', methods=['POST'])
+def delete_grant_application():
+    return None
+
+
 # Approve applicant's Application
 @app.route('/grant_creator/grant/approve_application', methods=['POST'])
 def approve_application():
@@ -287,6 +305,12 @@ def approve_application():
     except Exception as wallet_error:
         error_msg = {"message": "Wallet Error!" + str(wallet_error)}
         return jsonify(error_msg), 400
+
+
+# Reject Applicant's Application
+@app.route('/grant_creator/grant/reject_application', methods=['POST'])
+def reject_application():
+    return None
 
 
 # Approve Applicant's Milestone 1 by Grant Creator/Manager

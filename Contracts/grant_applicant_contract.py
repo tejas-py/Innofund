@@ -60,10 +60,6 @@ def grant_application():
         # Transaction: Give Milestone 2 (excluding advance) Money after the approval of the report
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.Payment,
-            # account of the applicant personal wallet
-            TxnField.receiver: Txn.accounts[1],
-            # amount to be given to the applicant for the milestone 2 payment excluding advance
-            TxnField.amount: Btoi(Txn.application_args[2]),
             TxnField.close_remainder_to: Txn.accounts[1],
             TxnField.fee: Int(0)
         }),
@@ -79,11 +75,8 @@ def grant_application():
         # Transaction: Milestone report denied, give the remaining balance to the grant creator
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.Payment,
-            # account of the grant creator/manager
-            TxnField.receiver: Txn.accounts[1],
             # give all the balance of the smart contract to the grant creator
             TxnField.close_remainder_to: Txn.accounts[1],
-            TxnField.amount: Btoi(Txn.application_args[1]),
             TxnField.fee: Int(0)
         }),
         # Submit the transaction
@@ -121,6 +114,7 @@ def grant_application():
     delete_cond = Cond(
         [And(
             is_app_creator,
+            Global.group_size() == Int(2),
             App.globalGet(Bytes('status')) == Bytes('rejected'),
             App.globalGet(Bytes('status')) == Bytes('pending'),
             App.globalGet(Bytes('status')) == Bytes('completed')
@@ -183,12 +177,35 @@ def grant_applicant():
         create_grant_app_inner_txn
     )
 
+    # delete the grant application and pay the algos back to the creator of grant application
+    delete_inner_txn = Seq(
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.ApplicationCall,
+            TxnField.application_id: Txn.applications[1],
+            TxnField.on_completion: OnComplete.DeleteApplication,
+            TxnField.fee: Int(0)
+        }),
+        InnerTxnBuilder.Next(),
+        # Transaction: Payment to grant application creator
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.Payment,
+            TxnField.amount: Int(407000),
+            TxnField.receiver: Global.creator_address(),
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
     # Application Call transactions
     call_transactions = Cond(
         [And(
             Global.group_size() == Int(3),
             Txn.application_args[0] == Bytes("Create Grant Application")
-        ), create_grant_app_cond]
+        ), create_grant_app_cond],
+        [Txn.application_args[0] == Bytes('Delete Grant Application'), delete_inner_txn]
     )
 
     program = Cond(
