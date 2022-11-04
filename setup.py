@@ -1226,8 +1226,8 @@ def approve_milestone_2():
 
 
 # Reject Applicant's Milestone 1/2 by Grant Creator/Manager
-@app.route('/grant_creator/grant/reject_milestone', methods=['POST'])
-def reject_milestone():
+@app.route('/grant_creator/grant/milestone_reject', methods=['POST'])
+def milestone_rejected():
     try:
         # Get details of the user
         milestone_details = request.get_json()
