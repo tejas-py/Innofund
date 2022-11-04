@@ -449,8 +449,8 @@ def admin():
 def clearstate_contract():
     return Approve()
 
-
-if __name__ == "__main__":
-    with open("teal_test.teal", "w") as f:
-        compiled = compileTeal(admin(), mode=Mode.Application, version=6)
-        f.write(compiled)
+#
+# if __name__ == "__main__":
+#     with open("teal/grant_creator.teal", "w") as f:
+#         compiled = compileTeal(admin(), mode=Mode.Application, version=6)
+#         f.write(compiled)

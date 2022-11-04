@@ -220,3 +220,9 @@ def grant_applicant():
 # clear program for the grant applicant
 def clearstate_contract():
     return Approve()
+
+#
+# if __name__ == "__main__":
+#     with open("teal/grant_applicant.teal", "w") as f:
+#         compiled = compileTeal(grant_applicant(), mode=Mode.Application, version=6)
+#         f.write(compiled)
