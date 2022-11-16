@@ -1005,6 +1005,34 @@ def create_manager():
         return jsonify(error_msg), 400
 
 
+# remove manager
+@app.route('/grant_creator/manager/remove', methods=["POST"])
+def create_grant():
+    try:
+        # Get details of the user
+        grant_details = request.get_json()
+        address = grant_details['wallet_address']
+        creator_app_id = grant_details['user_app_id']
+        manager_app_id = grant_details['manager_user_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(address, 1000):
+            # give the user id for the user
+            try:
+                usertxn = grant_creator.delete_manager(algod_client, creator_app_id, manager_app_id)
+                return jsonify(usertxn), 200
+            except Exception as error:
+                return jsonify({"message": str(error)}), 500
+        else:
+            error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": "Wallet Error!" + str(wallet_error)}
+        return jsonify(error_msg), 400
+
+
 # Create Grant
 @app.route('/grant_creator/grant/create_grant', methods=["POST"])
 def create_grant():

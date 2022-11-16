@@ -151,17 +151,6 @@ def grant():
     # Smart contract Balance
     my_balance = AccountParam.balance(Global.current_application_address())
 
-    # check the status of the Grant
-    delete_cond_check = Seq(
-        my_balance,
-        Assert(Or(
-            App.globalGet(Bytes('status')) == Bytes('rejected'),
-            App.globalGet(Bytes('status')) == Bytes('pending'),
-            my_balance.value() == Int(0),
-        )),
-        Approve()
-    )
-
     # Delete Grant and Transfer the Grant Amount
     delete_cond = Seq(
         Assert(is_app_creator),
@@ -175,7 +164,18 @@ def grant():
         }),
         # Submit the transaction
         InnerTxnBuilder.Submit(),
-        delete_cond_check
+        Approve()
+    )
+
+    # check the status of the Grant
+    delete_cond_check = Seq(
+        my_balance,
+        Assert(Or(
+            App.globalGet(Bytes('status')) == Bytes('rejected'),
+            App.globalGet(Bytes('status')) == Bytes('pending'),
+            my_balance.value() == Int(0),
+            )),
+        delete_cond
     )
 
     program = Cond(
@@ -429,11 +429,33 @@ def admin():
         Approve()
     )
 
+    delete_manager = Seq(
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.ApplicationCall,
+            TxnField.application_id: Txn.applications[1],
+            TxnField.on_completion: OnComplete.DeleteApplication,
+            TxnField.fee: Int(0)
+        }),
+        InnerTxnBuilder.Next(),
+        # Transaction: Payment to grant creator
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.Payment,
+            TxnField.amount: Int(300000),
+            TxnField.receiver: Global.creator_address(),
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
     # Application Call transactions
     call_transactions = Cond(
         [Txn.application_args[0] == Bytes("Create Manager"), create_manager_cond],
         [Txn.application_args[0] == Bytes("Create Grant"), create_grant_cond],
-        [Txn.application_args[0] == Bytes("Delete Grant"), delete_grant_inner_txn]
+        [Txn.application_args[0] == Bytes("Delete Grant"), delete_grant_inner_txn],
+        [Txn.application_args[0] == Bytes('Delete Manager'), delete_manager]
     )
 
     program = Cond(
@@ -449,8 +471,8 @@ def admin():
 def clearstate_contract():
     return Approve()
 
-#
-# if __name__ == "__main__":
-#     with open("teal/grant_creator.teal", "w") as f:
-#         compiled = compileTeal(admin(), mode=Mode.Application, version=6)
-#         f.write(compiled)
+
+if __name__ == "__main__":
+    with open("teal/grant_creator.teal", "w") as f:
+        compiled = compileTeal(admin(), mode=Mode.Application, version=6)
+        f.write(compiled)
