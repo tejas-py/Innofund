@@ -300,6 +300,7 @@ def delete_manager(client, creator_app_id, manager_app_id):
     # define the params
     params = client.suggested_params()
     params.fee = 3000
+
     args_list = ['Delete Manager']
     app_list = [manager_app_id]
 
