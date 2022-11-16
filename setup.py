@@ -1007,7 +1007,7 @@ def create_manager():
 
 # remove manager
 @app.route('/grant_creator/manager/remove', methods=["POST"])
-def create_grant():
+def remove_manager():
     try:
         # Get details of the user
         grant_details = request.get_json()
