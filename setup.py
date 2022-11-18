@@ -1053,7 +1053,7 @@ def create_grant():
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
-        if CommonFunctions.check_balance(address, 1000):
+        if CommonFunctions.check_balance(address, 578_000+int(total_budget*1_000_000)):
             # give the user id for the user
             try:
                 usertxn = grant_creator.grant_app(algod_client, user_app_id, title, duration, min_grant, max_grant,
