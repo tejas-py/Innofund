@@ -141,7 +141,8 @@ def transfer_nft_to_application(client, asset_id, admin_app_id, wallet_address):
         sender=wallet_address,
         sp=params_txn2,
         index=admin_app_id,
-        foreign_assets=[asset_id]
+        foreign_assets=[asset_id],
+        app_args=['Add NFT']
     )
 
     # Use the AssetTransferTxn class to transfer assets
