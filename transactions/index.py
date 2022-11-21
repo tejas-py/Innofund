@@ -121,7 +121,7 @@ def assets_in_wallet(app_id):
                      "unit-name": one_asset_param.get('unit-name'),
                      "frozen-state": one_asset_param.get('default-frozen'),
                      "url": one_asset_param.get('url'),
-                     "total":one_asset_info.get('amount'),
+                     "total": one_asset_info.get('amount'),
                      "asset-id": one_asset_information.get('index')
                      }
             total_assets.append(asset)

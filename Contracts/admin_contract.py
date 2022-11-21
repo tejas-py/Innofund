@@ -43,8 +43,27 @@ def approval_program():
         Approve()
     )
 
+    # optin nft
+    inner_txn3 = Seq(
+        InnerTxnBuilder.Begin(),
+        # Transaction: Opt-in NFT
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.asset_amount: Int(0),
+            TxnField.xfer_asset: Txn.assets[0],
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        Approve()
+    )
+
     group_transaction = Cond(
         [Txn.application_args[0] == Bytes('Withdraw NFT'), inner_txn1],
+        [And(
+            Global.group_size() == Int(3),
+            Txn.application_args[0] == Bytes('Add NFT')
+        ), inner_txn3],
         [And(
             Global.group_size() == Int(3),
             Txn.application_args[0] == Bytes('Buy NFT')

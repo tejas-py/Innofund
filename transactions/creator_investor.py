@@ -8,7 +8,7 @@ from Contracts import campaign_contract, milestone_contract, teal
 local_ints = 0
 local_bytes = 0
 global_ints = 6
-global_bytes = 5
+global_bytes = 6
 global_schema = StateSchema(global_ints, global_bytes)
 local_schema = StateSchema(local_ints, local_bytes)
 

@@ -439,8 +439,8 @@ def nft_marketplace():
     try:
         nft_list = index.assets_in_wallet(admin_application_id)
         return jsonify(nft_list), 200
-    except Exception as error:
-        return jsonify({'message': str(error)}), 500
+    except Exception:
+        return jsonify({'message': "No NFT Found"}), 500
 
 
 # Single NFT information for marketplace

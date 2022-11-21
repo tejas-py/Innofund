@@ -126,31 +126,44 @@ def transfer_nft_to_application(client, asset_id, admin_app_id, wallet_address):
     # set suggested params
     params = client.suggested_params()
 
-    # Use the AssetTransferTxn opt-in
-    txn_1 = transaction.AssetTransferTxn(
+    # Payment to admin application wallet to receive NFT
+    txn_1 = transaction.PaymentTxn(
         sender=wallet_address,
         sp=params,
         receiver=marketplace_address,
-        amt=0,
-        index=asset_id)
+        amt=int(0.2*1_000_000)
+    )
+
+    # Application call to optin NFT
+    params_txn2 = client.suggested_params()
+    params_txn2.fee = 2000
+    txn_2 = transaction.ApplicationNoOpTxn(
+        sender=wallet_address,
+        sp=params_txn2,
+        index=admin_app_id,
+        foreign_assets=[asset_id]
+    )
 
     # Use the AssetTransferTxn class to transfer assets
-    txn_2 = transaction.AssetTransferTxn(
+    txn_3 = transaction.AssetTransferTxn(
         sender=wallet_address,
         sp=params,
         receiver=marketplace_address,
-        amt=10,
-        index=asset_id)
+        amt=1,
+        index=asset_id
+    )
 
     print("Grouping transactions...")
     # compute group id and put it into each transaction
-    group_id = transaction.calculate_group_id([txn_1, txn_2])
+    group_id = transaction.calculate_group_id([txn_1, txn_2, txn_3])
     print("...computed groupId: ", group_id)
     txn_1.group = group_id
     txn_2.group = group_id
+    txn_3.group = group_id
 
     txngrp = [{'txn': encoding.msgpack_encode(txn_1)},
-              {'txn': encoding.msgpack_encode(txn_2)}]
+              {'txn': encoding.msgpack_encode(txn_2)},
+              {'txn': encoding.msgpack_encode(txn_3)}]
 
     return txngrp
 
