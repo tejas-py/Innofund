@@ -102,7 +102,7 @@ def asset_details(asset_id):
 def assets_in_wallet(app_id):
 
     # get address from app id
-    address = utilities.CommonFunctions.get_address_from_application(app_id)
+    address = encoding.encode_address(encoding.checksum(b'appID' + app_id.to_bytes(8, 'big')))
 
     # get frozen state of assets
     response_frozen = indexerConnection.account_info(address=address)
