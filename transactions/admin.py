@@ -22,16 +22,10 @@ def create_admin_account(client):
     approval_program = teal.to_teal(admin_contract.approval_program())
     clear_program = teal.to_teal(admin_contract.clearstate_contract())
 
-    private_key, address = account.generate_account()
-    print("Fund the address, use the link https://bank.testnet.algorand.network/ : {}".format(address))
-    print("Here is your private key: \n{}".format(private_key))
-    print("And this is your mnemonic: \n{}".format(mnemonic.from_private_key(private_key)))
+    mnemonic_keys = "loyal wrestle resemble true love access ship olive urban stick magnet verb bamboo anger open trip air heart laundry pulp dilemma divide ill abstract crack"
+    private_key = mnemonic.to_private_key(mnemonic_keys)
+    sender = account.address_from_private_key(private_key)
 
-    account_info = client.account_info(address)
-    print("Account balance: {} microAlgos".format(account_info.get('amount')) + "\n")
-    input("Press ENTER to continue...")
-
-    sender = address
     on_complete = transaction.OnComplete.NoOpOC.real
 
     params = client.suggested_params()
@@ -131,7 +125,7 @@ def transfer_nft_to_application(client, asset_id, admin_app_id, wallet_address):
         sender=wallet_address,
         sp=params,
         receiver=marketplace_address,
-        amt=int(0.2*1_000_000)
+        amt=int(0.3*1_000_000)
     )
 
     # Application call to optin NFT
@@ -188,14 +182,14 @@ def withdraw_nft_from_marketplace(client, asset_id, admin_app_id, wallet_address
 
 
 # buy nft from admin
-def buy_nft(client, asset_id, user_app_id, nft_price):
+def buy_nft(client, asset_id, user_app_id, nft_price, admin_app_id):
 
     # set suggested params
     params = client.suggested_params()
 
     # get the wallet address
-    admin_app_id = 107294801
     creator_address = get_address_from_application(user_app_id)
+    # creator_address = wallet_address
     admin_wallet_address = get_address_from_application(admin_app_id)
 
     # Optin NFT
@@ -217,7 +211,7 @@ def buy_nft(client, asset_id, user_app_id, nft_price):
 
     # Application call to receive nft
     # parameters
-    params_txn3 = client.suggested_params
+    params_txn3 = client.suggested_params()
     params_txn3.fee = 2000
     params_txn3.flat_fee = True
 

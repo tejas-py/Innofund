@@ -10,14 +10,6 @@ import utilities.CommonFunctions
 indexerConnection = connection.connect_indexer()
 
 
-# get total assets on the nodes
-def total_assets_by_admin(admin):
-    print(f"Total assets minted by {admin}...")
-    response = indexerConnection.search_assets(creator=admin)
-    asset_info = json.dumps(response, indent=2, sort_keys=True)
-    return asset_info
-
-
 # get the transaction information for asset by an account
 def get_minted_asset_transaction(address):
 
@@ -55,7 +47,6 @@ def get_minted_asset_transaction(address):
 
         total_assets.append(asset)
 
-
     return total_assets
 
 
@@ -76,25 +67,17 @@ def name_by_user_id(user_app_id):
 
 # get asset details
 def asset_details(asset_id):
-
     # get asset create transactions
     response = indexerConnection.asset_info(asset_id)
     asset_info = response['asset']
     params = asset_info['params']
 
-    # get the creator of the asset
-    creator = params.get('creator')
-    asset_fee = indexerConnection.search_transactions_by_address(address=creator, txn_type="acfg", asset_id = asset_id)
-    asset_transaction = asset_fee['transactions'][0]
-
     asset = {"asset_name": params.get('name'),
              "unit_name": params.get('unit-name'),
              "url": params.get('url'),
              "total": params.get('total'),
-             "asset_id": asset_info.get('index'),
-             "Price": asset_transaction.get('fee')
+             "asset_id": asset_info.get('index')
              }
-
     return asset
 
 
@@ -102,8 +85,43 @@ def asset_details(asset_id):
 def assets_in_wallet(app_id):
 
     # get address from app id
-    address = encoding.encode_address(encoding.checksum(b'appID' + app_id.to_bytes(8, 'big')))
+    address = utilities.CommonFunctions.get_address_from_application(app_id)
 
+    # get frozen state of assets
+    response_frozen = indexerConnection.account_info(address=address)
+    total_asset_info = response_frozen['account']['assets']
+
+    # create blank array to store loop data
+    total_assets = []
+    # cashdillo_assets = []
+
+    # loop for searching info for one asset at a time
+    for one_asset_info in total_asset_info:
+        if one_asset_info.get('amount') > 0:
+            asset_detail = indexerConnection.asset_info(one_asset_info['asset-id'])
+            one_asset_information = asset_detail['asset']
+            one_asset_param = one_asset_information['params']
+            asset = {"asset-name": one_asset_param.get('name'),
+                     "unit-name": one_asset_param.get('unit-name'),
+                     "frozen-state": one_asset_param.get('default-frozen'),
+                     "url": one_asset_param.get('url'),
+                     "total": one_asset_info.get('amount'),
+                     "asset-id": one_asset_information.get('index')
+                     }
+            total_assets.append(asset)
+
+    # for one_asset in total_assets:
+    #     if one_asset['asset_name'] == "Cashdillo" and one_asset['total'] == 1:
+    #         cashdillo_assets.append(one_asset)
+
+    return total_assets
+
+
+# nft marketplace nft list
+def assets_in_marketplace(app_id):
+
+    address = encoding.encode_address(encoding.checksum(b'appID' + app_id.to_bytes(8, 'big')))
+    # address = "YRUXAUFC7Z5BL3V3XBJ64I5BIN3A4YOJPBLUHGSEDPWNYVGUMOKBIV4N2I"
     # get frozen state of assets
     response_frozen = indexerConnection.account_info(address=address)
     total_asset_info = response_frozen['account']['assets']
@@ -125,6 +143,7 @@ def assets_in_wallet(app_id):
                      "asset-id": one_asset_information.get('index')
                      }
             total_assets.append(asset)
+
 
     return total_assets
 
@@ -499,13 +518,16 @@ def app_param_value(app_id, key=None):
         encoded_key = one_param['key']
         decoded_key = decode(encoded_key)
 
-        if one_param['value']['type'] == 2:
-            decoded_value = one_param['value']['uint']
-        else:
-            encoded_value = one_param['value']['bytes']
-            decoded_value = decode(encoded_value)
+        try:
+            if one_param['value']['type'] == 2:
+                decoded_value = one_param['value']['uint']
+            else:
+                encoded_value = one_param['value']['bytes']
+                decoded_value = decode(encoded_value)
 
-        sorted_params.append({decoded_key: decoded_value})
+            sorted_params.append({decoded_key: decoded_value})
+        except Exception as Error:
+            print(Error)
 
     if key:
         for arg in sorted_params:
@@ -514,3 +536,49 @@ def app_param_value(app_id, key=None):
                     return arg.get(key)
     else:
         return sorted_params
+
+
+# search number of grant managers created by the grant creator
+def grant_manager_number_by_grant_creator(creator_app_id):
+
+    response = indexerConnection.search_transactions(application_id=creator_app_id, txn_type='appl')
+    app_txns = response['transactions']
+    grant_manager_number = 0
+
+    for one_txn in app_txns:
+        try:
+            if one_txn['note'] == "Q3JlYXRpbmcgbWFuYWdlciBmb3IgQ2FzaGRpbGxv":
+                grant_manager_number += 1
+        except Exception as error:
+            print(error)
+
+    return grant_manager_number
+
+
+# search number of grants created by the grant creator
+def grant_number_by_grant_creator(creator_app_id):
+
+    response = indexerConnection.search_transactions(application_id=creator_app_id, txn_type='appl')
+    app_txns = response['transactions']
+    grant_manager_number = 0
+
+    for one_txn in app_txns:
+        try:
+            if one_txn['note'] == "Q3JlYXRpbmcgR3JhbnQ=":
+                grant_manager_number += 1
+        except Exception as error:
+            print(error)
+
+    return grant_manager_number
+
+
+# check the min and max balance
+def balance(client, app_id):
+    wallet_address = encoding.encode_address(encoding.checksum(b'appID' + app_id.to_bytes(8, 'big')))
+    account_i = client.account_info(wallet_address)
+    locked_balance = account_i['min-balance']
+    account_balance = account_i['amount']
+    print(f"min: {locked_balance}")
+    print(f"max: {account_balance}")
+
+    return {"min": locked_balance, "max": account_balance}

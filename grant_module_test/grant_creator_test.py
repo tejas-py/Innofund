@@ -33,7 +33,7 @@ def grant_admin_app(client, mnemonic_keys, organisation_name, organisation_role,
     print('creating transaction object...')
     txn = ApplicationCreateTxn(sender=sender, sp=params, on_complete=on_complete,
                                approval_program=approval_program, clear_program=clear_program,
-                               global_schema=global_schema, local_schema=local_schema, app_args=args_list)
+                               global_schema=global_schema, local_schema=local_schema, app_args=args_list, extra_pages=2)
 
     print("Signing Transaction...")
     signed_txn = txn.sign(private_key)
@@ -117,11 +117,17 @@ def grant_app(client, mnemonic_keys, user_app_id, title, duration, min_grant, ma
     # define params for transaction 1
     params = client.suggested_params()
     admin_app_address = encoding.encode_address(encoding.checksum(b'appID' + user_app_id.to_bytes(8, 'big')))
+    number_of_grants_by_user = transactions.index.grant_number_by_grant_creator(user_app_id)
 
-    # minimum balance is 578_000 for creating grant by the grant creator + the grant the creator wants to give to the applicants
-    txn_1 = PaymentTxn(sender, params, admin_app_address,
-                       amt=578_000+int(total_budget*1_000_000)
-                       )
+    if number_of_grants_by_user == 0:
+        # minimum balance is 578_000 for creating grant by the grant creator + the grant the creator wants to give to the applicants
+        txn_1 = PaymentTxn(sender, params, admin_app_address,
+                           amt=678_000+int(total_budget*1_000_000)
+                           )
+    else:
+        txn_1 = PaymentTxn(sender, params, admin_app_address,
+                           amt=578_000+int(total_budget*1_000_000)
+                           )
 
     # define params for transaction 2
     params_txn2 = client.suggested_params()
@@ -198,7 +204,7 @@ def delete_grant(client, mnemonic_keys, user_app_id, grant_app_id):
 
     # define the params
     params = client.suggested_params()
-    params.fee = 3000
+    params.fee = 4000
     args_list = ['Delete Grant']
     app_list = [grant_app_id]
 

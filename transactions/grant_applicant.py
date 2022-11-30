@@ -116,6 +116,7 @@ int 1
 return
 """
 
+
 # declare clear state program source
 clear_program_source = b"""#pragma version 6
 int 1
@@ -216,3 +217,6 @@ def edit_application_form(client, application_app_id, user_app_id, mile1, mile2,
     txngrp = [{'txn': encoding.msgpack_encode(txn)}]
 
     return txngrp
+
+
+# print(Today_seconds())

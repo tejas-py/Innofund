@@ -89,8 +89,8 @@ def grant():
         # app args 1 == current time
         # app args 2 == asl amount
         Assert(Btoi(Txn.application_args[1]) < App.globalGet(Bytes('grant_end_date'))),
-        Assert(Btoi(Txn.application_args[2]) < App.globalGet(Bytes('grant_end_date'))),
-        Assert(Btoi(Txn.application_args[3]) < App.globalGet(Bytes('grant_end_date'))),
+        Assert(Btoi(Txn.application_args[3]) > App.globalGet(Bytes('grant_end_date'))),
+        Assert(Btoi(Txn.application_args[4]) > App.globalGet(Bytes('grant_end_date'))),
         # check the amount that is asked
         Assert(App.globalGet(Bytes('total_budget')) > App.globalGet(Bytes('given_grant'))),
         Assert(Btoi(Txn.application_args[2]) <= App.globalGet(Bytes('total_budget'))),
@@ -153,29 +153,21 @@ def grant():
 
     # Delete Grant and Transfer the Grant Amount
     delete_cond = Seq(
-        Assert(is_app_creator),
+        # my_balance,
+        Assert(Txn.sender() == Global.creator_address()),
+        Assert(App.globalGet(Bytes('status')) != Bytes('approved')),
         Assert(Global.group_size() == Int(2)),
         # Pay the remaining amount inside the Grant to Grant Creator/Manager
         InnerTxnBuilder.Begin(),
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.Payment,
-            TxnField.close_remainder_to: Global.creator_address(),
+            TxnField.close_remainder_to: Txn.accounts[1],
             TxnField.fee: Int(0)
         }),
         # Submit the transaction
         InnerTxnBuilder.Submit(),
+        # Assert(my_balance.value() == Int(0)),
         Approve()
-    )
-
-    # check the status of the Grant
-    delete_cond_check = Seq(
-        my_balance,
-        Assert(Or(
-            App.globalGet(Bytes('status')) == Bytes('rejected'),
-            App.globalGet(Bytes('status')) == Bytes('pending'),
-            my_balance.value() == Int(0),
-            )),
-        delete_cond
     )
 
     program = Cond(
@@ -414,6 +406,7 @@ def admin():
             TxnField.type_enum: TxnType.ApplicationCall,
             TxnField.application_id: Txn.applications[1],
             TxnField.on_completion: OnComplete.DeleteApplication,
+            TxnField.accounts: [Global.creator_address()],
             TxnField.fee: Int(0)
         }),
         InnerTxnBuilder.Next(),
@@ -454,7 +447,10 @@ def admin():
     call_transactions = Cond(
         [Txn.application_args[0] == Bytes("Create Manager"), create_manager_cond],
         [Txn.application_args[0] == Bytes("Create Grant"), create_grant_cond],
-        [Txn.application_args[0] == Bytes("Delete Grant"), delete_grant_inner_txn],
+        [And(
+            is_app_creator,
+            Txn.application_args[0] == Bytes("Delete Grant"),
+        ), delete_grant_inner_txn],
         [Txn.application_args[0] == Bytes('Delete Manager'), delete_manager]
     )
 

@@ -14,6 +14,21 @@ cors = CORS(app, resources={
 # Setting up connection with algorand client
 algod_client = connection.algo_conn()
 
+# Mention the admin Application id
+admin_app_id = 144844676
+
+
+# return the title of the page and response
+def return_with_title(title, response):
+
+    return f"""
+      <!DOCTYPE html>
+      <html>
+      <head><title>{title}</title></head>
+      <body>{response}</body>
+      </html>
+      """
+
 
 # home page
 @app.route('/')
@@ -323,6 +338,13 @@ def init_milestone():
     return jsonify(milestone_txn)
 
 
+b'''
+========================================================================================================================
+                                                NFT Marketplace
+========================================================================================================================
+'''
+
+
 # Group Transaction: (Call user app and mint NFT)
 @app.route('/create_asset', methods=["POST"])
 def mint_nft():
@@ -366,16 +388,27 @@ def transfer_nft_to_marketplace():
         # get the details
         transaction_details = request.get_json()
         asset_id = transaction_details['nft_id']
-        admin_application_id = 107294801
-        wallet_address = transaction_details['admin_wallet_address']
+
+        wallet_address = CommonFunctions.get_address_from_application(admin_app_id)
+
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
     try:
         if CommonFunctions.check_balance(wallet_address, 2000):
-            # send the details to create transactions
-            txn = admin.transfer_nft_to_application(algod_client, asset_id, admin_application_id, wallet_address)
-            return jsonify(txn), 200
+            try:
+                # get nft details
+                nft_params = index.asset_details(asset_id)
+            except Exception as Error:
+                return jsonify({'message': f"NFT Not Found! f{Error}"}), 500
+
+            if nft_params['asset_name'] == "Cashdillo" and nft_params['total'] == 1 and nft_params['asset_id'] == asset_id:
+                # send the details to create transaction
+                txn = admin.transfer_nft_to_application(algod_client, asset_id, admin_app_id, wallet_address)
+                return jsonify(txn), 200
+            else:
+                return jsonify({'message': "This NFT cannot be linked to the marketplace"}), 400
+
         else:
             return jsonify({'message': "Check the wallet Balance"}), 500
     except Exception as error:
@@ -390,15 +423,14 @@ def withdraw_nft():
         # get the details
         transaction_details = request.get_json()
         asset_id = transaction_details['nft_id']
-        admin_application_id = 107294801
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
-    wallet_address = CommonFunctions.get_address_from_application(admin_application_id)
+    wallet_address = CommonFunctions.get_address_from_application(admin_app_id)
 
     try:
         if CommonFunctions.check_balance(wallet_address, 1000):
             # send the details to create transactions
-            txn = admin.withdraw_nft_from_marketplace(algod_client, asset_id, admin_application_id, wallet_address)
+            txn = admin.withdraw_nft_from_marketplace(algod_client, asset_id, admin_app_id, wallet_address)
             return jsonify(txn), 200
         else:
             return jsonify({'message': "Check the wallet Balance"}), 500
@@ -415,6 +447,7 @@ def buy_nft():
         asset_id = transaction_detail['nft_id']
         user_app_id = transaction_detail['user_app_id']
         nft_price = transaction_detail['nft_price']
+        # wallet_address = transaction_detail['wallet_address']
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
 
@@ -422,7 +455,7 @@ def buy_nft():
 
     try:
         if CommonFunctions.check_balance(wallet_address, 3000):
-            txn = admin.buy_nft(algod_client, asset_id, user_app_id, nft_price)
+            txn = admin.buy_nft(algod_client, asset_id, user_app_id, nft_price, admin_app_id)
             return jsonify(txn), 200
         else:
             return jsonify({'message': 'Check Wallet balance'}), 500
@@ -434,10 +467,8 @@ def buy_nft():
 @app.route('/nft_marketplace', methods=['GET'])
 def nft_marketplace():
 
-    admin_application_id = 107294801
-
     try:
-        nft_list = index.assets_in_wallet(admin_application_id)
+        nft_list = index.assets_in_marketplace(admin_app_id)
         return jsonify(nft_list), 200
     except Exception:
         return jsonify({'message': "No NFT Found"}), 500
@@ -819,12 +850,13 @@ def nft_in_campaign(campaign_app_id):
 # Get total NFT
 @app.route('/total_nft/<int:app_id>')
 def total_nft(app_id):
+
     try:
         assets = index.assets_in_wallet(app_id)
 
         return jsonify(assets), 200
     except Exception as Error:
-        print(f"Check User App ID! Error: {Error}")
+        print(f"Check User App ID! Error: {Error}"), 500
 
 
 # Get total NFT
@@ -894,7 +926,7 @@ def upload_ipfs():
         return jsonify({'message': f"Server Not Connected, IPFS Down, Error: {error}"}), 500
 
 
-'''
+b'''
 ========================================================================================================================
                             Grant Module: Grant-Creator, Grant-Manager, Grant-Applicant
 ========================================================================================================================
@@ -1056,9 +1088,12 @@ def create_grant():
         if CommonFunctions.check_balance(address, 578_000+int(total_budget*1_000_000)):
             # give the user id for the user
             try:
-                usertxn = grant_creator.grant_app(algod_client, user_app_id, title, duration, min_grant, max_grant,
-                                                  total_grants, total_budget, grant_end_date, ESG)
-                return jsonify(usertxn), 200
+                if int(CommonFunctions.Today_seconds()) < grant_end_date:
+                    usertxn = grant_creator.grant_app(algod_client, user_app_id, title, duration, min_grant, max_grant,
+                                                      total_grants, total_budget, grant_end_date, ESG, address)
+                    return jsonify(usertxn), 200
+                else:
+                    return jsonify({'message': "Grant can not be created. Grant End Date Error."}), 500
             except Exception as error:
                 return jsonify({"message": str(error)}), 500
         else:
@@ -1092,8 +1127,36 @@ def update_grant():
         if CommonFunctions.check_balance(address, 1000):
             # give the user id for the user
             try:
-                usertxn = grant_creator.edit_grant(algod_client, user_app_id, title, duration, min_grant, max_grant,
-                                                   total_grants, total_budget, grant_end_date, grant_app_id)
+                usertxn = grant_creator.edit_grant(algod_client, user_app_id, grant_app_id, title, duration, min_grant, max_grant,
+                                                   total_grants, total_budget, grant_end_date)
+                return jsonify(usertxn), 200
+            except Exception as error:
+                return jsonify({"message": str(error)}), 500
+        else:
+            error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": "Wallet Error!" + str(wallet_error)}
+        return jsonify(error_msg), 400
+
+
+# Delete Grant
+@app.route('/grant_creator/grant/delete', methods=['POST'])
+def delete_grant():
+    try:
+        # Get details of the user
+        review_details = request.get_json()
+        address = review_details['wallet_address']
+        grant_app_id = review_details['grant_app_id']
+        user_app_id = review_details['user_app_id']
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(address, 1000):
+            # give the user id for the user
+            try:
+                usertxn = grant_creator.delete_grant(algod_client, user_app_id, grant_app_id)
                 return jsonify(usertxn), 200
             except Exception as error:
                 return jsonify({"message": str(error)}), 500
