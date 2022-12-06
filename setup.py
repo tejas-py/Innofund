@@ -1374,12 +1374,7 @@ def milestone_rejected():
         return jsonify(error_msg), 400
 
 
-# def txn():
-    # res = connection.connect_indexer().search_transactions(txid="SAZJ3532EXN3UA6TV4GTK7VYX4OPSOECB5GOAQPBPHK24C2YKCNQ")
-    # print(int(res['transactions'][0]['inner-txns'][0]['payment-transaction']['amount']/1_000_000))
-
-
 # running the API, on Port: 3000
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
-    # txn()
+
