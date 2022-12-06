@@ -338,11 +338,11 @@ def init_milestone():
     return jsonify(milestone_txn)
 
 
-b'''
+b"""
 ========================================================================================================================
                                                 NFT Marketplace
 ========================================================================================================================
-'''
+"""
 
 
 # Group Transaction: (Call user app and mint NFT)
@@ -926,11 +926,11 @@ def upload_ipfs():
         return jsonify({'message': f"Server Not Connected, IPFS Down, Error: {error}"}), 500
 
 
-b'''
+b"""
 ========================================================================================================================
                             Grant Module: Grant-Creator, Grant-Manager, Grant-Applicant
 ========================================================================================================================
-'''
+"""
 
 
 # Grant Creator Account
@@ -1258,6 +1258,35 @@ def approve_application():
         return jsonify(error_msg), 400
 
 
+# Reject applicant's Application
+@app.route('/grant_creator/grant/reject_application', methods=['POST'])
+def reject_application():
+    try:
+        # Get details of the user
+        approval_details = request.get_json()
+        wallet_address = approval_details['wallet_address']
+        application_app_id = approval_details['application_app_id']
+        grant_app_id = approval_details['grant_app_id']
+
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(wallet_address, 1000):
+            # give the user id for the user
+            try:
+                usertxn = grant_creator.reject_grant_application(algod_client, wallet_address, application_app_id, grant_app_id)
+                return jsonify(usertxn), 200
+            except Exception as error:
+                return jsonify({"message": str(error)}), 500
+        else:
+            error_msg = {"message": "For Account Creation, Minimum Balance should be 1000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": "Wallet Error!" + str(wallet_error)}
+        return jsonify(error_msg), 400
+
+
 # Approve Applicant's Milestone 1 by Grant Creator/Manager
 @app.route('/grant_creator/grant/approve_milestone_1', methods=['POST'])
 def approve_milestone_1():
@@ -1345,6 +1374,12 @@ def milestone_rejected():
         return jsonify(error_msg), 400
 
 
+# def txn():
+    # res = connection.connect_indexer().search_transactions(txid="SAZJ3532EXN3UA6TV4GTK7VYX4OPSOECB5GOAQPBPHK24C2YKCNQ")
+    # print(int(res['transactions'][0]['inner-txns'][0]['payment-transaction']['amount']/1_000_000))
+
+
 # running the API, on Port: 3000
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+    # txn()

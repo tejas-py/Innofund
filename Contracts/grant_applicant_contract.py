@@ -115,9 +115,7 @@ def grant_application():
         [And(
             is_app_creator,
             Global.group_size() == Int(2),
-            App.globalGet(Bytes('status')) == Bytes('rejected'),
-            App.globalGet(Bytes('status')) == Bytes('pending'),
-            App.globalGet(Bytes('status')) == Bytes('completed')
+            App.globalGet(Bytes('status')) != Bytes('approve'),
         ), Approve()]
     )
     program = Cond(

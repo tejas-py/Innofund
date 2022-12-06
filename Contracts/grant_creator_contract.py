@@ -23,6 +23,7 @@ def grant():
             App.globalPut(Bytes('given_grant'), Int(0)),
             App.globalPut(Bytes('status'), Bytes('pending')),
             App.globalPut(Bytes('creator'), Txn.application_args[8]),
+            App.globalPut(Bytes('accepted_grant_applications'), Int(0)),
             Approve()
         ]
     )
@@ -30,13 +31,13 @@ def grant():
     # when the grant applicant application gets approves, the status for the application changes to approve
     approve_applicant_application_status = Seq(
         Assert(App.globalGet(Bytes('status')) == Bytes('approved')),
-        Assert(Btoi(Txn.application_args[4]) < App.globalGet(Bytes('grant_end_date'))),
+        Assert(App.globalGet(Bytes('total_grants')) > App.globalGet(Bytes('accepted_grant_applications'))),
         InnerTxnBuilder.Begin(),
         # Transaction 1: Applicant's application call to change the status of the applicant's application smart contract
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.ApplicationCall,
             TxnField.application_id: Txn.applications[1],
-            TxnField.application_args: [Txn.application_args[1]],
+            TxnField.application_args: [Bytes("Change status to approve")],
             TxnField.fee: Int(0)
         }),
         InnerTxnBuilder.Next(),
@@ -61,7 +62,50 @@ def grant():
         }),
         # Submit the transaction
         InnerTxnBuilder.Submit(),
-        # approve the transaction and update the given grant
+        # approve the transaction, update the given grant and accepted grant applications
+        App.globalPut(Bytes('accepted_grant_applications'),
+                      App.globalGet(Bytes('accepted_grant_applications')) + Int(1)),
+        App.globalPut(Bytes('given_grant'),
+                      App.globalGet(Bytes('given_grant')) + Btoi(Txn.application_args[2]) + Btoi(Txn.application_args[3])),
+        Approve()
+    )
+
+    # when the grant applicant application gets approves, the status for the application changes to approve
+    approve_last_applicant_application_status = Seq(
+        Assert(App.globalGet(Bytes('status')) == Bytes('approved')),
+        Assert(App.globalGet(Bytes('total_grants')) > App.globalGet(Bytes('accepted_grant_applications'))),
+        InnerTxnBuilder.Begin(),
+        # Transaction 1: Applicant's application call to change the status of the applicant's application smart contract
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.ApplicationCall,
+            TxnField.application_id: Txn.applications[1],
+            TxnField.application_args: [Bytes("Change status to approve")],
+            TxnField.fee: Int(0)
+        }),
+        InnerTxnBuilder.Next(),
+        # Transaction 2: Give advance 10% to the grant applicant to start the milestone
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.Payment,
+            # account of the applicant personal wallet
+            TxnField.receiver: Txn.accounts[2],
+            # 10% advance to be given to the applicant personal wallet
+            TxnField.amount: Btoi(Txn.application_args[3]),
+            TxnField.fee: Int(0)
+        }),
+        InnerTxnBuilder.Next(),
+        # Transaction 2: Transfer the grant money to the applicant smart contract
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.Payment,
+            # account of the applicant's smart contract
+            # Total Ask Amount to be given to the grant applicant smart contract - 10% advance
+            TxnField.close_remainder_to: Txn.accounts[1],
+            TxnField.fee: Int(0)
+        }),
+        # Submit the transaction
+        InnerTxnBuilder.Submit(),
+        # approve the transaction, update the given grant and accepted grant applications
+        App.globalPut(Bytes('accepted_grant_applications'),
+                      App.globalGet(Bytes('accepted_grant_applications')) + Int(1)),
         App.globalPut(Bytes('given_grant'),
                       App.globalGet(Bytes('given_grant')) + Btoi(Txn.application_args[2]) + Btoi(Txn.application_args[3])),
         Approve()
@@ -75,7 +119,7 @@ def grant():
         InnerTxnBuilder.SetFields({
             TxnField.type_enum: TxnType.ApplicationCall,
             TxnField.application_id: Txn.applications[1],
-            TxnField.application_args: [Txn.application_args[1]],
+            TxnField.application_args: [Bytes("Change status to rejected")],
             TxnField.fee: Int(0)
         }),
         # Submit the transaction
@@ -86,6 +130,7 @@ def grant():
     # checking all the forms of the application that is applied by the grant applicant
     check_applicant_application = Seq(
         Assert(App.globalGet(Bytes('status')) == Bytes('approved')),
+        Assert(App.globalGet(Bytes('total_grants')) > App.globalGet(Bytes('accepted_grant_applications'))),
         # app args 1 == current time
         # app args 2 == asl amount
         Assert(Btoi(Txn.application_args[1]) < App.globalGet(Bytes('grant_end_date'))),
@@ -138,13 +183,18 @@ def grant():
             Txn.application_args[0] == Bytes("Approve grant application")
         ), approve_applicant_application_status],
         # Condition 3
-        [Txn.application_args[0] == Bytes("Reject grant application"), reject_applicant_application_status],
+        [And(
+            is_app_creator,
+            Txn.application_args[0] == Bytes("Approve last grant application")
+        ), approve_last_applicant_application_status],
         # Condition 4
+        [Txn.application_args[0] == Bytes("Reject grant application"), reject_applicant_application_status],
+        # Condition 5
         [And(
             is_app_creator,
             Txn.application_args[0] == Bytes('Edit Grant')
         ), edit_grant_details],
-        # Condition 5
+        # Condition 6
         [Txn.application_args[0] == Bytes('Approve/Reject Grant by Admin'), status_change_by_admin]
     )
 
@@ -153,7 +203,7 @@ def grant():
 
     # Delete Grant and Transfer the Grant Amount
     delete_cond = Seq(
-        # my_balance,
+        my_balance,
         Assert(Txn.sender() == Global.creator_address()),
         Assert(App.globalGet(Bytes('status')) != Bytes('approved')),
         Assert(Global.group_size() == Int(2)),
@@ -166,7 +216,7 @@ def grant():
         }),
         # Submit the transaction
         InnerTxnBuilder.Submit(),
-        # Assert(my_balance.value() == Int(0)),
+        Assert(my_balance.value() == Int(0)),
         Approve()
     )
 
@@ -231,7 +281,7 @@ def manager():
             InnerTxnBuilder.SetFields({
                 TxnField.type_enum: TxnType.ApplicationCall,
                 TxnField.global_num_byte_slices: Int(3),
-                TxnField.global_num_uints: Int(8),
+                TxnField.global_num_uints: Int(9),
                 TxnField.approval_program: Bytes(app_prog_teal),
                 TxnField.clear_state_program: Bytes(clear_prog_teal),
                 TxnField.application_args: [
@@ -374,7 +424,7 @@ def admin():
             InnerTxnBuilder.SetFields({
                 TxnField.type_enum: TxnType.ApplicationCall,
                 TxnField.global_num_byte_slices: Int(3),
-                TxnField.global_num_uints: Int(8),
+                TxnField.global_num_uints: Int(9),
                 TxnField.approval_program: Bytes(app_prog_teal_grant),
                 TxnField.clear_state_program: Bytes(clear_prog_teal),
                 TxnField.application_args: [
