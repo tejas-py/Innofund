@@ -582,3 +582,13 @@ def balance(client, app_id):
     print(f"max: {account_balance}")
 
     return {"min": locked_balance, "max": account_balance}
+
+
+# get the total budget and given grant percentage
+def percentage_grant(grant_app_id):
+
+    total_budget = app_param_value(grant_app_id, 'total_budget')
+    given_grant = app_param_value(grant_app_id, 'given_grant')
+    percentage_calculated = given_grant/total_budget * 100
+
+    return {'grantPercentage': str(percentage_calculated)}

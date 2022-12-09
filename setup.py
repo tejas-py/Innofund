@@ -94,7 +94,7 @@ def create_admin_account():
     return jsonify(json_return)
 
 
-# delete account
+# delete account (Pending)
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
     try:
@@ -320,7 +320,7 @@ def delete_campaign():
             return jsonify({"message": f"Check Wallet Address, Error: {wallet_error}"}), 400
 
 
-# start the milestone
+# start the milestone...(API no Integrated)
 @app.route('/start_milestone', methods=['POST'])
 def init_milestone():
     try:
@@ -507,6 +507,7 @@ def asset_optin():
 
 
 # Transfer NFT from admin to campaign creator
+# ***NO SCREEN***
 @app.route('/transfer_asset', methods=["POST"])
 def transfer_nft():
 
@@ -594,6 +595,7 @@ def clamming_nft():
 
 
 # destroy asset, Group transaction: (campaign call app and destroy asset)
+# ***NO SCREEN***
 @app.route('/burn_asset', methods=["POST"])
 def burn_asset():
     asset_details = request.get_json()
@@ -883,7 +885,7 @@ def upload_ipfs():
     # extension support
     extensions_allowed = ['jpg', 'jpeg', 'png', 'gif', 'ico', 'icon', 'webp', 'tiff', 'raw', 'jpeg2000', 'svg', 'pdf', 'jfif', # images
                           'mp4', 'mov', 'wmv', 'avi', 'avchd', 'flv', 'f4v', 'swf', 'mkv', 'mpeg2', # Videos
-                          'pcm', 'wav', 'aiff', 'mp3', 'aac', 'ogg', 'wma', 'flac', 'alac'] # Audio
+                          'pcm', 'wav', 'aiff', 'mp3', 'aac', 'ogg', 'wma', 'flac', 'alac']# Audio
 
     # get the file and the user app id
     try:
@@ -1246,7 +1248,7 @@ def approve_application():
         if CommonFunctions.check_balance(wallet_address, 1000):
             # give the user id for the user
             try:
-                usertxn = grant_creator.approve_grant_application(algod_client, wallet_address, application_app_id, user_app_id, grant_app_id)
+                usertxn = grant_creator.approve_grant_application(algod_client, wallet_address, application_app_id, grant_app_id)
                 return jsonify(usertxn), 200
             except Exception as error:
                 return jsonify({"message": str(error)}), 500
@@ -1304,7 +1306,7 @@ def approve_milestone_1():
         if CommonFunctions.check_balance(wallet_address, 1000):
             # give the user id for the user
             try:
-                usertxn = grant_creator.milestone_1_approval(algod_client, wallet_address, application_app_id, user_app_id)
+                usertxn = grant_creator.milestone_1_approval(algod_client, wallet_address, application_app_id)
                 return jsonify(usertxn), 200
             except Exception as error:
                 return jsonify({"message": str(error)}), 500
@@ -1316,7 +1318,7 @@ def approve_milestone_1():
         return jsonify(error_msg), 400
 
 
-# Approve Applicant's Milestone 2 by Grant Creator/Manager
+# Approve Applicant's Milestone 2 by Grant Creator/Manager:user
 @app.route('/grant_creator/grant/approve_milestone_2', methods=['POST'])
 def approve_milestone_2():
     try:
@@ -1333,7 +1335,7 @@ def approve_milestone_2():
         if CommonFunctions.check_balance(wallet_address, 1000):
             # give the user id for the user
             try:
-                usertxn = grant_creator.milestone_2_approval(algod_client, wallet_address, application_app_id, user_app_id)
+                usertxn = grant_creator.milestone_2_approval(algod_client, wallet_address, application_app_id)
                 return jsonify(usertxn), 200
             except Exception as error:
                 return jsonify({"message": str(error)}), 500
@@ -1374,7 +1376,18 @@ def milestone_rejected():
         return jsonify(error_msg), 400
 
 
-# running the API, on Port: 3000
+# Get the percentage of the Total budge and the given grant
+@app.route('/grant_detail/<int:grant_app_id>', methods=['GET'])
+def grant_detail(grant_app_id):
+
+    try:
+        info = index.percentage_grant(grant_app_id)
+        return jsonify(info), 200
+    except Exception as error:
+        return jsonify({'message': f'{grant_app_id} Grant doesn\'t Exist.'}), 400
+
+
+# running the API
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run(debug=False, port=3000)
 

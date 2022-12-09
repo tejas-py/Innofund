@@ -1,4 +1,6 @@
 from algosdk.future.transaction import *
+
+import API.connection
 import transactions.index
 from utilities.CommonFunctions import get_address_from_application, Today_seconds, compile_program
 
@@ -429,12 +431,17 @@ def admin_grant_review(client, wallet_address, review, grant_app_id):
 
 # Approve the Applicant's Application for grant and transfer 10% of Advance money for Milestone 1
 # user_app_id: Of the applicant to give advance money
-def approve_grant_application(client, wallet_address, application_app_id, user_app_id, grant_app_id):
+def approve_grant_application(client, wallet_address, application_app_id, grant_app_id):
 
     # derive the accounts
     sender = wallet_address
     smart_contract_address = encoding.encode_address(encoding.checksum(b'appID' + application_app_id.to_bytes(8, 'big')))
-    grant_applicant_wallet_address = get_address_from_application(user_app_id)
+
+    # get the wallet address of the applicant
+    applicant_smart_contract_address = get_address_from_application(application_app_id)
+    indexer_client = API.connection.connect_indexer()
+    res = indexer_client.search_transactions(address=applicant_smart_contract_address)
+    applicant_wallet_address = res['transactions'][0]['sender']
 
     # define the params
     params = client.suggested_params()
@@ -455,11 +462,11 @@ def approve_grant_application(client, wallet_address, application_app_id, user_a
     budget_left_in_smart_contract = total_budget - given_grant
 
     # check if the application is the last application to approve for the grant
-    amount_difference = budget_left_in_smart_contract - milestone_1_ask + milestone_2_ask
-    if amount_difference > 100_000:
+    total_ask_amount = (milestone_1_ask + milestone_2_ask)
+    if (budget_left_in_smart_contract - total_ask_amount) > 100_000:
         # Transactions for all the grant application to approve
         args_list = ["Approve grant application", "Change status to approve", int(total_money), int(advance_of_milestone_1)]
-        accounts_list = [smart_contract_address, grant_applicant_wallet_address]
+        accounts_list = [smart_contract_address, applicant_wallet_address]
         apps = [application_app_id]
         print('creating transaction object...')
         txn = ApplicationNoOpTxn(sender=sender, sp=params, index=grant_app_id, app_args=args_list, accounts=accounts_list, foreign_apps=apps)
@@ -467,9 +474,9 @@ def approve_grant_application(client, wallet_address, application_app_id, user_a
     else:
         # transaction for the last grant application to approve
         args_list = ["Approve last grant application", "Change status to approve", int(total_money), int(advance_of_milestone_1)]
-        accounts_list = [smart_contract_address, grant_applicant_wallet_address]
+        accounts_list = [smart_contract_address, applicant_wallet_address]
         apps = [application_app_id]
-        print("YES")
+
         print('creating transaction object...')
         txn = ApplicationNoOpTxn(sender=sender, sp=params, index=grant_app_id, app_args=args_list, accounts=accounts_list, foreign_apps=apps)
 
@@ -500,12 +507,17 @@ def reject_grant_application(client, wallet_address, application_app_id, grant_a
 
 
 # approve milestone 1 by grant manager/creator
-# user_app_id of the applicant
-def milestone_1_approval(client, wallet_address, application_app_id, user_app_id):
+def milestone_1_approval(client, wallet_address, application_app_id):
 
     # derive the accounts
     sender = wallet_address
-    grant_applicant_wallet_address = get_address_from_application(user_app_id)
+    applicant_smart_contract_address = get_address_from_application(application_app_id)
+
+    # get the wallet address of the applicant
+    indexer_client = API.connection.connect_indexer()
+    res = indexer_client.search_transactions(address=applicant_smart_contract_address)
+
+    applicant_wallet_address = res['transactions'][0]['sender']
 
     # define the params
     params = client.suggested_params()
@@ -526,7 +538,7 @@ def milestone_1_approval(client, wallet_address, application_app_id, user_app_id
 
     if int(Today_seconds()) <= milestone_1_deadline:
         args_list = ["Approve Milestone 1", int(amount_to_give)]
-        accounts_list = [grant_applicant_wallet_address]
+        accounts_list = [applicant_wallet_address]
 
         print('creating transaction object...')
         txn = ApplicationNoOpTxn(sender=sender, sp=params, index=application_app_id, app_args=args_list, accounts=accounts_list, note="Grant Milestone 1 Approved")
@@ -539,12 +551,16 @@ def milestone_1_approval(client, wallet_address, application_app_id, user_app_id
 
 
 # approve milestone 2 by grant manager/creator
-# user_app_id of the applicant
-def milestone_2_approval(client, wallet_address, application_app_id, user_app_id):
+def milestone_2_approval(client, wallet_address, application_app_id):
 
     # derive the accounts
     sender = wallet_address
-    grant_applicant_wallet_address = get_address_from_application(user_app_id)
+    applicant_smart_contract_address = get_address_from_application(application_app_id)
+
+    # get the wallet address of the applicant
+    indexer_client = API.connection.connect_indexer()
+    res = indexer_client.search_transactions(address=applicant_smart_contract_address)
+    applicant_wallet_address = res['transactions'][0]['sender']
 
     # define the params
     params = client.suggested_params()
@@ -563,7 +579,7 @@ def milestone_2_approval(client, wallet_address, application_app_id, user_app_id
 
     if int(Today_seconds()) <= milestone_2_deadline:
         args_list = ["Approve Milestone 2", int(0), int(amount_to_give)]
-        accounts_list = [grant_applicant_wallet_address]
+        accounts_list = [applicant_wallet_address]
 
         print('creating transaction object...')
         txn = ApplicationNoOpTxn(sender=sender, sp=params, index=application_app_id, app_args=args_list, accounts=accounts_list)
@@ -572,7 +588,7 @@ def milestone_2_approval(client, wallet_address, application_app_id, user_app_id
 
         return txngrp
     else:
-        return ({'message': "Milestone 1 Deadline Reached"})
+        return ({'message': "Milestone 2 Deadline Reached"})
 
 
 # Milestone Rejected by Grant Creator/Manager
