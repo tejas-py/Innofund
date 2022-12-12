@@ -1,5 +1,5 @@
 from algosdk.v2client import algod, indexer
-from ipfsApi import Client
+from ipfsapi import Client
 
 
 # Connection to the algorand network
